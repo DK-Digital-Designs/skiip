@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History | Skiip</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body style="padding-bottom: 80px;">
+
+    <header style="padding: 24px 0;">
+        <div class="container flex items-center gap-16">
+            <a href="index.html" style="font-size: 24px;">←</a>
+            <h1 style="font-size: 24px;">Order History</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="history-container">
+            <!-- Populated by JS -->
+        </div>
+    </main>
+
+    <nav
+        style="position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11,11,15,0.9); backdrop-filter: blur(12px); border-top: 1px solid var(--stroke); display: flex; justify-content: space-around; padding: 12px 0;">
+        <a href="index.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">🏠</span> Home
+        </a>
+        <a href="menu.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">🍔</span> Menu
+        </a>
+        <a href="queue.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">⏳</span> Queue
+        </a>
+        <a href="orders.html" class="text-accent flex flex-col items-center" style="font-size: 10px; font-weight: 600;">
+            <span style="font-size: 20px;">📜</span> History
+        </a>
+    </nav>
+
+    <script type="module" src="../assets/js/app-attendee.js"></script>
+</body>
+
+</html>
