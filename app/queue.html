@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Queue | Skiip</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .queue-status-card {
+            background: var(--card);
+            border: 1px solid var(--stroke);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .queue-status-card.ready {
+            border-color: var(--accent);
+            background: rgba(242, 181, 33, 0.05);
+        }
+
+        .queue-number {
+            font-size: 72px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+            margin: 20px 0;
+        }
+
+        .now-serving-banner {
+            background: #1a1a1f;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+    </style>
+  <script type="module" crossorigin src="../assets/storage-DkYz1-e1.js"></script>
+  <script type="module" crossorigin src="../assets/app-attendee-BSRvmWZK.js"></script>
+  <link rel="stylesheet" crossorigin href="../assets/storage-BouRETiu.css">
+</head>
+
+<body style="padding-bottom: 80px;">
+
+    <div
+        style="background: var(--accent); color: var(--bg); padding: 8px; text-align: center; font-size: 12px; font-weight: 700;">
+        PROTOTYPE — NO REAL PAYMENTS
+    </div>
+
+    <header style="padding: 24px 0;">
+        <div class="container flex items-center gap-16">
+            <a href="index.html" style="font-size: 24px;">←</a>
+            <h1 style="font-size: 24px;">My Queue</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="queue-container">
+            <!-- Populated by JS -->
+            <div class="text-center text-muted" style="padding: 80px 0;">
+                <span style="font-size: 48px; display: block; margin-bottom: 20px;">☕️</span>
+                <p>No active orders in the queue.</p>
+                <a href="menu.html" class="btn btn-ghost" style="margin-top: 24px;">Browse Menus</a>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <h3 style="margin-bottom: 20px;">Pickup Instructions</h3>
+            <div class="card" style="font-size: 14px; color: var(--muted);">
+                <p class="mb-12">• Watch your status: From 'Placed' to 'Ready'.</p>
+                <p class="mb-12">• Head to the vendor's <strong>Skiip Lane</strong> only when status is 'Ready'.</p>
+                <p>• Show your pickup token to the staff member.</p>
+            </div>
+        </div>
+    </main>
+
+    <nav
+        style="position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11,11,15,0.9); backdrop-filter: blur(12px); border-top: 1px solid var(--stroke); display: flex; justify-content: space-around; padding: 12px 0;">
+        <a href="index.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">🏠</span> Home
+        </a>
+        <a href="menu.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">🍔</span> Menu
+        </a>
+        <a href="queue.html" class="text-accent flex flex-col items-center" style="font-size: 10px; font-weight: 600;">
+            <span style="font-size: 20px;">⏳</span> Queue
+        </a>
+        <a href="orders.html" class="flex flex-col items-center" style="font-size: 10px; opacity: 0.6;">
+            <span style="font-size: 20px;">📜</span> History
+        </a>
+    </nav>
+
+</body>
+
+</html>

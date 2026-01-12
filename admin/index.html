@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | Skiip</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .admin-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 12px 16px;
+            background: transparent;
+            color: var(--muted);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .admin-menu button.active {
+            background: var(--card);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--stroke);
+            font-size: 14px;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--muted);
+            font-weight: 600;
+        }
+    </style>
+  <script type="module" crossorigin src="../assets/admin-B1OXHwSz.js"></script>
+  <link rel="modulepreload" crossorigin href="../assets/storage-DkYz1-e1.js">
+  <link rel="stylesheet" crossorigin href="../assets/storage-BouRETiu.css">
+</head>
+
+<body style="background: #050507;">
+
+    <nav style="background: var(--bg); border-bottom: 1px solid var(--stroke); padding: 16px 24px;">
+        <div class="flex justify-between items-center">
+            <a href="../index.html" class="logo" style="font-size: 20px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="currentColor" />
+                </svg>
+                SKI<span>IP</span> <span style="font-size: 12px; opacity: 0.5; margin-left:10px;">ADMIN</span>
+            </a>
+            <button id="clear-demo-data" class="btn btn-ghost"
+                style="padding: 8px 16px; font-size: 12px; border-color: rgba(239, 68, 68, 0.4); color: #ef4444;">Clear
+                Demo Data</button>
+        </div>
+    </nav>
+
+    <main class="container admin-grid">
+        <aside class="admin-menu">
+            <button class="active" data-view="events">Manage Events</button>
+            <button data-view="vendors">Manage Vendors</button>
+            <button data-view="orders">All Orders</button>
+            <button data-view="leads">Marketing Leads</button>
+            <button data-view="export" style="margin-top: 40px; border: 1px solid var(--stroke);">Export & Data</button>
+        </aside>
+
+        <section id="admin-content">
+            <!-- Dynamic Content -->
+        </section>
+    </main>
+
+</body>
+
+</html>

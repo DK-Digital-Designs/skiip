@@ -1,0 +1,1 @@
+import{S as n}from"./storage-DkYz1-e1.js";import"./main-BWxyFV1t.js";document.getElementById("contact-form").addEventListener("submit",t=>{t.preventDefault();const e=t.target,o=new FormData(e),a=Object.fromEntries(o.entries());n.saveContactMessage(a),e.style.display="none",document.getElementById("contact-success").style.display="block"});
