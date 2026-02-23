@@ -1,32 +1,56 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+import Stripe from 'https://esm.sh/stripe@14.10.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts"
-
-console.log("Hello from Functions!")
-
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
-  }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
+  // This is needed to use the Fetch API rather than relying on the Node http client.
+  httpClient: Stripe.createFetchHttpClient(),
 })
 
-/* To invoke locally:
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
 
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/stripe-checkout' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
+  try {
+    const { orderDetails, returnUrl } = await req.json()
 
-*/
+    // Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: orderDetails.items.map((item: any) => ({
+        price_data: {
+          currency: 'zar', // South African Rand
+          product_data: {
+            name: item.name || item.product_snapshot?.name || 'Item',
+          },
+          unit_amount: Math.round(item.price * 100), // Convert to cents
+        },
+        quantity: item.quantity,
+      })),
+      mode: 'payment',
+      success_url: `${returnUrl}?success=true&order_id=${orderDetails.order_id}`,
+      cancel_url: `${returnUrl}?canceled=true`,
+      metadata: {
+        order_id: orderDetails.order_id,
+      },
+    })
+
+    return new Response(
+      JSON.stringify({ sessionId: session.id, url: session.url }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    )
+  } catch (error) {
+    console.error(error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    )
+  }
+})

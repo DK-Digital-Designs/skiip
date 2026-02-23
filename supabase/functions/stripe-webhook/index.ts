@@ -1,32 +1,57 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+import Stripe from 'https://esm.sh/stripe@14.10.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts"
-
-console.log("Hello from Functions!")
-
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
-  }
-
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
+// Initialize Stripe API client
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
+  httpClient: Stripe.createFetchHttpClient(),
 })
 
-/* To invoke locally:
+// Webhook Secret from Stripe Dashboard
+const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') as string
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+serve(async (req) => {
+  const signature = req.headers.get('stripe-signature')
 
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/stripe-webhook' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
+  if (!signature) {
+    return new Response('No signature', { status: 400 })
+  }
 
-*/
+  try {
+    const body = await req.text()
+    const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret)
+    
+    // Create Supabase client with Service Role key to bypass RLS for admin updates
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any
+      const orderId = session.metadata.order_id
+
+      console.log(`Payment successful for order: ${orderId}`)
+
+      // Update order status to paid
+      const { error } = await supabaseClient
+        .from('orders')
+        .update({ status: 'paid', payment_status: 'succeeded' })
+        .eq('id', orderId)
+
+      if (error) {
+        console.error('Error updating order:', error)
+        throw error
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200 })
+  } catch (error) {
+    console.error(`Webhook Error: ${error.message}`)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
+  }
+})

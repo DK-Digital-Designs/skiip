@@ -1,4 +1,5 @@
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '../supabase';
 
 // Replace with your public key from Stripe Dashboard
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_placeholder');
@@ -19,21 +20,36 @@ export const StripeService = {
         }
 
         try {
-            // This expects a backend endpoint that interacts with the Stripe API
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+            // Get current session for user context (if any)
+            const { data: authData } = await supabase.auth.getSession();
+            const session = authData?.session;
+
+            // Call Supabase Edge Function
+            const response = await supabase.functions.invoke('stripe-checkout', {
+                body: data,
+                headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
             });
 
-            const session = await response.json();
+            if (response.error) {
+                console.error("Edge function returned error:", response.error);
+                throw new Error("Failed to create checkout session");
+            }
 
-            const stripe = await stripePromise;
-            const { error } = await stripe.redirectToCheckout({
-                sessionId: session.id,
-            });
+            const { sessionId, url } = response.data;
 
-            if (error) throw error;
+            if (url) {
+                // If the edge function returns a full redirect URL, we can just use that
+                window.location.href = url;
+            } else {
+                // Otherwise use the Stripe SDK to redirect via sessionId
+                const stripe = await stripePromise;
+                const { error } = await stripe.redirectToCheckout({
+                    sessionId: sessionId,
+                });
+
+                if (error) throw error;
+            }
+
         } catch (err) {
             console.error('Stripe Error:', err);
             throw err;
