@@ -1,43 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { useStores } from '../../lib/hooks/useMenu';
+import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
+
+const MOCK_VENDORS = [
+    { id: '1', name: 'Burger Bliss', description: 'Gourmet burgers and loaded fries', pickup_location: 'Food Court A, Stall 3' },
+    { id: '2', name: 'Pizza Paradise', description: 'Wood-fired artisan pizzas', pickup_location: 'Food Court B, Stall 1' },
+    { id: '3', name: 'Drinks & Co', description: 'Craft cocktails and refreshments', pickup_location: 'Bar Area 2' },
+];
 
 export default function VendorList() {
-    const [vendors, setVendors] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const eventId = searchParams.get('event') || 1; // Default event
 
-    useEffect(() => {
-        if (!isSupabaseConfigured()) {
-            // Demo mode with mock data
-            setVendors([
-                { id: '1', name: 'Burger Bliss', description: 'Gourmet burgers and loaded fries', pickup_location: 'Food Court A, Stall 3' },
-                { id: '2', name: 'Pizza Paradise', description: 'Wood-fired artisan pizzas', pickup_location: 'Food Court B, Stall 1' },
-                { id: '3', name: 'Drinks & Co', description: 'Craft cocktails and refreshments', pickup_location: 'Bar Area 2' },
-            ]);
-            setLoading(false);
-            return;
-        }
-        fetchVendors();
-    }, [eventId]);
+    // React Query Hook (only run if Supabase is configured)
+    const { data: qStores = [], isLoading: isStoresLoading } = useStores(isSupabaseConfigured() ? eventId : null);
 
-    async function fetchVendors() {
-        try {
-            const { data, error } = await supabase
-                .from('vendors')
-                .select('*')
-                .eq('event_id', eventId)
-                .eq('is_active', true);
-
-            if (error) throw error;
-            setVendors(data || []);
-        } catch (error) {
-            console.error('Error fetching vendors:', error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    const isDemo = !isSupabaseConfigured();
+    const vendors = isDemo ? MOCK_VENDORS : qStores;
+    const loading = isDemo ? false : isStoresLoading;
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
@@ -63,8 +45,15 @@ export default function VendorList() {
                 <p className="text-muted" style={{ marginBottom: '40px' }}>Select from the vendors below to view their menu.</p>
 
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                        <div className="spinner" style={{ width: '40px', height: '40px' }}></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="card">
+                                <LoadingSkeleton height="160px" marginBottom="16px" />
+                                <LoadingSkeleton width="60%" height="24px" marginBottom="12px" />
+                                <LoadingSkeleton width="90%" height="16px" marginBottom="8px" />
+                                <LoadingSkeleton width="40%" height="16px" />
+                            </div>
+                        ))}
                     </div>
                 ) : vendors.length === 0 ? (
                     <div className="card" style={{ textAlign: 'center', padding: '60px' }}>

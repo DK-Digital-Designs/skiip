@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { AuthService } from '../../lib/services/auth.service';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -8,44 +9,61 @@ export default function AdminDashboard() {
     const [recentOrders, setRecentOrders] = useState([]);
 
     useEffect(() => {
+        if (!isSupabaseConfigured()) {
+            // Demo mode
+            setStats({ totalOrders: 3, totalRevenue: 450.00, activeVendors: 3 });
+            setRecentOrders([
+                { id: 'demo-001a', status: 'preparing', total: 180.00, customer_phone: '+27 82 123 4567', created_at: new Date().toISOString() },
+                { id: 'demo-002b', status: 'ready', total: 110.00, customer_phone: '+27 83 456 7890', created_at: new Date().toISOString() },
+                { id: 'demo-003c', status: 'collected', total: 160.00, customer_phone: '+27 84 789 0123', created_at: new Date().toISOString() },
+            ]);
+            return;
+        }
+
         checkAuth();
         fetchStats();
     }, []);
 
     async function checkAuth() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const session = await AuthService.getSession();
+        if (!session) {
             navigate('/admin/login');
         }
     }
 
     async function fetchStats() {
-        // Fetch total orders and revenue
-        const { data: orders } = await supabase
-            .from('orders')
-            .select('total_amount, created_at, id, status, customer_phone')
-            .order('created_at', { ascending: false })
-            .limit(10);
+        try {
+            // Fetch total orders and revenue
+            const { data: orders } = await supabase
+                .from('orders')
+                .select('total, created_at, id, status, customer_phone')
+                .order('created_at', { ascending: false })
+                .limit(10);
 
-        const totalRevenue = orders?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+            const totalRevenue = orders?.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
 
-        // Fetch active vendors
-        const { data: vendors } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('is_active', true);
+            // Fetch active stores (vendors)
+            const { data: stores } = await supabase
+                .from('stores')
+                .select('id')
+                .eq('status', 'active');
 
-        setStats({
-            totalOrders: orders?.length || 0,
-            totalRevenue,
-            activeVendors: vendors?.length || 0
-        });
+            setStats({
+                totalOrders: orders?.length || 0,
+                totalRevenue,
+                activeVendors: stores?.length || 0
+            });
 
-        setRecentOrders(orders || []);
+            setRecentOrders(orders || []);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
     }
 
     async function handleLogout() {
-        await supabase.auth.signOut();
+        if (isSupabaseConfigured()) {
+            await AuthService.signOut();
+        }
         navigate('/admin/login');
     }
 
@@ -97,7 +115,7 @@ export default function AdminDashboard() {
                                     </p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ fontSize: '20px', fontWeight: '700' }}>R{order.total_amount.toFixed(2)}</p>
+                                    <p style={{ fontSize: '20px', fontWeight: '700' }}>R{parseFloat(order.total || 0).toFixed(2)}</p>
                                     <p className="text-accent" style={{ fontSize: '13px' }}>{order.status}</p>
                                 </div>
                             </div>

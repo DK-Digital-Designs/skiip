@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { OrderService } from '../../lib/services/order.service';
+import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 
 const STATUS_CONFIG = {
-    pending_payment: { label: 'Payment Pending', color: '#9b9ba5', icon: '⏳' },
+    pending: { label: 'Order Placed', color: '#9b9ba5', icon: '📝' },
+    paid: { label: 'Payment Received', color: '#3b82f6', icon: '💳' },
     preparing: { label: 'Preparing', color: '#f59e0b', icon: '👨‍🍳' },
     ready: { label: 'Ready for Pickup', color: '#10b981', icon: '✅' },
     collected: { label: 'Collected', color: '#8b5cf6', icon: '🎉' },
@@ -19,6 +22,8 @@ export default function OrderTracker() {
     useEffect(() => {
         fetchOrder();
 
+        if (!isSupabaseConfigured()) return;
+
         // Subscribe to realtime updates
         const subscription = supabase
             .channel(`order-${orderId}`)
@@ -28,7 +33,7 @@ export default function OrderTracker() {
                 table: 'orders',
                 filter: `id=eq.${orderId}`
             }, (payload) => {
-                setOrder(payload.new);
+                setOrder(prev => ({ ...prev, ...payload.new }));
             })
             .subscribe();
 
@@ -39,22 +44,27 @@ export default function OrderTracker() {
 
     async function fetchOrder() {
         try {
-            const { data: orderData } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('id', orderId)
-                .single();
+            if (!isSupabaseConfigured()) {
+                // Demo mode
+                setOrder({
+                    id: orderId,
+                    status: 'preparing',
+                    total: 180.00,
+                    created_at: new Date().toISOString(),
+                    order_items: [
+                        { quantity: 2, price: 90, product_snapshot: { name: 'Demo Burger', price: 90 } }
+                    ]
+                });
+                setVendor({ name: 'Burger Bliss (Demo)', pickup_location: 'Food Court A' });
+                setLoading(false);
+                return;
+            }
 
+            const orderData = await OrderService.getOrderById(orderId);
             setOrder(orderData);
 
-            if (orderData) {
-                const { data: vendorData } = await supabase
-                    .from('vendors')
-                    .select('*')
-                    .eq('id', orderData.vendor_id)
-                    .single();
-
-                setVendor(vendorData);
+            if (orderData?.stores) {
+                setVendor(orderData.stores);
             }
         } catch (error) {
             console.error('Error:', error);
@@ -65,8 +75,10 @@ export default function OrderTracker() {
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="spinner" style={{ width: '40px', height: '40px' }}></div>
+            <div className="container" style={{ maxWidth: '600px', paddingTop: '60px' }}>
+                <LoadingSkeleton height="200px" marginBottom="24px" borderRadius="12px" />
+                <LoadingSkeleton height="100px" marginBottom="24px" borderRadius="12px" />
+                <LoadingSkeleton height="200px" borderRadius="12px" />
             </div>
         );
     }
@@ -82,7 +94,8 @@ export default function OrderTracker() {
         );
     }
 
-    const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.preparing;
+    const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+    const orderItems = order.order_items || [];
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px', background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, var(--bg) 100%)' }}>
@@ -110,15 +123,15 @@ export default function OrderTracker() {
                 {/* Order Details */}
                 <div className="card" style={{ marginBottom: '24px' }}>
                     <h3 style={{ marginBottom: '16px' }}>Order Details</h3>
-                    {order.items && order.items.map((item, index) => (
+                    {orderItems.map((item, index) => (
                         <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                            <span>{item.quantity}× {item.name}</span>
+                            <span>{item.quantity}× {item.product_snapshot?.name || 'Item'}</span>
                             <span>R{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid var(--stroke)', fontSize: '18px', fontWeight: '700' }}>
                         <span>Total</span>
-                        <span className="text-accent">R{order.total_amount.toFixed(2)}</span>
+                        <span className="text-accent">R{order.total?.toFixed(2) ?? '0.00'}</span>
                     </div>
                 </div>
 

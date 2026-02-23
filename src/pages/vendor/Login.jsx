@@ -1,36 +1,47 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { AuthService } from '../../lib/services/auth.service';
+import { StoreService } from '../../lib/services/store.service';
+import { useToast } from '../../components/ui/Toast';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 export default function VendorLogin() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const { addToast } = useToast();
 
     async function handleLogin(e) {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+            if (!isSupabaseConfigured()) {
+                // Demo login
+                if (email === 'vendor@skiip.com' && password === 'password') {
+                    navigate('/vendor/dashboard');
+                } else {
+                    addToast('Invalid demo credentials. Use vendor@skiip.com / password', 'error');
+                }
+                setLoading(false);
+                return;
+            }
+
+            await AuthService.signIn(email, password);
 
             // Check if user is a vendor
-            const { data: vendor } = await supabase
-                .from('vendors')
-                .select('*')
-                .eq('email', email)
-                .single();
-
-            if (vendor) {
-                navigate('/vendor/dashboard');
-            } else {
-                alert('No vendor account found');
-                await supabase.auth.signOut();
+            const storeData = await StoreService.getMyStore();
+            if (!storeData) {
+                addToast('No store found for this account.', 'error');
+                navigate('/');
+                return;
             }
+
+            addToast('Login successful!', 'success');
+            navigate('/vendor/dashboard');
         } catch (error) {
-            alert(error.message || 'Login failed');
+            addToast(error.message || 'Login failed', 'error');
         } finally {
             setLoading(false);
         }
@@ -68,6 +79,12 @@ export default function VendorLogin() {
                     <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
                         {loading ? 'Signing in...' : 'Sign In'}
                     </button>
+
+                    {!isSupabaseConfigured() && (
+                        <p style={{ marginTop: '16px', fontSize: '13px', color: '#f59e0b' }}>
+                            Demo Mode: Use <strong>vendor@example.com</strong> / <strong>password</strong>
+                        </p>
+                    )}
                 </form>
             </div>
         </div>

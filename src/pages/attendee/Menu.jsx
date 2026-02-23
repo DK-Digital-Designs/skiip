@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { useStore, useStoreMenu } from '../../lib/hooks/useMenu';
+import { useCart } from '../../lib/hooks/useCart';
+import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 
 const MOCK_MENU = {
     '1': [
-        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 85.00, category: 'Burgers' },
-        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 95.00, category: 'Burgers' },
-        { id: '3', name: 'Loaded Fries', description: 'Fries with cheese, bacon, sour cream', price: 55.00, category: 'Sides' },
-        { id: '4', name: 'Cola', description: 'Ice-cold soft drink', price: 25.00, category: 'Drinks' },
+        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 85.00, category: 'Burgers', store_id: '1' },
+        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 95.00, category: 'Burgers', store_id: '1' },
+        { id: '3', name: 'Loaded Fries', description: 'Fries with cheese, bacon, sour cream', price: 55.00, category: 'Sides', store_id: '1' },
+        { id: '4', name: 'Cola', description: 'Ice-cold soft drink', price: 25.00, category: 'Drinks', store_id: '1' },
     ],
     '2': [
-        { id: '5', name: 'Margherita Pizza', description: 'Tomato, mozzarella, basil', price: 110.00, category: 'Pizza' },
-        { id: '6', name: 'Pepperoni Pizza', description: 'Pepperoni, cheese, tomato sauce', price: 125.00, category: 'Pizza' },
-        { id: '7', name: 'Veggie Supreme', description: 'Mixed vegetables, cheese, olives', price: 120.00, category: 'Pizza' },
+        { id: '5', name: 'Margherita Pizza', description: 'Tomato, mozzarella, basil', price: 110.00, category: 'Pizza', store_id: '2' },
+        { id: '6', name: 'Pepperoni Pizza', description: 'Pepperoni, cheese, tomato sauce', price: 125.00, category: 'Pizza', store_id: '2' },
+        { id: '7', name: 'Veggie Supreme', description: 'Mixed vegetables, cheese, olives', price: 120.00, category: 'Pizza', store_id: '2' },
     ],
     '3': [
-        { id: '8', name: 'Craft Beer', description: 'Local IPA on tap', price: 65.00, category: 'Beer' },
-        { id: '9', name: 'Mojito', description: 'Mint, lime, rum, soda', price: 85.00, category: 'Cocktails' },
-        { id: '10', name: 'Soft Drink', description: 'Various flavors', price: 25.00, category: 'Soft Drinks' },
+        { id: '8', name: 'Craft Beer', description: 'Local IPA on tap', price: 65.00, category: 'Beer', store_id: '3' },
+        { id: '9', name: 'Mojito', description: 'Mint, lime, rum, soda', price: 85.00, category: 'Cocktails', store_id: '3' },
+        { id: '10', name: 'Soft Drink', description: 'Various flavors', price: 25.00, category: 'Soft Drinks', store_id: '3' },
     ],
 };
 
@@ -30,76 +33,40 @@ const MOCK_VENDORS = {
 export default function Menu() {
     const { vendorId } = useParams();
     const navigate = useNavigate();
-    const [vendor, setVendor] = useState(null);
-    const [menuItems, setMenuItems] = useState([]);
-    const [cart, setCart] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!isSupabaseConfigured()) {
-            // Demo mode
-            setVendor(MOCK_VENDORS[vendorId] || MOCK_VENDORS['1']);
-            setMenuItems(MOCK_MENU[vendorId] || MOCK_MENU['1']);
-            setLoading(false);
-            return;
-        }
-        fetchVendorAndMenu();
-    }, [vendorId]);
+    // React Query Hooks (only run if Supabase is configured)
+    const { data: qStore, isLoading: isStoreLoading } = useStore(isSupabaseConfigured() ? vendorId : null);
+    const { data: qMenu = [], isLoading: isMenuLoading } = useStoreMenu(isSupabaseConfigured() ? vendorId : null);
 
-    async function fetchVendorAndMenu() {
-        try {
-            const { data: vendorData } = await supabase
-                .from('vendors')
-                .select('*')
-                .eq('id', vendorId)
-                .single();
+    const isDemo = !isSupabaseConfigured();
+    const vendor = isDemo ? (MOCK_VENDORS[vendorId] || MOCK_VENDORS['1']) : qStore;
+    const menuItems = isDemo ? (MOCK_MENU[vendorId] || MOCK_MENU['1']) : qMenu;
+    const loading = isDemo ? false : (isStoreLoading || isMenuLoading);
 
-            setVendor(vendorData);
+    // Global cart state
+    const { items: cart, addItem, removeItem, getCartTotal, clearCart, vendorId: cartVendorId } = useCart();
 
-            const { data: itemsData } = await supabase
-                .from('menu_items')
-                .select('*')
-                .eq('vendor_id', vendorId)
-                .eq('is_available', true)
-                .order('category', { ascending: true });
-
-            setMenuItems(itemsData || []);
-        } catch (error) {
-            console.error('Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    function addToCart(item) {
-        const existing = cart.find(i => i.id === item.id);
-        if (existing) {
-            setCart(cart.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
-        } else {
-            setCart([...cart, { ...item, quantity: 1 }]);
-        }
-    }
-
-    function removeFromCart(itemId) {
-        const existing = cart.find(i => i.id === itemId);
-        if (existing && existing.quantity > 1) {
-            setCart(cart.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i));
-        } else {
-            setCart(cart.filter(i => i.id !== itemId));
-        }
-    }
-
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartTotal = getCartTotal();
 
     function proceedToCheckout() {
-        sessionStorage.setItem('cart', JSON.stringify({ vendorId, vendor, items: cart }));
         navigate('/order/checkout');
     }
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="spinner" style={{ width: '40px', height: '40px' }}></div>
+            <div className="container" style={{ paddingTop: '40px' }}>
+                <LoadingSkeleton width="200px" height="40px" marginBottom="40px" />
+                <div style={{ display: 'grid', gap: '16px' }}>
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flex: 1 }}>
+                                <LoadingSkeleton width="150px" height="24px" marginBottom="8px" />
+                                <LoadingSkeleton width="250px" height="16px" />
+                            </div>
+                            <LoadingSkeleton width="100px" height="44px" />
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -145,7 +112,10 @@ export default function Menu() {
                                     {item.description && <p className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>{item.description}</p>}
                                     <p className="text-accent" style={{ fontWeight: '700', fontSize: '18px' }}>R{item.price.toFixed(2)}</p>
                                 </div>
-                                <button onClick={() => addToCart(item)} className="btn btn-primary">
+                                <button
+                                    onClick={() => addItem({ ...item, store_id: vendorId })}
+                                    className="btn btn-primary"
+                                >
                                     Add to Cart
                                 </button>
                             </div>
@@ -165,11 +135,11 @@ export default function Menu() {
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 {cart.map(item => (
                                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '8px 12px', borderRadius: '8px' }}>
-                                        <button onClick={() => removeFromCart(item.id)} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>
+                                        <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>
                                             −
                                         </button>
                                         <span style={{ minWidth: '30px', textAlign: 'center', fontSize: '14px' }}>{item.quantity}× {item.name}</span>
-                                        <button onClick={() => addToCart(item)} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>
+                                        <button onClick={() => addItem({ ...item, store_id: vendorId })} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>
                                             +
                                         </button>
                                     </div>

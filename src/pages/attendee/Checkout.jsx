@@ -1,59 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { useCart } from '../../lib/hooks/useCart';
+import { useAuth } from '../../lib/context/AuthContext';
+import { OrderService } from '../../lib/services/order.service';
+import { StoreService } from '../../lib/services/store.service';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { useToast } from '../../components/ui/Toast';
 
 export default function Checkout() {
     const navigate = useNavigate();
+    const { user, loading: authLoading } = useAuth();
+    const { items, getCartTotal, vendorId, clearCart } = useCart();
+    const { addToast } = useToast();
+
     const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState(user?.email || '');
+    const [notes, setNotes] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [vendor, setVendor] = useState(null);
 
-    // Get cart from sessionStorage
-    const cartData = JSON.parse(sessionStorage.getItem('cart') || '{}');
-    const { vendor, items = [] } = cartData;
+    const total = getCartTotal();
 
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    useEffect(() => {
+        // Pre-fill email when user loads
+        if (user?.email && !email) {
+            setEmail(user.email);
+        }
+
+        if (vendorId) {
+            fetchVendor();
+        }
+    }, [user, authLoading, vendorId]);
+
+    async function fetchVendor() {
+        if (!isSupabaseConfigured()) return; // Handle demo mode if needed, but OrderService requires Supabase
+        try {
+            const data = await StoreService.getStoreById(vendorId);
+            setVendor(data);
+        } catch (error) {
+            console.error('Error fetching vendor:', error);
+        }
+    }
 
     async function handleCheckout(e) {
         e.preventDefault();
         setProcessing(true);
 
         try {
-            // Create order in database
-            const { data: order, error } = await supabase
-                .from('orders')
-                .insert([{
-                    vendor_id: cartData.vendorId,
-                    customer_phone: phone,
-                    items: items,
-                    total_amount: total,
-                    status: 'pending_payment'
-                }])
-                .select()
-                .single();
+            if (!isSupabaseConfigured()) {
+                addToast('Demo mode: Connect Supabase to place real orders.', 'info');
+                setProcessing(false);
+                return;
+            }
 
-            if (error) throw error;
+            const order = await OrderService.createOrder({
+                store_id: vendorId,
+                items: items,
+                total: total,
+                customer_email: email || user?.email,
+                customer_phone: phone,
+                notes: notes,
+                user_id: user?.id || null // Support guest checkout
+            });
 
-            // In real implementation, integrate Stripe here
-            // For MVP, we'll simulate payment success
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // 2. Process Payment via Stripe
+            addToast('Redirecting to secure payment...', 'info');
+            // For now, StripeService handles the mock/live logic
+            // In a real app, this would redirect or show a card element
+            // await StripeService.createCheckoutSession({ orderId: order.id, ... }); 
 
-            // Update order status to paid
-            await supabase
-                .from('orders')
-                .update({ status: 'preparing' })
-                .eq('id', order.id);
+            // Simulate slight delay for "payment processing"
+            await new Promise(r => setTimeout(r, 1500));
 
             // Clear cart
-            sessionStorage.removeItem('cart');
+            clearCart();
 
             // Navigate to order tracker
+            addToast('Order placed successfully!', 'success');
             navigate(`/order/track/${order.id}`);
         } catch (error) {
             console.error('Error creating order:', error);
-            alert('Failed to create order. Please try again.');
+            addToast('Failed to create order. Please try again.', 'error');
         } finally {
             setProcessing(false);
         }
+    }
+
+    if (authLoading) return <div>Loading...</div>;
+    if (!items.length) {
+        return (
+            <div className="container" style={{ padding: '60px', textAlign: 'center' }}>
+                <h2>Your cart is empty</h2>
+                <button onClick={() => navigate('/order')} className="btn btn-primary" style={{ marginTop: '20px' }}>
+                    Browse Vendors
+                </button>
+            </div>
+        );
     }
 
     return (
@@ -89,6 +131,17 @@ export default function Checkout() {
                 <form onSubmit={handleCheckout}>
                     <div className="card" style={{ marginBottom: '24px' }}>
                         <h3 style={{ marginBottom: '16px' }}>Contact Information</h3>
+
+                        <label>Email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="name@example.com"
+                            required
+                            style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
+                        />
+
                         <label>WhatsApp Number</label>
                         <input
                             type="tel"
@@ -96,9 +149,16 @@ export default function Checkout() {
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="+27 XX XXX XXXX"
                             required
-                            style={{ marginBottom: '12px' }}
+                            style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
-                        <p className="text-muted" style={{ fontSize: '13px' }}>We'll send your order updates to this number via WhatsApp</p>
+
+                        <label>Notes (Optional)</label>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Allergies, instructions, etc."
+                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)', minHeight: '80px' }}
+                        />
                     </div>
 
                     <button
