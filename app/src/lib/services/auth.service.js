@@ -48,6 +48,57 @@ export const AuthService = {
     },
 
     /**
+     * Sign up a new vendor
+     */
+    async signUpVendor(email, password, fullName, storeName, storeSlug) {
+        if (!supabase) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    role: 'seller',
+                },
+            },
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+            const { error: profileError } = await supabase
+                .from('user_profiles')
+                .insert([{
+                    id: data.user.id,
+                    email: email,
+                    full_name: fullName,
+                    role: 'seller',
+                }]);
+
+            if (profileError) {
+                console.error('Error creating user profile:', profileError);
+            }
+
+            const { error: storeError } = await supabase
+                .from('stores')
+                .insert([{
+                    user_id: data.user.id,
+                    name: storeName,
+                    slug: storeSlug,
+                    status: 'pending' // pending by default for verification
+                }]);
+
+            if (storeError) {
+                console.error('Error creating store:', storeError);
+                throw storeError;
+            }
+        }
+
+        return data;
+    },
+
+    /**
      * Sign in an existing user
      * @param {string} email 
      * @param {string} password 

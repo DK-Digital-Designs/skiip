@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStore, useStoreMenu } from '../../lib/hooks/useMenu';
 import { useCart } from '../../lib/hooks/useCart';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
+import AttendeeHeader from '../../components/shared/AttendeeHeader';
 
 const MOCK_MENU = {
     '1': [
@@ -73,13 +74,7 @@ export default function Menu() {
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '120px' }}>
-            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
-                <div className="container">
-                    <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: '16px', cursor: 'pointer', fontWeight: '600' }}>
-                        ← Back to vendors
-                    </button>
-                </div>
-            </header>
+            <AttendeeHeader backTo="/order" backLabel="← Back to vendors" />
 
             <div className="container">
                 {!isSupabaseConfigured() && (

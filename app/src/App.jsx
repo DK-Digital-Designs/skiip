@@ -7,8 +7,12 @@ import AttendeeVendors from './pages/attendee/VendorList';
 import AttendeeMenu from './pages/attendee/Menu';
 import AttendeeCheckout from './pages/attendee/Checkout';
 import AttendeeOrderTracker from './pages/attendee/OrderTracker';
+import BuyerLogin from './pages/attendee/BuyerLogin';
+import BuyerSignup from './pages/attendee/BuyerSignup';
+import BuyerProfile from './pages/attendee/BuyerProfile';
 
 import VendorLogin from './pages/vendor/Login';
+import VendorSignup from './pages/vendor/Signup';
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
 
@@ -33,9 +37,13 @@ function App() {
                 <Route path="/order/vendor/:vendorId" element={<AttendeeMenu />} />
                 <Route path="/order/checkout" element={<AttendeeCheckout />} />
                 <Route path="/order/track/:orderId" element={<AttendeeOrderTracker />} />
+                <Route path="/order/login" element={<BuyerLogin />} />
+                <Route path="/order/signup" element={<BuyerSignup />} />
+                <Route path="/order/profile" element={<BuyerProfile />} />
 
                 {/* Vendor Portal */}
                 <Route path="/vendor/login" element={<VendorLogin />} />
+                <Route path="/vendor/signup" element={<VendorSignup />} />
                 <Route
                     path="/vendor/dashboard"
                     element={

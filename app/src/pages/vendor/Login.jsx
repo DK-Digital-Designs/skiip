@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
 import { useToast } from '../../components/ui/Toast';
@@ -85,6 +85,10 @@ export default function VendorLogin() {
                             Demo Mode: Use <strong>vendor@example.com</strong> / <strong>password</strong>
                         </p>
                     )}
+
+                    <p className="text-center" style={{ fontSize: '14px', marginTop: '24px' }}>
+                        Want to become a vendor? <Link to="/vendor/signup" className="text-accent">Apply here</Link>
+                    </p>
                 </form>
             </div>
         </div>
