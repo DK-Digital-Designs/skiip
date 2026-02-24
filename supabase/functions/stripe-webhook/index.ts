@@ -39,14 +39,38 @@ serve(async (req) => {
       log.info(`Payment successful for order: ${orderId}`)
 
       // Update order status to paid
-      const { error } = await supabaseClient
+      const { error: orderError } = await supabaseClient
         .from('orders')
         .update({ status: 'paid', payment_status: 'succeeded' })
         .eq('id', orderId)
 
-      if (error) {
-        log.error('Error updating order after payment', { orderId, error })
-        throw error
+      if (orderError) {
+        log.error('Error updating order after payment', { orderId, error: orderError })
+        throw orderError
+      }
+
+      // Decrement inventory for each item in the order
+      const { data: orderItems, error: itemsError } = await supabaseClient
+        .from('order_items')
+        .select('product_id, quantity')
+        .eq('order_id', orderId)
+
+      if (itemsError) {
+        log.error('Error fetching order items for stock decrement', { orderId, error: itemsError })
+      } else if (orderItems) {
+        for (const item of orderItems) {
+          const { error: decrementError } = await supabaseClient.rpc('decrement_inventory', {
+            product_id: item.product_id,
+            quantity_to_decrement: item.quantity
+          })
+          
+          if (decrementError) {
+             log.error('Failed to decrement inventory', { 
+               productId: item.product_id, 
+               error: decrementError 
+             })
+          }
+        }
       }
     }
 

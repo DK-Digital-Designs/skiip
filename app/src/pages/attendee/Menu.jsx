@@ -102,16 +102,40 @@ export default function Menu() {
                     <div style={{ display: 'grid', gap: '16px' }}>
                         {menuItems.map((item) => (
                             <div key={item.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <h3 style={{ marginBottom: '4px' }}>{item.name}</h3>
-                                    {item.description && <p className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>{item.description}</p>}
-                                    <p className="text-accent" style={{ fontWeight: '700', fontSize: '18px' }}>£{item.price.toFixed(2)}</p>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                                    <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'var(--stroke)', overflow: 'hidden', flexShrink: 0 }}>
+                                        {item.images?.[0] ? (
+                                            <img src={item.images[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🍔</div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 style={{ marginBottom: '4px' }}>{item.name}</h3>
+                                        {item.description && <p className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>{item.description}</p>}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <p className="text-accent" style={{ fontWeight: '700', fontSize: '18px' }}>£{item.price.toFixed(2)}</p>
+                                            {item.inventory_quantity === 0 && (
+                                                <span style={{
+                                                    background: '#ef4444',
+                                                    color: 'white',
+                                                    fontSize: '10px',
+                                                    fontWeight: '800',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    textTransform: 'uppercase'
+                                                }}>Sold Out</span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => addItem({ ...item, store_id: vendorId })}
                                     className="btn btn-primary"
+                                    disabled={item.inventory_quantity === 0}
+                                    style={item.inventory_quantity === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                 >
-                                    Add to Cart
+                                    {item.inventory_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                                 </button>
                             </div>
                         ))}

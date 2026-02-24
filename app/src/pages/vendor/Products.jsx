@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
 import { ProductService } from '../../lib/services/product.service';
+import ProductImageUpload from '../../components/vendor/ProductImageUpload';
 
 export default function VendorProducts() {
     const navigate = useNavigate();
@@ -19,7 +20,8 @@ export default function VendorProducts() {
         description: '',
         price: '',
         category: 'Burgers', // Default
-        image_url: ''
+        images: [],
+        inventory_quantity: 0
     });
 
     useEffect(() => {
@@ -67,7 +69,8 @@ export default function VendorProducts() {
             description: product.description || '',
             price: product.price,
             category: product.category,
-            image_url: product.image_url || ''
+            images: product.images || [],
+            inventory_quantity: product.inventory_quantity || 0
         });
         setIsEditing(true);
     }
@@ -79,7 +82,8 @@ export default function VendorProducts() {
             description: '',
             price: '',
             category: 'Burgers',
-            image_url: ''
+            images: [],
+            inventory_quantity: 0
         });
         setIsEditing(true);
     }
@@ -93,11 +97,14 @@ export default function VendorProducts() {
                 return;
             }
 
+            const slug = formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(2, 7);
+
             const payload = {
                 ...formData,
                 price: parseFloat(formData.price),
                 store_id: store.id,
-                status: 'active'
+                status: 'active',
+                slug: currentProduct ? currentProduct.slug : slug
             };
 
             if (currentProduct) {
@@ -156,8 +163,12 @@ export default function VendorProducts() {
                                     <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '8px' }} />
                                 </div>
                                 <div>
-                                    <label>Price (R)</label>
+                                    <label>Price (£)</label>
                                     <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} style={{ width: '100%', padding: '8px' }} />
+                                </div>
+                                <div>
+                                    <label>Stock Quantity</label>
+                                    <input type="number" required value={formData.inventory_quantity} onChange={e => setFormData({ ...formData, inventory_quantity: parseInt(e.target.value) || 0 })} style={{ width: '100%', padding: '8px' }} />
                                 </div>
                             </div>
                             <div style={{ marginBottom: '16px' }}>
@@ -174,6 +185,11 @@ export default function VendorProducts() {
                                 <label>Description</label>
                                 <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} style={{ width: '100%', padding: '8px', minHeight: '80px' }} />
                             </div>
+
+                            <ProductImageUpload
+                                onUpload={(url) => setFormData({ ...formData, images: [url] })}
+                                currentImageUrl={formData.images?.[0]}
+                            />
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost">Cancel</button>
                                 <button type="submit" className="btn btn-primary">Save Product</button>
@@ -185,9 +201,25 @@ export default function VendorProducts() {
                 <div style={{ display: 'grid', gap: '16px' }}>
                     {products.map(product => (
                         <div key={product.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <h3 style={{ marginBottom: '4px' }}>{product.name}</h3>
-                                <p className="text-muted">{product.category} • R{product.price}</p>
+                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                <div style={{ width: '50px', height: '50px', borderRadius: '4px', background: 'var(--stroke)', overflow: 'hidden' }}>
+                                    {product.images?.[0] ? (
+                                        <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🍔</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 style={{ marginBottom: '4px' }}>{product.name}</h3>
+                                    <p className="text-muted">{product.category} • £{product.price}</p>
+                                    <p style={{
+                                        fontSize: '12px',
+                                        color: product.inventory_quantity > 0 ? '#22c55e' : '#ef4444',
+                                        fontWeight: '600'
+                                    }}>
+                                        {product.inventory_quantity > 0 ? `${product.inventory_quantity} in stock` : 'SOLD OUT'}
+                                    </p>
+                                </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => handleEdit(product)} className="btn btn-ghost">Edit</button>

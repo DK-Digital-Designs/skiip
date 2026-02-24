@@ -51,6 +51,9 @@ Run these commands in your terminal (requires [Supabase CLI](https://supabase.co
 supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 supabase secrets set SENTRY_DSN=your-sentry-dsn-here
+supabase secrets set TWILIO_ACCOUNT_SID=your_sid_here
+supabase secrets set TWILIO_AUTH_TOKEN=your_token_here
+supabase secrets set TWILIO_WHATSAPP_NUMBER=your_twilio_whatsapp_number
 ```
 
 ### Run the App
@@ -107,6 +110,29 @@ vercel
 ```
 
 Or connect your GitHub repo to Vercel for automatic deployments.
+
+## 6. WhatsApp Notifications (Twilio)
+To enable automated WhatsApp notifications:
+1. Create a Twilio account and enable the [WhatsApp Sandbox](https://www.twilio.com/console/sms/whatsapp/learn) (or production).
+2. Set the `TWILIO_*` secrets in Supabase (see section 3).
+3. Create a **Database Webhook** in the Supabase Dashboard:
+    - **Name**: `whatsapp-on-status-change`
+    - **Table**: `orders`
+    - **Events**: `UPDATE`
+    - **Trigger Condition**: `status`
+    - **Webhook Method**: `POST`
+    - **Webhook URL**: `https://your-project.supabase.co/functions/v1/whatsapp-notify`
+    - **HTTP Headers**: Add `Authorization: Bearer YOUR_ANON_KEY`
+
+### 7. Product Images (Supabase Storage)
+To enable product image uploads:
+1. Go to **Storage** in your Supabase Dashboard.
+2. Create a new bucket named `product-images`.
+3. Set the bucket to **Public**.
+4. Add a bucket policy to allow authenticated users to upload files:
+    - **Policy Name**: `Allow authenticated uploads`
+    - **Allowed Operations**: `INSERT`, `UPDATE`
+    - **Target Role**: `authenticated`
 
 ## 7. Next Steps (Post-MVP)
 
