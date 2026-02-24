@@ -49,10 +49,10 @@ export default function OrderTracker() {
                 setOrder({
                     id: orderId,
                     status: 'preparing',
-                    total: 180.00,
+                    total: 18.00,
                     created_at: new Date().toISOString(),
                     order_items: [
-                        { quantity: 2, price: 90, product_snapshot: { name: 'Demo Burger', price: 90 } }
+                        { quantity: 2, price: 9, product_snapshot: { name: 'Demo Burger', price: 9 } }
                     ]
                 });
                 setVendor({ name: 'Burger Bliss (Demo)', pickup_location: 'Food Court A' });
@@ -126,12 +126,12 @@ export default function OrderTracker() {
                     {orderItems.map((item, index) => (
                         <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                             <span>{item.quantity}× {item.product_snapshot?.name || 'Item'}</span>
-                            <span>R{(item.price * item.quantity).toFixed(2)}</span>
+                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid var(--stroke)', fontSize: '18px', fontWeight: '700' }}>
                         <span>Total</span>
-                        <span className="text-accent">R{order.total?.toFixed(2) ?? '0.00'}</span>
+                        <span className="text-accent">£{order.total?.toFixed(2) ?? '0.00'}</span>
                     </div>
                 </div>
 

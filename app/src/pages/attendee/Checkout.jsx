@@ -118,12 +118,12 @@ export default function Checkout() {
                     {items.map((item, index) => (
                         <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: index < items.length - 1 ? '1px solid var(--stroke)' : 'none' }}>
                             <span>{item.quantity}× {item.name}</span>
-                            <span>R{(item.price * item.quantity).toFixed(2)}</span>
+                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid var(--stroke)', fontSize: '20px', fontWeight: '700' }}>
                         <span>Total</span>
-                        <span className="text-accent">R{total.toFixed(2)}</span>
+                        <span className="text-accent">£{total.toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -147,7 +147,7 @@ export default function Checkout() {
                             type="tel"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            placeholder="+27 XX XXX XXXX"
+                            placeholder="+44 XX XXX XXXX"
                             required
                             style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
@@ -167,7 +167,7 @@ export default function Checkout() {
                         style={{ width: '100%', fontSize: '18px', padding: '16px' }}
                         disabled={processing}
                     >
-                        {processing ? 'Processing...' : `Pay R${total.toFixed(2)}`}
+                        {processing ? 'Processing...' : `Pay £${total.toFixed(2)}`}
                     </button>
                 </form>
 

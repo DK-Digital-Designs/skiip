@@ -89,7 +89,7 @@ export default function BuyerProfile() {
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <h4 style={{ marginBottom: '4px' }}>${parseFloat(order.total).toFixed(2)}</h4>
+                                    <h4 style={{ marginBottom: '4px' }}>£{parseFloat(order.total).toFixed(2)}</h4>
                                     <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: order.status === 'collected' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: order.status === 'collected' ? '#10b981' : '#f59e0b' }}>
                                         {order.status.toUpperCase()}
                                     </span>

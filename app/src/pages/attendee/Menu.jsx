@@ -8,20 +8,20 @@ import AttendeeHeader from '../../components/shared/AttendeeHeader';
 
 const MOCK_MENU = {
     '1': [
-        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 85.00, category: 'Burgers', store_id: '1' },
-        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 95.00, category: 'Burgers', store_id: '1' },
-        { id: '3', name: 'Loaded Fries', description: 'Fries with cheese, bacon, sour cream', price: 55.00, category: 'Sides', store_id: '1' },
-        { id: '4', name: 'Cola', description: 'Ice-cold soft drink', price: 25.00, category: 'Drinks', store_id: '1' },
+        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 8.50, category: 'Burgers', store_id: '1' },
+        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 9.50, category: 'Burgers', store_id: '1' },
+        { id: '3', name: 'Loaded Fries', description: 'Fries with cheese, bacon, sour cream', price: 5.50, category: 'Sides', store_id: '1' },
+        { id: '4', name: 'Cola', description: 'Ice-cold soft drink', price: 2.50, category: 'Drinks', store_id: '1' },
     ],
     '2': [
-        { id: '5', name: 'Margherita Pizza', description: 'Tomato, mozzarella, basil', price: 110.00, category: 'Pizza', store_id: '2' },
-        { id: '6', name: 'Pepperoni Pizza', description: 'Pepperoni, cheese, tomato sauce', price: 125.00, category: 'Pizza', store_id: '2' },
-        { id: '7', name: 'Veggie Supreme', description: 'Mixed vegetables, cheese, olives', price: 120.00, category: 'Pizza', store_id: '2' },
+        { id: '5', name: 'Margherita Pizza', description: 'Tomato, mozzarella, basil', price: 11.00, category: 'Pizza', store_id: '2' },
+        { id: '6', name: 'Pepperoni Pizza', description: 'Pepperoni, cheese, tomato sauce', price: 12.50, category: 'Pizza', store_id: '2' },
+        { id: '7', name: 'Veggie Supreme', description: 'Mixed vegetables, cheese, olives', price: 12.00, category: 'Pizza', store_id: '2' },
     ],
     '3': [
-        { id: '8', name: 'Craft Beer', description: 'Local IPA on tap', price: 65.00, category: 'Beer', store_id: '3' },
-        { id: '9', name: 'Mojito', description: 'Mint, lime, rum, soda', price: 85.00, category: 'Cocktails', store_id: '3' },
-        { id: '10', name: 'Soft Drink', description: 'Various flavors', price: 25.00, category: 'Soft Drinks', store_id: '3' },
+        { id: '8', name: 'Craft Beer', description: 'Local IPA on tap', price: 6.50, category: 'Beer', store_id: '3' },
+        { id: '9', name: 'Mojito', description: 'Mint, lime, rum, soda', price: 8.50, category: 'Cocktails', store_id: '3' },
+        { id: '10', name: 'Soft Drink', description: 'Various flavors', price: 2.50, category: 'Soft Drinks', store_id: '3' },
     ],
 };
 
@@ -105,7 +105,7 @@ export default function Menu() {
                                 <div style={{ flex: 1 }}>
                                     <h3 style={{ marginBottom: '4px' }}>{item.name}</h3>
                                     {item.description && <p className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>{item.description}</p>}
-                                    <p className="text-accent" style={{ fontWeight: '700', fontSize: '18px' }}>R{item.price.toFixed(2)}</p>
+                                    <p className="text-accent" style={{ fontWeight: '700', fontSize: '18px' }}>£{item.price.toFixed(2)}</p>
                                 </div>
                                 <button
                                     onClick={() => addItem({ ...item, store_id: vendorId })}
@@ -125,7 +125,7 @@ export default function Menu() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <div>
                                 <p className="text-muted" style={{ fontSize: '14px' }}>Cart ({cart.reduce((sum, i) => sum + i.quantity, 0)} items)</p>
-                                <p style={{ fontSize: '24px', fontWeight: '800' }}>R{cartTotal.toFixed(2)}</p>
+                                <p style={{ fontSize: '24px', fontWeight: '800' }}>£{cartTotal.toFixed(2)}</p>
                             </div>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 {cart.map(item => (

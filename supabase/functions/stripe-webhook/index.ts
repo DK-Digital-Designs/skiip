@@ -2,6 +2,9 @@ import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logger } from "../_shared/logger.ts"
+
+const log = logger('stripe-webhook')
 
 // Initialize Stripe API client
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
@@ -15,6 +18,7 @@ serve(async (req) => {
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
+    log.error('No stripe-signature header')
     return new Response('No signature', { status: 400 })
   }
 
@@ -32,7 +36,7 @@ serve(async (req) => {
       const session = event.data.object as any
       const orderId = session.metadata.order_id
 
-      console.log(`Payment successful for order: ${orderId}`)
+      log.info(`Payment successful for order: ${orderId}`)
 
       // Update order status to paid
       const { error } = await supabaseClient
@@ -41,14 +45,14 @@ serve(async (req) => {
         .eq('id', orderId)
 
       if (error) {
-        console.error('Error updating order:', error)
+        log.error('Error updating order after payment', { orderId, error })
         throw error
       }
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
   } catch (error) {
-    console.error(`Webhook Error: ${error.message}`)
+    log.error(`Webhook processing failed: ${error.message}`, { stack: error.stack })
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { "Content-Type": "application/json" } }

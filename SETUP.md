@@ -9,8 +9,9 @@
 
 ### Create a New Supabase Project
 1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Wait for the project to be provisioned
-3. Note down your **Project URL** and **Anon Key** from Settings → API
+2. **Region**: Select **London (eu-west-2)** for minimal latency in the UK.
+3. Wait for the project to be provisioned
+4. Note down your **Project URL** and **Anon Key** from Settings → API
 
 ### Run Database Schema
 1. Go to the SQL Editor in your Supabase dashboard
@@ -40,7 +41,16 @@ cp .env.example .env
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_STRIPE_PUBLIC_KEY=pk_test_... (optional for MVP)
+VITE_STRIPE_PUBLIC_KEY=pk_test_... 
+VITE_SENTRY_DSN=your-sentry-dsn-here
+```
+
+### Configure Supabase Secrets (for Edge Functions)
+Run these commands in your terminal (requires [Supabase CLI](https://supabase.com/docs/guides/cli)):
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set SENTRY_DSN=your-sentry-dsn-here
 ```
 
 ### Run the App
@@ -57,8 +67,8 @@ The app will be available at `http://localhost:5173`
 2. Select a vendor from the list
 3. Add items to cart
 4. Proceed to checkout
-5. Enter phone number (e.g., +27 12 345 6789)
-6. Click "Pay" - this will simulate payment
+5. Enter phone number (e.g., +44 20 7946 0000)
+6. Click "Pay" - this will redirect to Stripe Checkout (or simulate in Demo Mode)
 7. You'll be redirected to the order tracker
 
 ### Vendor Portal
@@ -100,12 +110,13 @@ Or connect your GitHub repo to Vercel for automatic deployments.
 
 ## 7. Next Steps (Post-MVP)
 
-- [ ] Integrate real Stripe payments
+- [x] Localize to UK (GBP £)
+- [x] Setup Frontend Error Tracking (Sentry)
+- [x] Configure Backend Logging (logger.ts)
+- [ ] Finalize Stripe Production Account (UK)
 - [ ] Set up WhatsApp notifications via Twilio
 - [ ] Add vendor menu management UI
-- [ ] Implement admin vendor/event CRUD
-- [ ] Add analytics dashboards
-- [ ] Setup production environment variables
+- [ ] Support London staging/production deployment
 
 ## Troubleshooting
 

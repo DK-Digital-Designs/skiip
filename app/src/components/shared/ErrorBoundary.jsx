@@ -52,6 +52,10 @@ export default function ErrorBoundary({ children }) {
             }}
             onError={(error, errorInfo) => {
                 console.error("Uncaught error:", error, errorInfo);
+                // Report to Sentry if available
+                if (window.Sentry) {
+                    window.Sentry.captureException(error, { extra: errorInfo });
+                }
             }}
         >
             {children}
