@@ -4,8 +4,36 @@
     ],
     "rewrites": [
         {
-            "source": "/(.*)",
-            "destination": "/"
+            "source": "/order/:path*",
+            "destination": "/app/index.html"
+        },
+        {
+            "source": "/vendor/:path*",
+            "destination": "/app/index.html"
+        },
+        {
+            "source": "/admin/:path*",
+            "destination": "/app/index.html"
+        },
+        {
+            "source": "/how-it-works",
+            "destination": "/how-it-works.html"
+        },
+        {
+            "source": "/for-vendors",
+            "destination": "/for-vendors.html"
+        },
+        {
+            "source": "/for-organisers",
+            "destination": "/for-organisers.html"
+        },
+        {
+            "source": "/pricing",
+            "destination": "/pricing.html"
+        },
+        {
+            "source": "/contact",
+            "destination": "/contact.html"
         }
     ]
 }
