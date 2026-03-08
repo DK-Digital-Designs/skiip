@@ -1,0 +1,11 @@
+{
+    "regions": [
+        "lhr1"
+    ],
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/"
+        }
+    ]
+}

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { OrderService } from '../../lib/services/order.service';
+import { useCart } from '../../lib/hooks/useCart';
+import { useToast } from '../../components/ui/Toast';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 
 const STATUS_CONFIG = {
@@ -14,19 +16,47 @@ const STATUS_CONFIG = {
 };
 
 export default function OrderTracker() {
-    const { orderId } = useParams();
+    const navigate = useNavigate();
+    const { orderId: pathOrderId } = useParams();
+    const [searchParams] = useSearchParams();
+    const { clearCart } = useCart();
+    const { addToast } = useToast();
+
+    // Support both /track/:id and /track?order_id=... (Stripe redirect)
+    const orderId = pathOrderId || searchParams.get('order_id');
+    const isSuccess = searchParams.get('success') === 'true';
+    const isCanceled = searchParams.get('canceled') === 'true';
+
     const [order, setOrder] = useState(null);
     const [vendor, setVendor] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [connectionStatus, setConnectionStatus] = useState('connected'); // connected, reconnecting, error
 
     useEffect(() => {
+        if (isCanceled) {
+            addToast('Payment cancelled. Your cart is preserved.', 'info');
+            navigate('/order'); // Go back to vendors
+            return;
+        }
+
+        if (isSuccess && orderId) {
+            clearCart();
+            addToast('Payment successful! Tracking your order...', 'success');
+        }
+
+        if (!orderId) {
+            setLoading(false);
+            return;
+        }
+
         fetchOrder();
 
         if (!isSupabaseConfigured()) return;
 
         // Subscribe to realtime updates
-        const subscription = supabase
-            .channel(`order-${orderId}`)
+        const channel = supabase.channel(`order-${orderId}`);
+
+        const subscription = channel
             .on('postgres_changes', {
                 event: 'UPDATE',
                 schema: 'public',
@@ -35,7 +65,18 @@ export default function OrderTracker() {
             }, (payload) => {
                 setOrder(prev => ({ ...prev, ...payload.new }));
             })
-            .subscribe();
+            .on('system', { event: '*' }, (payload) => {
+                // Monitor connection health
+                if (payload.extension === 'postgres_changes') {
+                    if (payload.status === 'SUBSCRIBED') setConnectionStatus('connected');
+                    if (payload.status === 'CHANNEL_ERROR') setConnectionStatus('error');
+                    if (payload.status === 'TIMED_OUT') setConnectionStatus('reconnecting');
+                }
+            })
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') setConnectionStatus('connected');
+                if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnectionStatus('error');
+            });
 
         return () => {
             subscription.unsubscribe();
@@ -100,6 +141,27 @@ export default function OrderTracker() {
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px', background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, var(--bg) 100%)' }}>
             <div className="container" style={{ maxWidth: '600px', paddingTop: '60px' }}>
+                {/* Connection Status Badge */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    marginBottom: '20px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: connectionStatus === 'connected' ? '#10b981' : connectionStatus === 'reconnecting' ? '#f59e0b' : '#ef4444'
+                }}>
+                    <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: 'currentColor',
+                        boxShadow: connectionStatus === 'connected' ? '0 0 8px rgba(16, 185, 129, 0.5)' : 'none'
+                    }} />
+                    {connectionStatus === 'connected' ? 'Live Updates Active' : connectionStatus === 'reconnecting' ? 'Reconnecting to live updates...' : 'Connection Lost. Refresh page.'}
+                </div>
+
                 {/* Status Card */}
                 <div className="card" style={{ textAlign: 'center', padding: '40px', marginBottom: '24px', border: `2px solid ${statusConfig.color}` }}>
                     <div style={{ fontSize: '60px', marginBottom: '16px' }}>{statusConfig.icon}</div>

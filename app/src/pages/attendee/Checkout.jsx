@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/context/AuthContext';
 import { OrderService } from '../../lib/services/order.service';
 import { StoreService } from '../../lib/services/store.service';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 
 export default function Checkout() {
@@ -65,19 +66,19 @@ export default function Checkout() {
 
             // 2. Process Payment via Stripe
             addToast('Redirecting to secure payment...', 'info');
-            // For now, StripeService handles the mock/live logic
-            // In a real app, this would redirect or show a card element
-            // await StripeService.createCheckoutSession({ orderId: order.id, ... }); 
 
-            // Simulate slight delay for "payment processing"
-            await new Promise(r => setTimeout(r, 1500));
+            const session = await StripeService.createCheckoutSession({
+                orderId: order.id,
+                items: items,
+                returnUrl: window.location.origin + '/order/track'
+            });
 
-            // Clear cart
-            clearCart();
-
-            // Navigate to order tracker
-            addToast('Order placed successfully!', 'success');
-            navigate(`/order/track/${order.id}`);
+            if (session?.url) {
+                // Redirect to Stripe Checkout
+                window.location.href = session.url;
+            } else {
+                throw new Error('Failed to generate payment link');
+            }
         } catch (error) {
             console.error('Error creating order:', error);
             addToast('Failed to create order. Please try again.', 'error');
