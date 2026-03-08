@@ -1,0 +1,7 @@
+{
+    "regions": [
+        "lhr1"
+    ],
+    "buildCommand": "vite build --config ../vite.site.config.js",
+    "outputDirectory": "../dist-site"
+}
