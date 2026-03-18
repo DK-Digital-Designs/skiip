@@ -20,13 +20,10 @@ export default function AdminVendors() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch stores
+            // Fetch stores without relational join
             const { data: storesData, error: storesError } = await supabase
                 .from('stores')
-                .select(`
-                    id, name, slug, status, created_at, user_id,
-                    user_profiles:user_id (email, full_name)
-                `)
+                .select('id, name, slug, status, created_at, user_id')
                 .order('created_at', { ascending: false });
 
             if (storesError) throw storesError;
@@ -39,7 +36,16 @@ export default function AdminVendors() {
 
             if (usersError) throw usersError;
 
-            setStores(storesData || []);
+            // Manual Join in javascript
+            const enrichedStores = (storesData || []).map(store => {
+                const ownerInfo = (usersData || []).find(u => u.id === store.user_id);
+                return {
+                    ...store,
+                    user_profiles: ownerInfo || null
+                };
+            });
+
+            setStores(enrichedStores);
             setUsers(usersData || []);
         } catch (error) {
             console.error('Error fetching admin data:', error);
@@ -128,8 +134,8 @@ export default function AdminVendors() {
                 {showNewStoreForm && (
                     <div className="card" style={{ marginBottom: '32px', padding: '24px' }}>
                         <h2 style={{ marginBottom: '16px' }}>Create New Vendor Store</h2>
-                        <form onSubmit={handleCreateStore} style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-                            <div>
+                        <form onSubmit={handleCreateStore} style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'end' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <label>Store Name</label>
                                 <input 
                                     required 
@@ -139,7 +145,7 @@ export default function AdminVendors() {
                                     placeholder="Food Truck 1" 
                                 />
                             </div>
-                            <div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <label>Store Slug (Optional)</label>
                                 <input 
                                     type="text" 
@@ -148,7 +154,7 @@ export default function AdminVendors() {
                                     placeholder="food-truck-1" 
                                 />
                             </div>
-                            <div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <label>Assign Owner</label>
                                 <select 
                                     required
