@@ -2,6 +2,22 @@
 <html lang="en">
 
 <head>
+    <script>
+      // PRE-FLIGHT CHECK: Automatically clear corrupted JSON from local storage
+      // This prevents fatal module-level crashes from libraries like Zustand trying to hydrate bad data.
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          const val = localStorage.getItem(key);
+          if (val && (val.startsWith('{') || val.startsWith('['))) {
+            try { JSON.parse(val); } catch(e) { 
+              console.warn(`[Pre-flight] Cleared corrupted storage key: ${key}`);
+              localStorage.removeItem(key); 
+            }
+          }
+        }
+      } catch(e) {}
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Now | Skiip</title>
