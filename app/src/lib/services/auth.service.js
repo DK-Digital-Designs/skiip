@@ -24,25 +24,6 @@ export const AuthService = {
 
         if (error) throw error;
 
-        // Create user profile record
-        if (data.user) {
-            const { error: profileError } = await supabase
-                .from('user_profiles')
-                .insert([
-                    {
-                        id: data.user.id,
-                        email: email,
-                        full_name: fullName,
-                        role: role,
-                    },
-                ]);
-
-            if (profileError) {
-                console.error('Error creating user profile:', profileError);
-                // We don't throw here to avoid failing the signup if profile creation fails, 
-                // but robust apps should handle this transactionally or via triggers.
-            }
-        }
 
         return data;
     },
@@ -67,19 +48,6 @@ export const AuthService = {
         if (error) throw error;
 
         if (data.user) {
-            const { error: profileError } = await supabase
-                .from('user_profiles')
-                .insert([{
-                    id: data.user.id,
-                    email: email,
-                    full_name: fullName,
-                    role: 'seller',
-                }]);
-
-            if (profileError) {
-                console.error('Error creating user profile:', profileError);
-            }
-
             const { error: storeError } = await supabase
                 .from('stores')
                 .insert([{
