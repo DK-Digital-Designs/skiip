@@ -56,7 +56,7 @@ export default function VendorSignup() {
                 slug
             );
 
-            addToast('Vendor account created! Pending approval.', 'success');
+            addToast('Vendor account created! Please check your email for a verification link.', 'success');
             navigate('/vendor/login');
 
         } catch (error) {

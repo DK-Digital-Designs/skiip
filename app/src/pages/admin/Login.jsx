@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { useToast } from '../../components/ui/Toast';
@@ -39,8 +39,19 @@ export default function AdminLogin() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
+                <div className="container flex justify-between items-center">
+                    <Link to="/" style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)', textDecoration: 'none' }}>
+                        ← Back to Site
+                    </Link>
+                    <Link to="/" className="text-accent" style={{ fontSize: '24px', fontWeight: '800', textDecoration: 'none' }}>
+                        SKIIP
+                    </Link>
+                </div>
+            </header>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px' }}>
                 <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>Admin Portal</h1>
                 <p className="text-muted" style={{ marginBottom: '32px' }}>Sign in to manage events and vendors</p>
 
@@ -105,6 +116,7 @@ export default function AdminLogin() {
                         </p>
                     )}
                 </form>
+            </div>
             </div>
         </div>
     );

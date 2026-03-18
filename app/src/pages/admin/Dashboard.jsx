@@ -10,13 +10,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
-            // Demo mode
-            setStats({ totalOrders: 3, totalRevenue: 450.00, activeVendors: 3 });
-            setRecentOrders([
-                { id: 'demo-001a', status: 'preparing', total: 180.00, customer_phone: '+44 79 1234 5678', created_at: new Date().toISOString() },
-                { id: 'demo-002b', status: 'ready', total: 110.00, customer_phone: '+44 79 4567 8901', created_at: new Date().toISOString() },
-                { id: 'demo-003c', status: 'collected', total: 160.00, customer_phone: '+44 79 7890 1234', created_at: new Date().toISOString() },
-            ]);
+            console.warn("Supabase not configured, cannot load live stats.");
             return;
         }
 
@@ -86,6 +80,7 @@ export default function AdminDashboard() {
                 <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Admin Dashboard</h1>
                     <div style={{ display: 'flex', gap: '16px' }}>
+                        <a href="/" className="btn btn-ghost">Return to Site</a>
                         <Link to="/admin/vendors" className="btn btn-ghost">Manage Vendors</Link>
                         <Link to="/admin/events" className="btn btn-ghost">Events</Link>
                         <button onClick={handleLogout} className="btn btn-ghost">Logout</button>

@@ -38,8 +38,7 @@ export default function BuyerSignup() {
                 formData.fullName,
                 'buyer'
             );
-
-            addToast('Account created successfully!', 'success');
+            addToast('Account created! Please check your email for a verification link.', 'success');
             navigate(from, { replace: true });
         } catch (error) {
             addToast(error.message || 'Signup failed', 'error');

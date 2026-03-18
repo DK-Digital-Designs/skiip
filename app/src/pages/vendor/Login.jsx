@@ -49,8 +49,19 @@ export default function VendorLogin() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
+                <div className="container flex justify-between items-center">
+                    <Link to="/" style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)', textDecoration: 'none' }}>
+                        ← Back to Site
+                    </Link>
+                    <Link to="/" className="text-accent" style={{ fontSize: '24px', fontWeight: '800', textDecoration: 'none' }}>
+                        SKIIP
+                    </Link>
+                </div>
+            </header>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px' }}>
                 <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>Vendor Portal</h1>
                 <p className="text-muted" style={{ marginBottom: '32px' }}>Sign in to manage your orders</p>
 
@@ -119,6 +130,7 @@ export default function VendorLogin() {
                         Want to become a vendor? <Link to="/vendor/signup" className="text-accent">Apply here</Link>
                     </p>
                 </form>
+            </div>
             </div>
         </div>
     );
