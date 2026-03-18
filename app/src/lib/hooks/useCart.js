@@ -73,6 +73,12 @@ export const useCart = create(
         }),
         {
             name: 'skiip-cart-storage', // name of the item in the storage (must be unique)
+            onRehydrateStorage: () => (state, error) => {
+                if (error) {
+                    console.warn('Cart hydration failed, clearing corrupted storage:', error);
+                    localStorage.removeItem('skiip-cart-storage');
+                }
+            }
         }
     )
 );

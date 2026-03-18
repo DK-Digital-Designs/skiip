@@ -22,12 +22,20 @@ export const AuthProvider = ({ children }) => {
                 const session = await AuthService.getSession();
                 if (session?.user) {
                     setUser(session.user);
-                    const { data } = await supabase
+                    const { data, error } = await supabase
                         .from('user_profiles')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
-                    setProfile(data);
+                    
+                    if (error) {
+                        console.warn('Profile fetch error during init:', error.message);
+                        setProfile(null);
+                    } else {
+                        setProfile(data);
+                    }
+                } else {
+                    setProfile(null);
                 }
             } catch (error) {
                 console.error('Error initializing session:', error);
@@ -40,18 +48,29 @@ export const AuthProvider = ({ children }) => {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                const { data } = await supabase
-                    .from('user_profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                setProfile(data);
-            } else {
-                setProfile(null);
+            try {
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    const { data, error } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+                    
+                    if (error) {
+                        console.warn('Profile fetch error during auth state change:', error.message);
+                        setProfile(null);
+                    } else {
+                        setProfile(data);
+                    }
+                } else {
+                    setProfile(null);
+                }
+            } catch (err) {
+                console.error("Auth state change error:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
