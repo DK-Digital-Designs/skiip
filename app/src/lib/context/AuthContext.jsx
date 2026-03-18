@@ -18,6 +18,14 @@ export const AuthProvider = ({ children }) => {
 
         // Check active session
         const initSession = async () => {
+            // Last-resort fail-safe: if initSession hangs for > 12s (Supabase lock contention), force loading to false
+            const timeoutId = setTimeout(() => {
+                if (loading) {
+                    console.warn("Auth initialization timed out, forcing load completion.");
+                    setLoading(false);
+                }
+            }, 12000);
+
             try {
                 const session = await AuthService.getSession();
                 if (session?.user) {
@@ -40,6 +48,7 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.error('Error initializing session:', error);
             } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
             }
         };
@@ -87,7 +96,20 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {loading ? (
+                <div style={{ 
+                    minHeight: '100vh', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    background: 'var(--bg)',
+                    flexDirection: 'column',
+                    gap: '24px'
+                }}>
+                    <div className="spinner" style={{ width: '40px', height: '40px' }}></div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading SKIIP...</p>
+                </div>
+            ) : children}
         </AuthContext.Provider>
     );
 };

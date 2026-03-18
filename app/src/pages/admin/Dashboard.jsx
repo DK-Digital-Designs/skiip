@@ -80,7 +80,7 @@ export default function AdminDashboard() {
                 <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Admin Dashboard</h1>
                     <div style={{ display: 'flex', gap: '16px' }}>
-                        <a href="/" className="btn btn-ghost">Return to Site</a>
+                        <Link to="/" className="btn btn-ghost">Return to Site</Link>
                         <Link to="/admin/vendors" className="btn btn-ghost">Manage Vendors</Link>
                         <Link to="/admin/events" className="btn btn-ghost">Events</Link>
                         <button onClick={handleLogout} className="btn btn-ghost">Logout</button>
