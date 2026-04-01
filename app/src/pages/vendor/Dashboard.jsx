@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
+import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
 

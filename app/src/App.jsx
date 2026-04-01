@@ -23,11 +23,13 @@ import AdminEvents from './pages/admin/Events';
 import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
+import GlobalHeader from './components/shared/GlobalHeader';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
     return (
         <>
+            <GlobalHeader />
             <Routes>
                 {/* Landing Page */}
                 <Route path="/" element={<LandingPage />} />

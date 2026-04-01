@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStores } from '../../lib/hooks/useMenu';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
-import AttendeeHeader from '../../components/shared/AttendeeHeader';
 
 const MOCK_VENDORS = [
     { id: '1', name: 'Burger Bliss', description: 'Gourmet burgers and loaded fries', pickup_location: 'Food Court A, Stall 3' },
@@ -24,9 +23,7 @@ export default function VendorList() {
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
-            <AttendeeHeader />
-
-            <div className="container">
+            <div className="container" style={{ marginTop: '40px' }}>
                 {!isSupabaseConfigured() && (
                     <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #f59e0b', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
                         <p style={{ color: '#f59e0b', margin: 0 }}>
