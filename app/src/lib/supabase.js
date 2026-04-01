@@ -15,7 +15,20 @@ if (isProduction && !isConfigured) {
 }
 
 export const supabase = isConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // Bypass navigator.locks to prevent NavigatorLockAcquireTimeoutError.
+        // This deadlock occurs when multiple auth operations (e.g. getSession +
+        // onAuthStateChange) race for the same browser lock. Providing a no-op
+        // lock function serializes them in-memory instead, which is safe for
+        // single-origin web apps.
+        lock: async (_name, _acquireTimeout, fn) => fn(),
+        // Persist session in localStorage (default) — keep this explicit
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+      },
+    })
   : null;
 
 /**

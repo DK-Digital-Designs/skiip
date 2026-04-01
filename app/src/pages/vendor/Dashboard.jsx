@@ -163,7 +163,6 @@ export default function VendorDashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button onClick={() => navigate('/vendor/products')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Manage Products</button>
-                        <button onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>
                 </div>
             </header>

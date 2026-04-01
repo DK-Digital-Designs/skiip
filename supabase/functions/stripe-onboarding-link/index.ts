@@ -71,10 +71,18 @@ serve(async (req: Request) => {
       .eq('id', store_id)
       .single()
 
-    if (storeError || !store) {
-      log.error('Store not found', { store_id, error: storeError });
+    if (storeError) {
+      log.error('Database error fetching store', { store_id, error: storeError });
       return new Response(
-        JSON.stringify({ error: 'Store not fount in Skiip database' }),
+        JSON.stringify({ error: `Database error: ${storeError.message}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!store) {
+      log.error('Store not found', { store_id });
+      return new Response(
+        JSON.stringify({ error: 'Store not found in Skiip database' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

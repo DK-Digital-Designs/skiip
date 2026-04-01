@@ -4,21 +4,6 @@ import { Link } from 'react-router-dom';
 export default function LandingPage() {
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {/* Header */}
-            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Link to="/" style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--accent)" />
-                        </svg>
-                        SKIIP
-                    </Link>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <Link to="/order" className="btn btn-primary">Start Ordering</Link>
-                    </div>
-                </div>
-            </header>
-
             {/* Hero */}
             <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div className="container" style={{ textAlign: 'center', maxWidth: '800px' }}>
@@ -33,8 +18,6 @@ export default function LandingPage() {
                         <Link to="/order" className="btn btn-primary" style={{ fontSize: '18px', padding: '16px 32px' }}>
                             Start Ordering
                         </Link>
-                        <Link to="/vendor/login" className="btn btn-ghost">Vendor Portal</Link>
-                        <Link to="/admin/login" className="btn btn-ghost">Admin</Link>
                     </div>
                 </div>
             </main>

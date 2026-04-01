@@ -1,25 +1,53 @@
-into the dashbaord now. 
+# Skiip — Known Issues & To-Do List
 
-Onboarding failed: ReferenceError: StripeService is not defined
-    at handleConnectStripe (Dashboard.jsx:127:29)
-handleConnectStripe	@	Dashboard.jsx:139
-<button>		
-VendorDashboard	@	Dashboard.jsx:186
-<VendorDashboard>		
-App	@	App.jsx:51
-<App>		
-(anonymous)	@	main.jsx:43
+---
 
+## ✅ Resolved
 
-creating a new item with the vendor dashbaord (inventory works) a bit janky, but it does work. 
+- **`ReferenceError: StripeService is not defined`** in `Dashboard.jsx` — Fixed by adding missing import.
+- **Product image uploads failing** — Created `product-images` Supabase Storage bucket via script.
+- **No way to leave vendor portal without logging out** — Resolved by the GlobalHeader.
+- **Vendor portal & admin login exposed on the public landing page** — Removed; unified login handles routing.
 
-images dont work, get a localhost popup that says bucket not found. 
+---
 
-no way for vendors to leave back to the main app, without logging out. 
+## 🐛 Known Bug: Supabase Navigator Lock Timeout
 
-i want a more global / standard login system, in the top right of the site at all times, you should be able to see your account, if you logged in, what tag you are( vendor, admin, user etc), and even as admin, you should be able to see the site as normal, with the added benefit of also accessing your user based roles (admin dashbaord) 
+**Symptom:**
+```
+NavigatorLockAcquireTimeoutError: Acquiring an exclusive Navigator LockManager lock
+"lock:sb-jmqjuvfjthwbsbelgccs-auth-token" timed out waiting 10000ms
+```
+This manifests as:
+- Vendors list shows "No vendors available" on first page load
+- GlobalHeader shows "Sign In / Sign Up" even when the user is authenticated
+- Requires hard refresh (`Ctrl+Shift+R`) to fix
 
-sometimes, vendors dont show up, and i have to reset the web page (ctrl, shift, r), and make sure to not log. and then it works, 
+**Root Cause:**  
+`supabase-js v2` uses the browser's `navigator.locks` API to serialize auth token operations.  
+The old `AuthContext` was calling `AuthService.getSession()` manually **at the same time** that `supabase.auth.onAuthStateChange` was internally requesting the same lock to broadcast its `INITIAL_SESSION` event.  
+These two concurrent lock requests deadlocked each other.
 
-sometimes loading is a bit slow. 
+**Fix Applied:**  
+Removed the manual `initSession()` call from `AuthContext.jsx`.  
+The context now relies purely on `onAuthStateChange`, which already fires an `INITIAL_SESSION` event on startup — no separate fetch is needed.
 
+**Status:** Fixed in `AuthContext.jsx`. Monitor for recurrence.
+
+---
+
+## 🔧 In Progress / Remaining
+
+- [ ] Test Stripe onboarding end-to-end (requires Stripe Secret Key set in Supabase Edge Function secrets)
+- [ ] Vendors sometimes still don't load on first visit — investigate `useStores` React Query caching + staleTime
+- [ ] Loading skeletons for vendor list (slow perceived performance)
+- [ ] Remove `VITE_SUPABASE_SERVICE_ROLE_KEY` from `.env` — it should never be in a frontend bundle
+
+---
+
+## 💡 Feature Ideas / Future Polish
+
+- Add a "Become a Vendor" CTA on the landing page that routes to the vendor signup/apply form
+- Add email confirmations to the vendor signup flow
+- Allow admins to toggle vendor `is_active` status from the admin dashboard
+- Add a "Forgot Password" link on the unified login page
