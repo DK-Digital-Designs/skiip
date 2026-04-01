@@ -36,6 +36,27 @@ export const StoreService = {
     },
 
     /**
+     * Get store by User ID
+     * @param {string} userId 
+     */
+    async getStoreByUserId(userId) {
+        if (!supabase) return null;
+
+        const { data, error } = await supabase
+            .from('stores')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Store Fetch Error:', error);
+            if (error.code === 'PGRST116') return null;
+            throw error;
+        }
+        return data;
+    },
+
+    /**
      * Get store for current user (Seller)
      */
     async getMyStore() {
@@ -48,9 +69,13 @@ export const StoreService = {
             .from('stores')
             .select('*')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 is 'not found'
+        if (error) {
+            console.error('Store Fetch Error:', error);
+            if (error.code === 'PGRST116') return null; // Not found
+            throw error;
+        }
         return data;
     }
 };

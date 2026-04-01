@@ -14,13 +14,12 @@ export default function Checkout() {
     const { items, getCartTotal, vendorId, clearCart } = useCart();
     const { addToast } = useToast();
 
-    const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState(user?.email || '');
-    const [notes, setNotes] = useState('');
-    const [processing, setProcessing] = useState(false);
-    const [vendor, setVendor] = useState(null);
+    const [tipAmount, setTipAmount] = useState(0);
+    const [customTip, setCustomTip] = useState('');
+    const [selectedTipPercent, setSelectedTipPercent] = useState(0);
 
-    const total = getCartTotal();
+    const subtotal = getCartTotal();
+    const total = subtotal + tipAmount;
 
     useEffect(() => {
         // Pre-fill email when user loads
@@ -32,6 +31,21 @@ export default function Checkout() {
             fetchVendor();
         }
     }, [user, authLoading, vendorId]);
+
+    const handleTipSelect = (percent) => {
+        setSelectedTipPercent(percent);
+        const amount = subtotal * (percent / 100);
+        setTipAmount(amount);
+        setCustomTip('');
+    };
+
+    const handleCustomTipChange = (e) => {
+        const val = e.target.value;
+        setCustomTip(val);
+        setSelectedTipPercent(null);
+        const amount = parseFloat(val) || 0;
+        setTipAmount(amount);
+    };
 
     async function fetchVendor() {
         if (!isSupabaseConfigured()) return; // Handle demo mode if needed, but OrderService requires Supabase
@@ -70,6 +84,7 @@ export default function Checkout() {
             const session = await StripeService.createCheckoutSession({
                 orderId: order.id,
                 items: items,
+                tip_amount: tipAmount,
                 returnUrl: window.location.origin + '/order/track'
             });
 
@@ -122,9 +137,49 @@ export default function Checkout() {
                             <span>£{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
+                    
+                    {tipAmount > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px' }}>
+                            <span>Tip</span>
+                            <span>£{tipAmount.toFixed(2)}</span>
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid var(--stroke)', fontSize: '20px', fontWeight: '700' }}>
                         <span>Total</span>
                         <span className="text-accent">£{total.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                {/* Tip Selection */}
+                <div className="card" style={{ marginBottom: '24px' }}>
+                    <h3 style={{ marginBottom: '8px' }}>Add a Tip</h3>
+                    <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>100% of tips go to the vendor staff</p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
+                        {[0, 5, 10, 15].map((percent) => (
+                            <button
+                                key={percent}
+                                type="button"
+                                onClick={() => handleTipSelect(percent)}
+                                className={selectedTipPercent === percent ? 'btn btn-primary' : 'btn btn-ghost'}
+                                style={{ padding: '10px' }}
+                            >
+                                {percent === 0 ? 'None' : `${percent}%`}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }}>£</span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={customTip}
+                            onChange={handleCustomTipChange}
+                            placeholder="Custom amount"
+                            style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
+                        />
                     </div>
                 </div>
 

@@ -6,15 +6,20 @@ import { logger } from "../_shared/logger.ts"
 
 const log = logger('stripe-webhook')
 
-// Initialize Stripe API client
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
+// Initialize Stripe with error handling
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+if (!stripeSecretKey) {
+  throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
 // Webhook Secret from Stripe Dashboard
-const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') as string
+const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
 
-serve(async (req) => {
+serve(async (req: Request) => {
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
@@ -24,13 +29,22 @@ serve(async (req) => {
 
   try {
     const body = await req.text()
+    
+    if (!endpointSecret) {
+      throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
+    }
+
     const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret)
     
-    // Create Supabase client with Service Role key to bypass RLS for admin updates
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // Validate Supabase environment
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any
@@ -38,10 +52,18 @@ serve(async (req) => {
 
       log.info(`Payment successful for order: ${orderId}`)
 
-      // Update order status to paid
+      // Fetch payment intent to get charge ID
+      const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent)
+
+      // Update order status and ledger
       const { error: orderError } = await supabaseClient
         .from('orders')
-        .update({ status: 'paid', payment_status: 'succeeded' })
+        .update({ 
+          status: 'paid', 
+          payment_status: 'succeeded',
+          payment_intent_id: session.payment_intent,
+          charge_id: paymentIntent.latest_charge
+        })
         .eq('id', orderId)
 
       if (orderError) {
@@ -72,10 +94,50 @@ serve(async (req) => {
           }
         }
       }
+    } else if (event.type === 'account.updated') {
+      const account = event.data.object as any
+      log.info(`Account updated: ${account.id}`, { 
+        charges_enabled: account.charges_enabled, 
+        details_submitted: account.details_submitted 
+      })
+
+      // If charges are enabled and details are submitted, the vendor is ready
+      if (account.charges_enabled && account.details_submitted) {
+        const { error: updateError } = await supabaseClient
+          .from('stores')
+          .update({ stripe_onboarding_complete: true })
+          .eq('stripe_account_id', account.id)
+
+        if (updateError) {
+          log.error('Error updating store onboarding status', { accountId: account.id, error: updateError })
+        } else {
+          log.info(`Store linked to account ${account.id} is now fully onboarded`)
+        }
+      }
+    } else if (event.type === 'charge.refunded') {
+      const charge = event.data.object as any
+      const orderId = charge.metadata.order_id
+      
+      log.info(`Charge refunded: ${charge.id} for order ${orderId}`)
+      
+      if (orderId) {
+        await supabaseClient
+          .from('orders')
+          .update({ 
+            status: 'refunded', 
+            payment_status: 'refunded'
+          })
+          .eq('id', orderId)
+      }
+    } else if (event.type === 'charge.dispute.created') {
+      const dispute = event.data.object as any
+      log.warn(`Dispute created: ${dispute.id} for charge ${dispute.charge}`)
+      // In a real app, you might want to flag this order for manual review
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as Error;
     log.error(`Webhook processing failed: ${error.message}`, { stack: error.stack })
     return new Response(
       JSON.stringify({ error: error.message }),

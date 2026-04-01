@@ -8,14 +8,15 @@ export const StripeService = {
      * @param {array} params.items
      * @param {string} params.returnUrl
      */
-    async createCheckoutSession({ orderId, items, returnUrl }) {
+    async createCheckoutSession({ orderId, items, tip_amount, returnUrl }) {
         if (!supabase) throw new Error('Supabase not configured');
 
         const { data, error } = await supabase.functions.invoke('stripe-checkout', {
             body: {
                 orderDetails: {
                     order_id: orderId,
-                    items: items
+                    items: items,
+                    tip_amount: tip_amount
                 },
                 returnUrl: returnUrl
             }
@@ -27,5 +28,31 @@ export const StripeService = {
         }
 
         return data; // { sessionId, url }
+    },
+
+    /**
+     * Create a Stripe Onboarding Link for a vendor
+     * @param {object} params
+     * @param {string} params.storeId
+     * @param {string} params.returnUrl
+     * @param {string} params.refreshUrl
+     */
+    async createOnboardingLink({ storeId, returnUrl, refreshUrl }) {
+        if (!supabase) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabase.functions.invoke('stripe-onboarding-link', {
+            body: {
+                store_id: storeId,
+                return_url: returnUrl,
+                refresh_url: refreshUrl
+            }
+        });
+
+        if (error) {
+            console.error('Stripe Onboarding Error:', error);
+            throw new Error(error.message || 'Failed to generate onboarding link');
+        }
+
+        return data; // { url }
     }
 };
