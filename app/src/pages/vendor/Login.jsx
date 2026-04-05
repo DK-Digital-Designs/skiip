@@ -29,13 +29,15 @@ export default function VendorLogin() {
                 return;
             }
 
-            await AuthService.signIn(email, password);
+            const authResponse = await AuthService.signIn(email, password);
 
             // Check if user is a vendor
-            const storeData = await StoreService.getMyStore();
+            const storeData = await StoreService.getStoreByUserId(authResponse.user.id);
             if (!storeData) {
-                addToast('No store found for this account.', 'error');
-                navigate('/');
+                // Not a vendor, immediately sign them out to prevent buyer dashboard loop
+                await AuthService.signOut();
+                addToast('No store found for this account. You are not a registered vendor.', 'error');
+                setLoading(false);
                 return;
             }
 

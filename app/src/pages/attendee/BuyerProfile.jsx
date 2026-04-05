@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import AttendeeHeader from '../../components/shared/AttendeeHeader';
 
 export default function BuyerProfile() {
     const { user } = useAuth();
@@ -45,9 +44,7 @@ export default function BuyerProfile() {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <AttendeeHeader backTo="/order" backLabel="← Return to Vendors" />
-
-            <div className="container" style={{ paddingBottom: '40px' }}>
+            <div className="container" style={{ paddingBottom: '40px', marginTop: '40px' }}>
                 <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>My Profile</h1>
 
                 <div className="card mb-40">

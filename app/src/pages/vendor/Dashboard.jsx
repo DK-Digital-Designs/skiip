@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
+import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
 
@@ -66,8 +67,9 @@ export default function VendorDashboard() {
                 return;
             }
 
-            const storeData = await StoreService.getMyStore();
+            const storeData = await StoreService.getStoreByUserId(session.user.id);
             if (!storeData) {
+                console.warn('Auth check failed: Store not found for user', session.user.id);
                 addToast('No store found for this account.', 'error');
                 navigate('/');
                 return;
@@ -75,7 +77,8 @@ export default function VendorDashboard() {
 
             setStore(storeData);
         } catch (error) {
-            console.error('Auth check failed:', error);
+            console.error('Auth check failed with specific error:', error);
+            addToast(`Auth error: ${error.message || 'Unknown error'}`, 'error');
             navigate('/vendor/login');
         } finally {
             setLoading(false);
@@ -114,6 +117,33 @@ export default function VendorDashboard() {
         audio.play().catch(() => { });
     }
 
+    async function handleConnectStripe() {
+        if (!isSupabaseConfigured()) {
+            addToast('Demo mode: Onboarding simulated', 'info');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const { url } = await StripeService.createOnboardingLink({
+                storeId: store.id,
+                returnUrl: window.location.origin + '/vendor/dashboard',
+                refreshUrl: window.location.origin + '/vendor/dashboard',
+            });
+
+            if (url) {
+                window.location.href = url;
+            } else {
+                throw new Error('Failed to generate onboarding link');
+            }
+        } catch (error) {
+            console.error('Onboarding failed:', error);
+            addToast('Failed to start onboarding. Please try again.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    }
+
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -133,12 +163,35 @@ export default function VendorDashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button onClick={() => navigate('/vendor/products')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Manage Products</button>
-                        <button onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>
                 </div>
             </header>
 
             <div className="container">
+                {/* Onboarding Banner */}
+                {store && !store.stripe_onboarding_complete && (
+                    <div className="card" style={{ 
+                        background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', 
+                        color: 'white', 
+                        marginBottom: '32px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '24px'
+                    }}>
+                        <div>
+                            <h2 style={{ marginBottom: '8px', color: 'white' }}>Connect your bank account</h2>
+                            <p style={{ opacity: 0.9 }}>To receive payouts and accept live orders, you need to set up your account with Stripe.</p>
+                        </div>
+                        <button 
+                            onClick={handleConnectStripe} 
+                            className="btn" 
+                            style={{ background: 'white', color: '#6366f1', fontWeight: '700', padding: '12px 24px' }}
+                        >
+                            Start Getting Paid
+                        </button>
+                    </div>
+                )}
                 {/* Filter Tabs */}
                 <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
                     <button

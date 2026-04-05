@@ -7,42 +7,48 @@ import AttendeeVendors from './pages/attendee/VendorList';
 import AttendeeMenu from './pages/attendee/Menu';
 import AttendeeCheckout from './pages/attendee/Checkout';
 import AttendeeOrderTracker from './pages/attendee/OrderTracker';
-import BuyerLogin from './pages/attendee/BuyerLogin';
-import BuyerSignup from './pages/attendee/BuyerSignup';
 import BuyerProfile from './pages/attendee/BuyerProfile';
 
-import VendorLogin from './pages/vendor/Login';
+import UnifiedLogin from './pages/shared/Login';
+import UnifiedSignup from './pages/shared/Signup';
+
 import VendorSignup from './pages/vendor/Signup';
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
 
-import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminVendors from './pages/admin/Vendors';
 import AdminEvents from './pages/admin/Events';
 import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
+import GlobalHeader from './components/shared/GlobalHeader';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
     return (
         <>
+            <GlobalHeader />
             <Routes>
                 {/* Landing Page */}
                 <Route path="/" element={<LandingPage />} />
 
-                {/* Attendee Flow */}
+                {/* Unified Auth */}
+                <Route path="/login" element={<UnifiedLogin />} />
+                <Route path="/signup" element={<UnifiedSignup />} />
+                {/* Legacy redirects keep old links from breaking */}
+                <Route path="/order/login" element={<UnifiedLogin />} />
+                <Route path="/vendor/login" element={<UnifiedLogin />} />
+                <Route path="/admin/login" element={<UnifiedLogin />} />
+
+                {/* Buyer / Attendee Flow */}
                 <Route path="/order" element={<AttendeeVendors />} />
                 <Route path="/order/vendor/:vendorId" element={<AttendeeMenu />} />
                 <Route path="/order/checkout" element={<AttendeeCheckout />} />
                 <Route path="/order/track/:orderId" element={<AttendeeOrderTracker />} />
-                <Route path="/order/login" element={<BuyerLogin />} />
-                <Route path="/order/signup" element={<BuyerSignup />} />
                 <Route path="/order/profile" element={<BuyerProfile />} />
 
                 {/* Vendor Portal */}
-                <Route path="/vendor/login" element={<VendorLogin />} />
                 <Route path="/vendor/signup" element={<VendorSignup />} />
                 <Route
                     path="/vendor/dashboard"
@@ -62,7 +68,6 @@ function App() {
                 />
 
                 {/* Admin Dashboard */}
-                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                     path="/admin/dashboard"
                     element={

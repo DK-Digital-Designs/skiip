@@ -11,52 +11,23 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
-            // Demo mode — no auth available
             setLoading(false);
             return;
         }
 
-        // Check active session
-        const initSession = async () => {
-            // Last-resort fail-safe: if initSession hangs for > 12s (Supabase lock contention), force loading to false
-            const timeoutId = setTimeout(() => {
-                if (loading) {
-                    console.warn("Auth initialization timed out, forcing load completion.");
-                    setLoading(false);
-                }
-            }, 12000);
-
-            try {
-                const session = await AuthService.getSession();
-                if (session?.user) {
-                    setUser(session.user);
-                    const { data, error } = await supabase
-                        .from('user_profiles')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single();
-                    
-                    if (error) {
-                        console.warn('Profile fetch error during init:', error.message);
-                        setProfile(null);
-                    } else {
-                        setProfile(data);
-                    }
-                } else {
-                    setProfile(null);
-                }
-            } catch (error) {
-                console.error('Error initializing session:', error);
-            } finally {
-                clearTimeout(timeoutId);
+        let isMounted = true;
+        
+        // Timeout fail-safe to unstick the UI if Supabase genuinely hangs
+        const timeoutId = setTimeout(() => {
+            if (isMounted && loading) {
+                console.warn("Auth initialization timed out, forcing load completion.");
                 setLoading(false);
             }
-        };
+        }, 12000);
 
-        initSession();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // Listen for auth changes (this immediately fires an INITIAL_SESSION event in v2)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!isMounted) return;
             try {
                 setUser(session?.user ?? null);
                 if (session?.user) {
@@ -78,11 +49,18 @@ export const AuthProvider = ({ children }) => {
             } catch (err) {
                 console.error("Auth state change error:", err);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    clearTimeout(timeoutId);
+                    setLoading(false);
+                }
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            isMounted = false;
+            clearTimeout(timeoutId);
+            subscription.unsubscribe();
+        };
     }, []);
 
     const value = {

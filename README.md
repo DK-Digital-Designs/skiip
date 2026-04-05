@@ -10,11 +10,19 @@ SKIIP is a high-performance, multi-tenant ordering platform designed for high-co
 
 Use these credentials to explore the different roles within the ecosystem:
 
+### Legacy Accounts
 | Role | Email | Password |
 | :--- | :--- | :--- |
 | **Super Admin** | `admin@example.com` | `password123` |
 | **Vendor (Burger Bliss)**| `vendor@example.com` | `password123` |
 | **Standard Buyer** | `buyer@example.com` | `password123` |
+
+### New 2026 Testing Accounts (Stripe Connect Phase 1)
+| Role | Email | Password | Setup Status |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin2026@example.com` | `password2026` | Confirmed |
+| **Vendor (Skiip Test Kitchen)**| `vendor2026@example.com` | `password2026` | Confirmed, Store Created |
+| **Standard Buyer** | `buyer2026@example.com` | `password2026` | Confirmed |
 
 ---
 
@@ -87,4 +95,4 @@ For a deeper dive into architecture and setup, see [SETUP.md](SETUP.md).
 ## 📝 License
 
 Private Property - **Skiip Technologies © 2026**
-All rights reserved.
+All rights reserved.

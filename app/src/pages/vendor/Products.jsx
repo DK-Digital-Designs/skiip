@@ -46,7 +46,7 @@ export default function VendorProducts() {
                 return;
             }
 
-            const storeData = await StoreService.getMyStore();
+            const storeData = await StoreService.getStoreByUserId(session.user.id);
             if (!storeData) {
                 navigate('/');
                 return;

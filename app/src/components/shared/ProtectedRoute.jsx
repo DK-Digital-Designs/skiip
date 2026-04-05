@@ -21,9 +21,8 @@ export default function ProtectedRoute({ children, roles }) {
     }
 
     if (!user) {
-        // Redirect to appropriate login page based on the current path
-        const loginPath = location.pathname.startsWith('/admin') ? '/admin/login' : '/vendor/login';
-        return <Navigate to={loginPath} state={{ from: location }} replace />;
+        // All unauthenticated users go to the unified login page
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     if (roles && roles.length > 0) {
