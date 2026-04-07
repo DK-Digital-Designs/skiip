@@ -238,7 +238,7 @@ export default function VendorDashboard() {
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>
-                                            {order.status.replace('_', ' ').toUpperCase()}
+                                            {order.status === 'pending' ? 'WAITING FOR PAYMENT' : order.status.replace('_', ' ').toUpperCase()}
                                         </p>
                                         <p style={{ fontSize: '14px' }}>📱 {order.customer_phone}</p>
                                     </div>
@@ -260,6 +260,11 @@ export default function VendorDashboard() {
 
                                 {/* Action Buttons */}
                                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    {order.status === 'paid' && (
+                                        <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="btn btn-primary">
+                                            👨‍🍳 Start Preparing
+                                        </button>
+                                    )}
                                     {order.status === 'preparing' && (
                                         <button onClick={() => updateOrderStatus(order.id, 'ready')} className="btn btn-primary">
                                             ✅ Mark as Ready
@@ -270,12 +275,7 @@ export default function VendorDashboard() {
                                             🎉 Mark as Collected
                                         </button>
                                     )}
-                                    {order.status === 'pending' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="btn btn-primary">
-                                            👨‍🍳 Start Preparing
-                                        </button>
-                                    )}
-                                    {(order.status === 'preparing' || order.status === 'ready' || order.status === 'pending') && (
+                                    {(order.status === 'pending' || order.status === 'paid' || order.status === 'preparing' || order.status === 'ready') && (
                                         <button onClick={() => updateOrderStatus(order.id, 'cancelled')} className="btn btn-ghost" style={{ color: '#ef4444' }}>
                                             ❌ Cancel Order
                                         </button>
