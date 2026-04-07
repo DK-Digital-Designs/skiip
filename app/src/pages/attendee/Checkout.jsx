@@ -123,9 +123,9 @@ export default function Checkout() {
             
             // Specific error handling for vendor status from Edge Function
             if (error.message?.includes('VENDOR_NOT_READY')) {
-                addToast('This vendor is not yet set up to receive payments.', 'error');
+                addToast('Oops! This vendor is still setting up their bank account on SKIIP. Please try again later.', 'error');
             } else {
-                addToast('Failed to initialize payment. Please try again.', 'error');
+                addToast('We had trouble starting the payment. Please check back soon.', 'error');
             }
         } finally {
             setProcessing(false);

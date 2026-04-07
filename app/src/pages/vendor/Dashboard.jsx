@@ -171,24 +171,35 @@ export default function VendorDashboard() {
                 {/* Onboarding Banner */}
                 {store && !store.stripe_onboarding_complete && (
                     <div className="card" style={{ 
-                        background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', 
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
                         color: 'white', 
                         marginBottom: '32px',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '24px'
+                        padding: '30px',
+                        border: '2px solid rgba(255,255,255,0.1)',
+                        boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.4)'
                     }}>
-                        <div>
-                            <h2 style={{ marginBottom: '8px', color: 'white' }}>Connect your bank account</h2>
-                            <p style={{ opacity: 0.9 }}>To receive payouts and accept live orders, you need to set up your account with Stripe.</p>
+                        <div style={{ maxWidth: '70%' }}>
+                            <h2 style={{ marginBottom: '12px', color: 'white', fontSize: '24px' }}>⚡ Setup Required to Accept Payments</h2>
+                            <p style={{ opacity: 0.95, fontSize: '16px', lineHeight: '1.5' }}>
+                                Your shop is currently in <strong>Limited Mode</strong>. You can manage products, but customers cannot place orders until you connect your bank account.
+                            </p>
                         </div>
                         <button 
                             onClick={handleConnectStripe} 
                             className="btn" 
-                            style={{ background: 'white', color: '#6366f1', fontWeight: '700', padding: '12px 24px' }}
+                            style={{ 
+                                background: 'white', 
+                                color: '#4f46e5', 
+                                fontWeight: '800', 
+                                padding: '14px 28px',
+                                fontSize: '15px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
                         >
-                            Start Getting Paid
+                            Complete Setup Now
                         </button>
                     </div>
                 )}
