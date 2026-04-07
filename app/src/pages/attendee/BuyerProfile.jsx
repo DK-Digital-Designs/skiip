@@ -4,12 +4,13 @@ import { useAuth } from '../../lib/context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 export default function BuyerProfile() {
-    const { user } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (authLoading) return;
         if (!user) {
             navigate('/order/login', { replace: true });
             return;
@@ -40,6 +41,7 @@ export default function BuyerProfile() {
         fetchHistory();
     }, [user, navigate]);
 
+    if (authLoading) return <div className="container" style={{ paddingTop: '60px' }}>Loading profile...</div>;
     if (!user) return null;
 
     return (
@@ -50,10 +52,10 @@ export default function BuyerProfile() {
                 <div className="card mb-40">
                     <div className="flex gap-16 items-center">
                         <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--accent)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-                            {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
+                            {profile?.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
                         </div>
                         <div>
-                            <h3 style={{ marginBottom: '4px' }}>{user.user_metadata?.full_name || 'Guest User'}</h3>
+                            <h3 style={{ marginBottom: '4px' }}>{profile?.full_name || 'Guest User'}</h3>
                             <p className="text-muted">{user.email}</p>
                         </div>
                     </div>

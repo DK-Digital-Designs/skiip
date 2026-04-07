@@ -10,9 +10,16 @@ import { useToast } from '../../components/ui/Toast';
 
 export default function Checkout() {
     const navigate = useNavigate();
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const { items, getCartTotal, vendorId, clearCart } = useCart();
     const { addToast } = useToast();
+
+    // Missing state variables
+    const [vendor, setVendor] = useState(null);
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [notes, setNotes] = useState('');
+    const [processing, setProcessing] = useState(false);
 
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
@@ -22,15 +29,18 @@ export default function Checkout() {
     const total = subtotal + tipAmount;
 
     useEffect(() => {
-        // Pre-fill email when user loads
-        if (user?.email && !email) {
-            setEmail(user.email);
+        // Pre-fill from profile if available (priority) or user object
+        if (profile) {
+            if (profile.email && !email) setEmail(profile.email);
+            if (profile.phone && !phone) setPhone(profile.phone);
+        } else if (user) {
+            if (user.email && !email) setEmail(user.email);
         }
 
         if (vendorId) {
             fetchVendor();
         }
-    }, [user, authLoading, vendorId]);
+    }, [user, profile, authLoading, vendorId]);
 
     const handleTipSelect = (percent) => {
         setSelectedTipPercent(percent);
@@ -64,6 +74,13 @@ export default function Checkout() {
         try {
             if (!isSupabaseConfigured()) {
                 addToast('Demo mode: Connect Supabase to place real orders.', 'info');
+                setProcessing(false);
+                return;
+            }
+
+            // Validation
+            if (!email || !phone) {
+                addToast('Please provide both an email and a phone number.', 'error');
                 setProcessing(false);
                 return;
             }
