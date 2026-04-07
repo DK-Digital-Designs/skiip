@@ -16,7 +16,7 @@ export const StripeService = {
                 orderDetails: {
                     order_id: orderId,
                     items: items,
-                    tip_amount: tip_amount
+                    tip_amount: tip_amount || 0
                 },
                 returnUrl: returnUrl
             }

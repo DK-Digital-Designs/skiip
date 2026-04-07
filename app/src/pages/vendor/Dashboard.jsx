@@ -238,12 +238,12 @@ export default function VendorDashboard() {
                                     {(order.order_items || []).map((item, idx) => (
                                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                             <span>{item.quantity}× {item.product_snapshot?.name || 'Item'}</span>
-                                            <span>R{(item.price * item.quantity).toFixed(2)}</span>
+                                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
                                         </div>
                                     ))}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--stroke)', fontWeight: '700' }}>
                                         <span>Total</span>
-                                        <span className="text-accent">R{order.total?.toFixed(2) || order.total_amount?.toFixed(2)}</span>
+                                        <span className="text-accent">£{order.total?.toFixed(2) || order.total_amount?.toFixed(2)}</span>
                                     </div>
                                 </div>
 

@@ -78,9 +78,16 @@ export default function Checkout() {
                 return;
             }
 
-            // Validation
+            // 1. Validation
             if (!email || !phone) {
                 addToast('Please provide both an email and a phone number.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            // 2. Pre-check Vendor Payment Readiness
+            if (vendor && !vendor.stripe_onboarding_complete) {
+                addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
                 setProcessing(false);
                 return;
             }
@@ -95,7 +102,7 @@ export default function Checkout() {
                 user_id: user?.id || null // Support guest checkout
             });
 
-            // 2. Process Payment via Stripe
+            // 3. Process Payment via Stripe
             addToast('Redirecting to secure payment...', 'info');
 
             const session = await StripeService.createCheckoutSession({
@@ -112,8 +119,14 @@ export default function Checkout() {
                 throw new Error('Failed to generate payment link');
             }
         } catch (error) {
-            console.error('Error creating order:', error);
-            addToast('Failed to create order. Please try again.', 'error');
+            console.error('Checkout error:', error);
+            
+            // Specific error handling for vendor status from Edge Function
+            if (error.message?.includes('VENDOR_NOT_READY')) {
+                addToast('This vendor is not yet set up to receive payments.', 'error');
+            } else {
+                addToast('Failed to initialize payment. Please try again.', 'error');
+            }
         } finally {
             setProcessing(false);
         }
