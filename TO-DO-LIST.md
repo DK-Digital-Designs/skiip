@@ -1,53 +1,53 @@
-# Skiip — Known Issues & To-Do List
+# Skiip — The Launch Checklist 🏁
 
 ---
 
-## ✅ Resolved
-
-- **`ReferenceError: StripeService is not defined`** in `Dashboard.jsx` — Fixed by adding missing import.
-- **Product image uploads failing** — Created `product-images` Supabase Storage bucket via script.
-- **No way to leave vendor portal without logging out** — Resolved by the GlobalHeader.
-- **Vendor portal & admin login exposed on the public landing page** — Removed; unified login handles routing.
+## ✅ PHASE 0: COMPLETED (The Engine is Running)
+- [x] **Stripe Sandbox Setup**: Verified payments, onboarding, and webhook routing.
+- [x] **Dashboard Workflow**: Intelligent Logic (Pending vs. Paid) is live.
+- [x] **Public Storefronts**: Customers can browse Vercel site and pay in £ GBP.
 
 ---
 
-## 🐛 Known Bug: Supabase Navigator Lock Timeout
+## 🔥 PHASE 1: DO THIS NOW (Critical for MVP Launch)
+*These must be finished before any "Real" customers use the site.*
 
-**Symptom:**
-```
-NavigatorLockAcquireTimeoutError: Acquiring an exclusive Navigator LockManager lock
-"lock:sb-jmqjuvfjthwbsbelgccs-auth-token" timed out waiting 10000ms
-```
-This manifests as:
-- Vendors list shows "No vendors available" on first page load
-- GlobalHeader shows "Sign In / Sign Up" even when the user is authenticated
-- Requires hard refresh (`Ctrl+Shift+R`) to fix
+### 📢 Communication
+- [ ] **WhatsApp Alerts**: Real-time notifications for vendors when a "PAID" order arrives. Must also notify customers when the Order is ready for pickup
+- [ ] **Basic Email Receipts**: Send a simple "Order Confirmed" to the customer.
 
-**Root Cause:**  
-`supabase-js v2` uses the browser's `navigator.locks` API to serialize auth token operations.  
-The old `AuthContext` was calling `AuthService.getSession()` manually **at the same time** that `supabase.auth.onAuthStateChange` was internally requesting the same lock to broadcast its `INITIAL_SESSION` event.  
-These two concurrent lock requests deadlocked each other.
+### 🛡️ Security & Reliability
+- [ ] **Frontend Security Sweep**: Remove all `SERVICE_ROLE` keys from the client-side code (High Priority).
+- [ ] **Inventory Locking**: Ensure the `decrement_inventory` function is 100% robust against "Double Buys."
+- [ ] **Order Auto-Cancel**: Logic to kill `PENDING` orders after 60 mins to free up stalled stock.
 
-**Fix Applied:**  
-Removed the manual `initSession()` call from `AuthContext.jsx`.  
-The context now relies purely on `onAuthStateChange`, which already fires an `INITIAL_SESSION` event on startup — no separate fetch is needed.
-
-**Status:** Fixed in `AuthContext.jsx`. Monitor for recurrence.
+### 📈 Core Ops
+- [ ] **Essential Analytics**: A single "Today's Volume" counter on the Vendor dashboard.
+- [ ] **Logging**: Basic error trapping for payment failures so we can debug live issues.
 
 ---
 
-## 🔧 In Progress / Remaining
+## 🚀 PHASE 2: POST-LAUNCH (Scale & Polish)
+*Add these once the first orders start flowing and the system is stable.*
 
-- [ ] Test Stripe onboarding end-to-end (requires Stripe Secret Key set in Supabase Edge Function secrets)
-- [ ] Vendors sometimes still don't load on first visit — investigate `useStores` React Query caching + staleTime
-- [ ] Loading skeletons for vendor list (slow perceived performance)
-- [ ] Remove `VITE_SUPABASE_SERVICE_ROLE_KEY` from `.env` — it should never be in a frontend bundle
+### 💎 User Experience
+- [ ] **Real-time Push**: Smooth "Pop" animations for new orders (no refresh needed).
+- [ ] **Loading Skeletons**: Professional "flicker-free" transitions between pages.
+- [ ] **Customer Profile**: Let users look up their previous Order history.
+
+### 🛠️ Advanced Vendor Tools
+- [ ] **Refund Interface**: Allow one-click Stripe refunds from the dashboard.
+- [ ] **Detailed Analytics**: Charts for revenue trends, peak times, and top-selling items.
+- [ ] **Admin Command Center**: A master dashboard for you to oversee all vendors.
+
+### 🌟 Community & Trust
+- [ ] **Store Reviews**: Let customers leave 5-star ratings after they pick up their order.
+- [ ] **Partner Portal**: Professional onboarding/application page for new vendors.
 
 ---
 
-## 💡 Feature Ideas / Future Polish
-
-- Add a "Become a Vendor" CTA on the landing page that routes to the vendor signup/apply form
-- Add email confirmations to the vendor signup flow
-- Allow admins to toggle vendor `is_active` status from the admin dashboard
-- Add a "Forgot Password" link on the unified login page
+> [!IMPORTANT]
+> **Going Live Checklist**:
+> 1. Swap `sk_test` and `pk_test` for **Live Keys**.
+> 2. Re-create the **Webhook Endpoint** in Stripe Live Mode.
+> 3. Run a real £1.00 payment to verify the entire loop.
