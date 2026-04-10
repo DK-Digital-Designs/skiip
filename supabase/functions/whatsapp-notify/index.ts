@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { logger } from "../_shared/logger.ts"
+import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
 
 const log = logger('whatsapp-notify')
 
@@ -7,14 +8,16 @@ const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
 const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
 const TWILIO_WHATSAPP_NUMBER = Deno.env.get('TWILIO_WHATSAPP_NUMBER') // e.g., +14155238886
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = buildCorsHeaders(origin)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405, origin)
   }
 
   try {
@@ -92,14 +95,9 @@ serve(async (req) => {
 
     log.info(`WhatsApp sent successfully to ${customer_phone}`, { sid: result.sid })
 
-    return new Response(JSON.stringify({ success: true, sid: result.sid }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ success: true, sid: result.sid }, 200, origin)
   } catch (error) {
     log.error('WhatsApp notification failed', { error: error.message, stack: error.stack })
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: error.message }, 500, origin)
   }
 })

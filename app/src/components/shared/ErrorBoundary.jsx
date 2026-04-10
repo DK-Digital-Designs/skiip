@@ -54,8 +54,15 @@ export default function ErrorBoundary({ children }) {
                 console.error("Uncaught error:", error, errorInfo);
                 // Clear storage to prevent permanent crash loops caused by bad data
                 try {
-                    localStorage.clear();
-                    sessionStorage.clear();
+                    // Only clear Skiip-owned keys to avoid wiping unrelated app/session data
+                    const skiipKeys = [
+                        ...Object.keys(localStorage).filter((k) => k.startsWith('skiip-')),
+                        ...Object.keys(sessionStorage).filter((k) => k.startsWith('skiip-')),
+                    ];
+                    for (const key of skiipKeys) {
+                        localStorage.removeItem(key);
+                        sessionStorage.removeItem(key);
+                    }
                 } catch (e) {
                     console.error("Could not clear storage", e);
                 }
