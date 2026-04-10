@@ -99,19 +99,26 @@ serve(async (req: Request) => {
 
     if (!store.stripe_account_id || !store.stripe_onboarding_complete) {
       log.error('Vendor not ready for payments', { store_id: order.store_id })
-      throw new Error('Vendor is not set up to receive payments');
+      return new Response(
+        JSON.stringify({ 
+          error: 'VENDOR_NOT_READY',
+          message: 'The vendor has not completed their payment setup. Payouts are disabled for this account.' 
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
     }
 
-    // 4. Prepare line items
+    // 4. Prepare line items (UK Focus for MVP)
+    const currency = 'gbp'
     const lineItems = items.map((item: CheckoutItem) => ({
       price_data: {
-        currency: 'gbp',
+        currency: currency,
         product_data: {
           name: item.name || item.product_snapshot?.name || 'Item',
         },
-        unit_amount: Math.round(item.price * 100),
+        unit_amount: Math.max(1, Math.round((item.price || 0) * 100)),
       },
-      quantity: item.quantity,
+      quantity: item.quantity || 1,
     }))
 
     if (tip_amount > 0) {

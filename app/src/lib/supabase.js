@@ -38,6 +38,5 @@ export const supabase = isConfigured
  * @returns {boolean}
  */
 export const isSupabaseConfigured = () => {
-  if (isProduction) return true; // Fail fast in prod
   return !!supabase;
 };

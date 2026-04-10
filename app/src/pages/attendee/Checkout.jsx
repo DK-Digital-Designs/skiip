@@ -10,9 +10,16 @@ import { useToast } from '../../components/ui/Toast';
 
 export default function Checkout() {
     const navigate = useNavigate();
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
     const { items, getCartTotal, vendorId, clearCart } = useCart();
     const { addToast } = useToast();
+
+    // Missing state variables
+    const [vendor, setVendor] = useState(null);
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [notes, setNotes] = useState('');
+    const [processing, setProcessing] = useState(false);
 
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
@@ -22,15 +29,18 @@ export default function Checkout() {
     const total = subtotal + tipAmount;
 
     useEffect(() => {
-        // Pre-fill email when user loads
-        if (user?.email && !email) {
-            setEmail(user.email);
+        // Pre-fill from profile if available (priority) or user object
+        if (profile) {
+            if (profile.email && !email) setEmail(profile.email);
+            if (profile.phone && !phone) setPhone(profile.phone);
+        } else if (user) {
+            if (user.email && !email) setEmail(user.email);
         }
 
         if (vendorId) {
             fetchVendor();
         }
-    }, [user, authLoading, vendorId]);
+    }, [user, profile, authLoading, vendorId]);
 
     const handleTipSelect = (percent) => {
         setSelectedTipPercent(percent);
@@ -68,6 +78,20 @@ export default function Checkout() {
                 return;
             }
 
+            // 1. Validation
+            if (!email || !phone) {
+                addToast('Please provide both an email and a phone number.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            // 2. Pre-check Vendor Payment Readiness
+            if (vendor && !vendor.stripe_onboarding_complete) {
+                addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
+                setProcessing(false);
+                return;
+            }
+
             const order = await OrderService.createOrder({
                 store_id: vendorId,
                 items: items,
@@ -78,7 +102,7 @@ export default function Checkout() {
                 user_id: user?.id || null // Support guest checkout
             });
 
-            // 2. Process Payment via Stripe
+            // 3. Process Payment via Stripe
             addToast('Redirecting to secure payment...', 'info');
 
             const session = await StripeService.createCheckoutSession({
@@ -95,8 +119,14 @@ export default function Checkout() {
                 throw new Error('Failed to generate payment link');
             }
         } catch (error) {
-            console.error('Error creating order:', error);
-            addToast('Failed to create order. Please try again.', 'error');
+            console.error('Checkout error:', error);
+            
+            // Specific error handling for vendor status from Edge Function
+            if (error.message?.includes('VENDOR_NOT_READY')) {
+                addToast('Oops! This vendor is still setting up their bank account on SKIIP. Please try again later.', 'error');
+            } else {
+                addToast('We had trouble starting the payment. Please check back soon.', 'error');
+            }
         } finally {
             setProcessing(false);
         }

@@ -17,28 +17,42 @@ export const AuthProvider = ({ children }) => {
 
         let isMounted = true;
         
-        // Timeout fail-safe to unstick the UI if Supabase genuinely hangs
+        // Timeout fail-safe
         const timeoutId = setTimeout(() => {
             if (isMounted && loading) {
                 console.warn("Auth initialization timed out, forcing load completion.");
                 setLoading(false);
             }
-        }, 12000);
+        }, 8000); // Reduced to 8s
 
-        // Listen for auth changes (this immediately fires an INITIAL_SESSION event in v2)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        async function initializeAuth() {
+            try {
+                // 1. Check current session immediately
+                const { data: { session } } = await supabase.auth.getSession();
+                if (isMounted) {
+                    await handleAuthStateChange('SIGNED_IN', session);
+                }
+            } catch (error) {
+                console.error("Initial session check failed:", error);
+                if (isMounted) setLoading(false);
+            }
+        }
+
+        async function handleAuthStateChange(event, session) {
             if (!isMounted) return;
             try {
-                setUser(session?.user ?? null);
-                if (session?.user) {
+                const currentUser = session?.user ?? null;
+                setUser(currentUser);
+                
+                if (currentUser) {
                     const { data, error } = await supabase
                         .from('user_profiles')
                         .select('*')
-                        .eq('id', session.user.id)
+                        .eq('id', currentUser.id)
                         .single();
                     
                     if (error) {
-                        console.warn('Profile fetch error during auth state change:', error.message);
+                        console.warn('Profile fetch error:', error.message);
                         setProfile(null);
                     } else {
                         setProfile(data);
@@ -47,13 +61,21 @@ export const AuthProvider = ({ children }) => {
                     setProfile(null);
                 }
             } catch (err) {
-                console.error("Auth state change error:", err);
+                console.error("Auth process error:", err);
             } finally {
                 if (isMounted) {
                     clearTimeout(timeoutId);
                     setLoading(false);
                 }
             }
+        }
+
+        // Initialize immediately
+        initializeAuth();
+
+        // 2. Listen for subsequent changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            handleAuthStateChange(event, session);
         });
 
         return () => {

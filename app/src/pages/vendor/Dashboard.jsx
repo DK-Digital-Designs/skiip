@@ -171,24 +171,35 @@ export default function VendorDashboard() {
                 {/* Onboarding Banner */}
                 {store && !store.stripe_onboarding_complete && (
                     <div className="card" style={{ 
-                        background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', 
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
                         color: 'white', 
                         marginBottom: '32px',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '24px'
+                        padding: '30px',
+                        border: '2px solid rgba(255,255,255,0.1)',
+                        boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.4)'
                     }}>
-                        <div>
-                            <h2 style={{ marginBottom: '8px', color: 'white' }}>Connect your bank account</h2>
-                            <p style={{ opacity: 0.9 }}>To receive payouts and accept live orders, you need to set up your account with Stripe.</p>
+                        <div style={{ maxWidth: '70%' }}>
+                            <h2 style={{ marginBottom: '12px', color: 'white', fontSize: '24px' }}>⚡ Setup Required to Accept Payments</h2>
+                            <p style={{ opacity: 0.95, fontSize: '16px', lineHeight: '1.5' }}>
+                                Your shop is currently in <strong>Limited Mode</strong>. You can manage products, but customers cannot place orders until you connect your bank account.
+                            </p>
                         </div>
                         <button 
                             onClick={handleConnectStripe} 
                             className="btn" 
-                            style={{ background: 'white', color: '#6366f1', fontWeight: '700', padding: '12px 24px' }}
+                            style={{ 
+                                background: 'white', 
+                                color: '#4f46e5', 
+                                fontWeight: '800', 
+                                padding: '14px 28px',
+                                fontSize: '15px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
                         >
-                            Start Getting Paid
+                            Complete Setup Now
                         </button>
                     </div>
                 )}
@@ -227,7 +238,7 @@ export default function VendorDashboard() {
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>
-                                            {order.status.replace('_', ' ').toUpperCase()}
+                                            {order.status === 'pending' ? 'WAITING FOR PAYMENT' : order.status.replace('_', ' ').toUpperCase()}
                                         </p>
                                         <p style={{ fontSize: '14px' }}>📱 {order.customer_phone}</p>
                                     </div>
@@ -238,17 +249,22 @@ export default function VendorDashboard() {
                                     {(order.order_items || []).map((item, idx) => (
                                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                             <span>{item.quantity}× {item.product_snapshot?.name || 'Item'}</span>
-                                            <span>R{(item.price * item.quantity).toFixed(2)}</span>
+                                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
                                         </div>
                                     ))}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--stroke)', fontWeight: '700' }}>
                                         <span>Total</span>
-                                        <span className="text-accent">R{order.total?.toFixed(2) || order.total_amount?.toFixed(2)}</span>
+                                        <span className="text-accent">£{order.total?.toFixed(2) || order.total_amount?.toFixed(2)}</span>
                                     </div>
                                 </div>
 
                                 {/* Action Buttons */}
                                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    {order.status === 'paid' && (
+                                        <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="btn btn-primary">
+                                            👨‍🍳 Start Preparing
+                                        </button>
+                                    )}
                                     {order.status === 'preparing' && (
                                         <button onClick={() => updateOrderStatus(order.id, 'ready')} className="btn btn-primary">
                                             ✅ Mark as Ready
@@ -259,12 +275,7 @@ export default function VendorDashboard() {
                                             🎉 Mark as Collected
                                         </button>
                                     )}
-                                    {order.status === 'pending' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="btn btn-primary">
-                                            👨‍🍳 Start Preparing
-                                        </button>
-                                    )}
-                                    {(order.status === 'preparing' || order.status === 'ready' || order.status === 'pending') && (
+                                    {(order.status === 'pending' || order.status === 'paid' || order.status === 'preparing' || order.status === 'ready') && (
                                         <button onClick={() => updateOrderStatus(order.id, 'cancelled')} className="btn btn-ghost" style={{ color: '#ef4444' }}>
                                             ❌ Cancel Order
                                         </button>
