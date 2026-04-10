@@ -179,6 +179,25 @@ export default function OrderTracker() {
                         {vendor.pickup_location && (
                             <p className="text-accent">📍 Pickup at: {vendor.pickup_location}</p>
                         )}
+
+                        <div style={{ marginTop: '12px' }}>
+                            <span
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 10px',
+                                    borderRadius: '999px',
+                                    fontSize: '12px',
+                                    fontWeight: '700',
+                                    background: order.whatsapp_opt_in ? 'rgba(16, 185, 129, 0.14)' : 'rgba(107, 114, 128, 0.12)',
+                                    color: order.whatsapp_opt_in ? '#047857' : '#6b7280',
+                                    border: `1px solid ${order.whatsapp_opt_in ? 'rgba(16, 185, 129, 0.35)' : 'rgba(107, 114, 128, 0.25)'}`,
+                                }}
+                            >
+                                {order.whatsapp_opt_in ? '📱 WhatsApp updates active' : '📱 WhatsApp updates inactive'}
+                            </span>
+                        </div>
                     </div>
                 )}
 

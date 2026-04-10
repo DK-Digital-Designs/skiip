@@ -19,6 +19,7 @@ export default function Checkout() {
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
+    const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     const [tipAmount, setTipAmount] = useState(0);
@@ -85,6 +86,12 @@ export default function Checkout() {
                 return;
             }
 
+            if (!whatsappOptIn) {
+                addToast('Please confirm WhatsApp opt-in to continue checkout.', 'error');
+                setProcessing(false);
+                return;
+            }
+
             // 2. Pre-check Vendor Payment Readiness
             if (vendor && !vendor.stripe_onboarding_complete) {
                 addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
@@ -98,6 +105,7 @@ export default function Checkout() {
                 total: total,
                 customer_email: email || user?.email,
                 customer_phone: phone,
+                whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
                 user_id: user?.id || null // Support guest checkout
             });
@@ -245,6 +253,24 @@ export default function Checkout() {
                             placeholder="Allergies, instructions, etc."
                             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)', minHeight: '80px' }}
                         />
+                    </div>
+
+                    <div className="card" style={{ marginBottom: '24px' }}>
+                        <h3 style={{ marginBottom: '8px' }}>WhatsApp Updates</h3>
+                        <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
+                            Purely transactional. No marketing. Standard rates apply.
+                        </p>
+
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={whatsappOptIn}
+                                onChange={(e) => setWhatsappOptIn(e.target.checked)}
+                                style={{ marginTop: '2px' }}
+                                required
+                            />
+                            <span>Opt-in to receiving order updates via WhatsApp.</span>
+                        </label>
                     </div>
 
                     <button
