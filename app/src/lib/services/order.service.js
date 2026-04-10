@@ -10,8 +10,9 @@ export const OrderService = {
      * @param {string} orderData.customer_email
      * @param {string} orderData.customer_phone
      * @param {string} orderData.notes
+     * @param {boolean} orderData.whatsapp_opt_in
      */
-    async createOrder({ store_id, items, total, customer_email, customer_phone, notes, user_id }) {
+    async createOrder({ store_id, items, total, customer_email, customer_phone, notes, user_id, whatsapp_opt_in = false }) {
         if (!supabase) throw new Error('Supabase not configured');
 
         // Use RPC for atomic transaction of order + order_items
@@ -22,7 +23,8 @@ export const OrderService = {
             p_customer_email: customer_email,
             p_customer_phone: customer_phone,
             p_notes: notes,
-            p_user_id: user_id || null // Allow null for guest checkout
+            p_user_id: user_id || null, // Allow null for guest checkout
+            p_whatsapp_opt_in: whatsapp_opt_in
         });
 
         if (error) throw error;
