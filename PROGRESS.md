@@ -9,8 +9,11 @@
 | Dean Gibson | ~5.5 hours | 2026/03/08 | Deployment & Marketing Prep: Refactored application and site configurations into distinct directories allowing for independent builds. Updated and optimized Vercel routing rules. Developed initial marketing landing pages (admin access, contact forms, vendor information, pricing tiers) and established a CI/CD GitHub Actions workflow for automated deployments to GitHub Pages. |
 | Dean Gibson | ~2.5 hours | 2026/03/18 | Auth & Pilot Prep: Fixed user profile population via SQL triggers for new signups. Added show/hide password UI toggles across all authentication forms. Analyzed trial-run infrastructure requirements (Supabase Pro, Vercel), documented SSO integrations, and resolved Supabase auth email URL configurations. |
 | Dean Gibson | ~2.0 hours | 2026/03/18 | Stability & Admin Scaling: Resolved critical "White Screen of Death" by implementing pre-flight storage validation and Supabase lock-contention fail-safes. Built full Vendor CRUD management and integrated live DB statistics into the Admin Dashboard. |
+| Dean Gibson | ~4.5 hours | 2026/04/01 | Stripe Connect & Core Polish: Implemented Stripe Connect vendor onboarding and linked it to the DB. Resolved persistent Supabase auth deadlock by bypassing navigator locks. Scaffolded application routing, global header, and Supabase storage utilities. |
+| Dean Gibson | ~5.0 hours | 2026/04/07 | MVP Readiness (UK Pilot): Localized checkout and payment flows for GBP currency. Fixed checkout crashes and polished vendor status/error handling. Enforced vendor dashboard logic to only allow processing of 'paid' orders. Refactored TO-DO-LIST into a structured launch checklist. |
+| Dean Gibson | ~6.0 hours | 2026/04/10 | Security Hardening & WhatsApp Integration: Re-architected edge functions with JWT auth verification and strict cors. Implemented Stripe webhook idempotency and server-side pricing validation. Developed Meta-compliant WhatsApp Business integration with checkout opt-in UI and webhook delivery logging. Cleaned up and consolidated branches into a single staging environment. |
 
-**Total Estimated Hours:** ~37.0 hours
+**Total Estimated Hours:** ~52.5 hours
 
 ---
 
