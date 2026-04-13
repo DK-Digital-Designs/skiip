@@ -117,7 +117,7 @@ export default function Checkout() {
                 orderId: order.id,
                 items: items,
                 tip_amount: tipAmount,
-                returnUrl: window.location.origin + '/order/track'
+                returnUrl: window.location.origin + '/#/order/track'
             });
 
             if (session?.url) {
