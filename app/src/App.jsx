@@ -45,6 +45,7 @@ function App() {
                 <Route path="/order" element={<AttendeeVendors />} />
                 <Route path="/order/vendor/:vendorId" element={<AttendeeMenu />} />
                 <Route path="/order/checkout" element={<AttendeeCheckout />} />
+                <Route path="/order/track" element={<AttendeeOrderTracker />} />
                 <Route path="/order/track/:orderId" element={<AttendeeOrderTracker />} />
                 <Route path="/order/profile" element={<BuyerProfile />} />
 
