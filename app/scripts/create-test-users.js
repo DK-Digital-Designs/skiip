@@ -41,7 +41,7 @@ async function createAccount(email, password, role, fullName) {
 
 async function createStore(userId, email) {
     console.log(`Creating store for vendor ${email}...`);
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('stores')
         .insert([{
             user_id: userId,
@@ -63,9 +63,9 @@ async function createStore(userId, email) {
 async function run() {
   const password = "password2026";
   
-  const superAdmin = await createAccount('admin2026@example.com', password, 'admin', 'Super Admin 2026');
+  await createAccount('admin2026@example.com', password, 'admin', 'Super Admin 2026');
   const vendor = await createAccount('vendor2026@example.com', password, 'seller', 'Vendor 2026');
-  const buyer = await createAccount('buyer2026@example.com', password, 'buyer', 'Buyer 2026');
+  await createAccount('buyer2026@example.com', password, 'buyer', 'Buyer 2026');
   
   if (vendor?.id) {
      // A short delay to ensure trigger has completed user_profile insert first

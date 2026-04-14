@@ -42,7 +42,7 @@ export default function VendorProducts() {
 
             const session = await AuthService.getSession();
             if (!session) {
-                navigate('/vendor/login');
+                navigate('/login');
                 return;
             }
 

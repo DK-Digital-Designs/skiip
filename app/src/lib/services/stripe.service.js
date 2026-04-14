@@ -5,18 +5,15 @@ export const StripeService = {
      * Create a Stripe Checkout Session via Supabase Edge Function
      * @param {object} params
      * @param {string} params.orderId
-     * @param {array} params.items
      * @param {string} params.returnUrl
      */
-    async createCheckoutSession({ orderId, items, tip_amount, returnUrl }) {
+    async createCheckoutSession({ orderId, returnUrl }) {
         if (!supabase) throw new Error('Supabase not configured');
 
         const { data, error } = await supabase.functions.invoke('stripe-checkout', {
             body: {
                 orderDetails: {
-                    order_id: orderId,
-                    items: items,
-                    tip_amount: tip_amount || 0
+                    order_id: orderId
                 },
                 returnUrl: returnUrl
             }

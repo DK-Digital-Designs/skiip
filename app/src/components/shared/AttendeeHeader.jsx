@@ -36,7 +36,7 @@ export default function AttendeeHeader({ backTo, backLabel = '← Back' }) {
                             </button>
                         </>
                     ) : (
-                        <Link to="/order/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                        <Link to="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
                             Sign In
                         </Link>
                     )}

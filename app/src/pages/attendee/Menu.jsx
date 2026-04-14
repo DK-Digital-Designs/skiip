@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStore, useStoreMenu } from '../../lib/hooks/useMenu';
@@ -45,7 +45,7 @@ export default function Menu() {
     const loading = isDemo ? false : (isStoreLoading || isMenuLoading);
 
     // Global cart state
-    const { items: cart, addItem, removeItem, getCartTotal, clearCart, vendorId: cartVendorId } = useCart();
+    const { items: cart, addItem, removeItem, getCartTotal } = useCart();
 
     const cartTotal = getCartTotal();
 

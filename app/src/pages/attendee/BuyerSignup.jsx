@@ -49,7 +49,7 @@ export default function BuyerSignup() {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <AttendeeHeader backTo="/order/login" backLabel="← Back to Login" />
+            <AttendeeHeader backTo="/login" backLabel="← Back to Login" />
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px' }}>
@@ -127,7 +127,7 @@ export default function BuyerSignup() {
                         </button>
 
                         <p className="text-center text-muted" style={{ fontSize: '14px', marginTop: '8px' }}>
-                            Already have an account? <Link to="/order/login" className="text-accent">Sign in</Link>
+                            Already have an account? <Link to="/login" className="text-accent">Sign in</Link>
                         </p>
                     </form>
                 </div>

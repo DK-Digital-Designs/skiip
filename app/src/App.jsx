@@ -16,7 +16,7 @@ import VendorSignup from './pages/vendor/Signup';
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
 
-import AdminDashboard from './pages/admin/Dashboard';
+import AdminDashboard from './pages/admin/DashboardV2';
 import AdminVendors from './pages/admin/Vendors';
 import AdminEvents from './pages/admin/Events';
 import NotFound from './pages/NotFound';
@@ -45,6 +45,7 @@ function App() {
                 <Route path="/order" element={<AttendeeVendors />} />
                 <Route path="/order/vendor/:vendorId" element={<AttendeeMenu />} />
                 <Route path="/order/checkout" element={<AttendeeCheckout />} />
+                <Route path="/order/track" element={<AttendeeOrderTracker />} />
                 <Route path="/order/track/:orderId" element={<AttendeeOrderTracker />} />
                 <Route path="/order/profile" element={<BuyerProfile />} />
 

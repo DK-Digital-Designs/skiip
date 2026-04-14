@@ -2,31 +2,30 @@ import { supabase } from '../supabase';
 
 export const OrderService = {
     /**
-     * Create a new order
-     * @param {object} orderData 
-     * @param {string} orderData.store_id
-     * @param {array} orderData.items
-     * @param {number} orderData.total
-     * @param {string} orderData.customer_email
-     * @param {string} orderData.customer_phone
-     * @param {string} orderData.notes
+     * Create a new server-authoritative order
      */
-    async createOrder({ store_id, items, total, customer_email, customer_phone, notes, user_id }) {
+    async createOrder({ items, customer_email, customer_phone, notes, tip_amount = 0, whatsapp_opt_in = false }) {
         if (!supabase) throw new Error('Supabase not configured');
 
-        // Use RPC for atomic transaction of order + order_items
-        const { data, error } = await supabase.rpc('create_order_v1', {
-            p_store_id: store_id,
-            p_items: items,
-            p_total: total,
-            p_customer_email: customer_email,
-            p_customer_phone: customer_phone,
-            p_notes: notes,
-            p_user_id: user_id || null // Allow null for guest checkout
+        const payload = {
+            items: items.map((item) => ({
+                product_id: item.id,
+                quantity: item.quantity,
+            })),
+            customer_email,
+            customer_phone,
+            notes,
+            tip_amount,
+            whatsapp_opt_in,
+        };
+
+        const { data, error } = await supabase.functions.invoke('order-create', {
+            body: payload,
         });
 
         if (error) throw error;
-        return data;
+        if (!data?.order) throw new Error('Order creation returned no order');
+        return data.order;
     },
 
     /**
@@ -75,15 +74,15 @@ export const OrderService = {
     async updateOrderStatus(orderId, status) {
         if (!supabase) throw new Error('Supabase not configured');
 
-        const { data, error } = await supabase
-            .from('orders')
-            .update({ status })
-            .eq('id', orderId)
-            .select()
-            .single();
+        const { data, error } = await supabase.functions.invoke('order-transition', {
+            body: {
+                orderId,
+                status,
+            },
+        });
 
         if (error) throw error;
-        return data;
+        return data?.order;
     },
 
     /**

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStores } from '../../lib/hooks/useMenu';

@@ -40,7 +40,7 @@ export default function VendorSignup() {
 
             if (!isSupabaseConfigured()) {
                 addToast('Demo form: Setup successful!', 'success');
-                navigate('/vendor/login');
+                navigate('/login');
                 setLoading(false);
                 return;
             }
@@ -57,7 +57,7 @@ export default function VendorSignup() {
             );
 
             addToast('Vendor account created! Please check your email for a verification link.', 'success');
-            navigate('/vendor/login');
+            navigate('/login');
 
         } catch (error) {
             addToast(error.message || 'Signup failed', 'error');
@@ -184,7 +184,7 @@ export default function VendorSignup() {
                     </button>
 
                     <p className="text-center" style={{ fontSize: '14px', marginTop: '16px' }}>
-                        Already a vendor? <Link to="/vendor/login" className="text-accent">Sign in here</Link>
+                        Already a vendor? <Link to="/login" className="text-accent">Sign in here</Link>
                     </p>
                 </form>
             </div>

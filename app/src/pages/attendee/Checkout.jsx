@@ -11,7 +11,7 @@ import { useToast } from '../../components/ui/Toast';
 export default function Checkout() {
     const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
-    const { items, getCartTotal, vendorId, clearCart } = useCart();
+    const { items, getCartTotal, vendorId } = useCart();
     const { addToast } = useToast();
 
     // Missing state variables
@@ -19,6 +19,7 @@ export default function Checkout() {
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
+    const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
 
     const [tipAmount, setTipAmount] = useState(0);
@@ -29,6 +30,11 @@ export default function Checkout() {
     const total = subtotal + tipAmount;
 
     useEffect(() => {
+        if (!authLoading && !user) {
+            navigate('/login', { state: { from: { pathname: '/order/checkout' } }, replace: true });
+            return;
+        }
+
         // Pre-fill from profile if available (priority) or user object
         if (profile) {
             if (profile.email && !email) setEmail(profile.email);
@@ -40,7 +46,7 @@ export default function Checkout() {
         if (vendorId) {
             fetchVendor();
         }
-    }, [user, profile, authLoading, vendorId]);
+    }, [user, profile, authLoading, vendorId, navigate]);
 
     const handleTipSelect = (percent) => {
         setSelectedTipPercent(percent);
@@ -78,9 +84,22 @@ export default function Checkout() {
                 return;
             }
 
+            if (!user) {
+                addToast('Please sign in before placing an order.', 'error');
+                navigate('/login', { state: { from: { pathname: '/order/checkout' } } });
+                setProcessing(false);
+                return;
+            }
+
             // 1. Validation
             if (!email || !phone) {
                 addToast('Please provide both an email and a phone number.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            if (!whatsappOptIn) {
+                addToast('Please confirm WhatsApp opt-in to continue checkout.', 'error');
                 setProcessing(false);
                 return;
             }
@@ -93,13 +112,12 @@ export default function Checkout() {
             }
 
             const order = await OrderService.createOrder({
-                store_id: vendorId,
                 items: items,
-                total: total,
                 customer_email: email || user?.email,
                 customer_phone: phone,
+                whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
-                user_id: user?.id || null // Support guest checkout
+                tip_amount: tipAmount
             });
 
             // 3. Process Payment via Stripe
@@ -107,9 +125,7 @@ export default function Checkout() {
 
             const session = await StripeService.createCheckoutSession({
                 orderId: order.id,
-                items: items,
-                tip_amount: tipAmount,
-                returnUrl: window.location.origin + '/order/track'
+                returnUrl: window.location.origin + '/#/order/track'
             });
 
             if (session?.url) {
@@ -133,6 +149,7 @@ export default function Checkout() {
     }
 
     if (authLoading) return <div>Loading...</div>;
+    if (!user) return null;
     if (!items.length) {
         return (
             <div className="container" style={{ padding: '60px', textAlign: 'center' }}>
@@ -245,6 +262,24 @@ export default function Checkout() {
                             placeholder="Allergies, instructions, etc."
                             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)', minHeight: '80px' }}
                         />
+                    </div>
+
+                    <div className="card" style={{ marginBottom: '24px' }}>
+                        <h3 style={{ marginBottom: '8px' }}>WhatsApp Updates</h3>
+                        <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
+                            Purely transactional. No marketing. Standard rates apply.
+                        </p>
+
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={whatsappOptIn}
+                                onChange={(e) => setWhatsappOptIn(e.target.checked)}
+                                style={{ marginTop: '2px' }}
+                                required
+                            />
+                            <span>Opt-in to receiving order updates via WhatsApp.</span>
+                        </label>
                     </div>
 
                     <button

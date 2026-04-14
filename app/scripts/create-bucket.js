@@ -37,7 +37,7 @@ async function run() {
     }
 
     console.log("Creating new 'product-images' bucket remotely...");
-    const { data, error } = await supabase.storage.createBucket('product-images', {
+    const { error } = await supabase.storage.createBucket('product-images', {
         public: true,
         allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
         fileSizeLimit: 5242880 // 5MB

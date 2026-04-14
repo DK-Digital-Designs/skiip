@@ -31,6 +31,7 @@ export default function OrderTracker() {
     const [vendor, setVendor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [connectionStatus, setConnectionStatus] = useState('connected'); // connected, reconnecting, error
+    const [showSuccessOverlay, setShowSuccessOverlay] = useState(isSuccess);
 
     useEffect(() => {
         if (isCanceled) {
@@ -41,7 +42,10 @@ export default function OrderTracker() {
 
         if (isSuccess && orderId) {
             clearCart();
-            addToast('Payment successful! Tracking your order...', 'success');
+            // We use the overlay now, but keep the URL clean
+            if (!pathOrderId) {
+                navigate(`/order/track/${orderId}`, { replace: true });
+            }
         }
 
         if (!orderId) {
@@ -139,6 +143,44 @@ export default function OrderTracker() {
     const orderItems = order.order_items || [];
 
     return (
+        <>
+            {showSuccessOverlay && (
+                <div style={{ 
+                    position: 'fixed', 
+                    inset: 0, 
+                    zIndex: 9999, 
+                    background: 'var(--bg)', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    textAlign: 'center', 
+                    padding: '20px' 
+                }}>
+                    <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
+                        🎉
+                    </div>
+                    <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '16px', color: '#10b981' }}>
+                        Payment Successful!
+                    </h1>
+                    <p className="text-muted" style={{ fontSize: '18px', maxWidth: '400px', marginBottom: '32px', lineHeight: '1.5' }}>
+                        Your order has been sent to the vendor. No further action is required.
+                    </p>
+                    <button 
+                        className="btn btn-primary" 
+                        onClick={() => setShowSuccessOverlay(false)}
+                        style={{ padding: '16px 32px', fontSize: '18px' }}
+                    >
+                        View Order Tracker
+                    </button>
+                    <style>{`
+                        @keyframes popIn {
+                            0% { transform: scale(0.5); opacity: 0; }
+                            100% { transform: scale(1); opacity: 1; }
+                        }
+                    `}</style>
+                </div>
+            )}
         <div style={{ minHeight: '100vh', paddingBottom: '40px', background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, var(--bg) 100%)' }}>
             <div className="container" style={{ maxWidth: '600px', paddingTop: '60px' }}>
                 {/* Connection Status Badge */}
@@ -179,6 +221,25 @@ export default function OrderTracker() {
                         {vendor.pickup_location && (
                             <p className="text-accent">📍 Pickup at: {vendor.pickup_location}</p>
                         )}
+
+                        <div style={{ marginTop: '12px' }}>
+                            <span
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 10px',
+                                    borderRadius: '999px',
+                                    fontSize: '12px',
+                                    fontWeight: '700',
+                                    background: order.whatsapp_opt_in ? 'rgba(16, 185, 129, 0.14)' : 'rgba(107, 114, 128, 0.12)',
+                                    color: order.whatsapp_opt_in ? '#047857' : '#6b7280',
+                                    border: `1px solid ${order.whatsapp_opt_in ? 'rgba(16, 185, 129, 0.35)' : 'rgba(107, 114, 128, 0.25)'}`,
+                                }}
+                            >
+                                {order.whatsapp_opt_in ? '📱 WhatsApp updates active' : '📱 WhatsApp updates inactive'}
+                            </span>
+                        </div>
                     </div>
                 )}
 
@@ -209,5 +270,6 @@ export default function OrderTracker() {
                 )}
             </div>
         </div>
+        </>
     );
 }

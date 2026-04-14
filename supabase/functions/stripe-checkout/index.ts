@@ -1,89 +1,79 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
+import { requireUser } from "../_shared/auth.ts"
+import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 
 const log = logger('stripe-checkout')
+const PLATFORM_FEE_PERCENT = 0.10
 
-// Configuration
-const PLATFORM_FEE_PERCENT = 0.10 // 10% platform fee
-
-// Initialize Stripe with error handling
-const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
 if (!stripeSecretKey) {
-  throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+  throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
 const stripe = new Stripe(stripeSecretKey, {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface CheckoutItem {
-  id: string;
-  name?: string;
-  price: number;
-  quantity: number;
-  product_snapshot?: {
-    name: string;
-  };
-}
-
 interface CheckoutRequest {
   orderDetails: {
-    order_id: string;
-    items: CheckoutItem[];
-    tip_amount?: number;
-  };
-  returnUrl: string;
+    order_id: string
+  }
+  returnUrl: string
+}
+
+function validateReturnUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
+  } catch {
+    return false
+  }
 }
 
 serve(async (req: Request) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = buildCorsHeaders(origin)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405, origin)
+  }
+
   try {
-    // 1. Safe JSON parsing
-    let body: CheckoutRequest;
-    try {
-      body = await req.json();
-    } catch (e) {
-      throw new Error('Invalid JSON body');
+    const user = await requireUser(req)
+    const body = (await req.json()) as CheckoutRequest
+    const orderId = body.orderDetails?.order_id
+    const returnUrl = body.returnUrl
+
+    if (!orderId || !validateReturnUrl(returnUrl)) {
+      return jsonResponse({ error: 'Missing order_id or valid returnUrl' }, 400, origin)
     }
 
-    const { orderDetails, returnUrl } = body;
-    const { order_id, items, tip_amount = 0 } = orderDetails;
-
-    if (!order_id || !items || !Array.isArray(items)) {
-      throw new Error('Missing order_id or valid items array');
-    }
-
-    // 2. Validate Supabase environment
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase environment variables are not configured');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 3. Fetch Order and Store Details
+    const supabase = createServiceClient()
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('store_id, total')
-      .eq('id', order_id)
+      .select('id, user_id, store_id, subtotal, total, tip_amount, status, payment_status')
+      .eq('id', orderId)
       .single()
 
     if (orderError || !order) {
-      log.error('Order not found', { order_id, error: orderError })
-      throw new Error('Order not found');
+      log.error('Order not found', { orderId, error: orderError })
+      return jsonResponse({ error: 'Order not found' }, 404, origin)
+    }
+
+    if (user.role !== 'admin' && order.user_id !== user.id) {
+      return jsonResponse({ error: 'Forbidden' }, 403, origin)
+    }
+
+    if (order.status !== 'pending' || order.payment_status !== 'pending') {
+      return jsonResponse({ error: 'Order is not in a payable state' }, 409, origin)
     }
 
     const { data: store, error: storeError } = await supabase
@@ -93,60 +83,72 @@ serve(async (req: Request) => {
       .single()
 
     if (storeError || !store) {
-      log.error('Store not found', { store_id: order.store_id, error: storeError })
-      throw new Error('Store not found');
+      return jsonResponse({ error: 'Store not found' }, 404, origin)
     }
 
     if (!store.stripe_account_id || !store.stripe_onboarding_complete) {
-      log.error('Vendor not ready for payments', { store_id: order.store_id })
-      return new Response(
-        JSON.stringify({ 
-          error: 'VENDOR_NOT_READY',
-          message: 'The vendor has not completed their payment setup. Payouts are disabled for this account.' 
-        }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return jsonResponse(
+        { error: 'VENDOR_NOT_READY', message: 'The vendor has not completed their payment setup.' },
+        403,
+        origin,
       )
     }
 
-    // 4. Prepare line items (UK Focus for MVP)
-    const currency = 'gbp'
-    const lineItems = items.map((item: CheckoutItem) => ({
+    const { data: orderItems, error: itemsError } = await supabase
+      .from('order_items')
+      .select('quantity, price, total, product_snapshot')
+      .eq('order_id', orderId)
+
+    if (itemsError || !orderItems || orderItems.length === 0) {
+      return jsonResponse({ error: 'Order items not found' }, 404, origin)
+    }
+
+    const computedSubtotal = orderItems.reduce((sum, item) => sum + Number(item.total || 0), 0)
+    const storedSubtotal = Number(order.subtotal || 0)
+    const tipAmount = Number(order.tip_amount || 0)
+    const storedTotal = Number(order.total || 0)
+
+    if (Math.abs(computedSubtotal - storedSubtotal) > 0.01) {
+      log.warn('Order subtotal mismatch detected', { orderId, storedSubtotal, computedSubtotal })
+      return jsonResponse({ error: 'Order subtotal mismatch' }, 409, origin)
+    }
+
+    if (Math.abs(storedTotal - (storedSubtotal + tipAmount)) > 0.01) {
+      log.warn('Order total mismatch detected', { orderId, storedTotal, computed: storedSubtotal + tipAmount })
+      return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
+    }
+
+    const lineItems = orderItems.map((item) => ({
       price_data: {
-        currency: currency,
+        currency: 'gbp',
         product_data: {
-          name: item.name || item.product_snapshot?.name || 'Item',
+          name: item.product_snapshot?.name || 'Item',
         },
-        unit_amount: Math.max(1, Math.round((item.price || 0) * 100)),
+        unit_amount: Math.max(1, Math.round(Number(item.price) * 100)),
       },
-      quantity: item.quantity || 1,
+      quantity: Math.max(1, Number(item.quantity) || 1),
     }))
 
-    if (tip_amount > 0) {
+    if (tipAmount > 0) {
       lineItems.push({
         price_data: {
           currency: 'gbp',
-          product_data: {
-            name: 'Tip',
-          },
-          unit_amount: Math.round(tip_amount * 100),
+          product_data: { name: 'Tip' },
+          unit_amount: Math.round(tipAmount * 100),
         },
         quantity: 1,
       })
     }
 
-    // 5. Calculate platform fee (Excludes tip)
-    const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    const applicationFeeAmount = Math.round(itemsTotal * PLATFORM_FEE_PERCENT * 100)
-
-    // 6. Create Stripe Checkout Session
+    const applicationFeeAmount = Math.round(storedSubtotal * PLATFORM_FEE_PERCENT * 100)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${returnUrl}?success=true&order_id=${order_id}`,
-      cancel_url: `${returnUrl}?canceled=true`,
+      success_url: `${returnUrl}?success=true&order_id=${orderId}`,
+      cancel_url: `${returnUrl}?canceled=true&order_id=${orderId}`,
       metadata: {
-        order_id: order_id,
+        order_id: orderId,
         store_id: order.store_id,
       },
       payment_intent_data: {
@@ -155,31 +157,30 @@ serve(async (req: Request) => {
           destination: store.stripe_account_id,
         },
         metadata: {
-          order_id: order_id,
+          order_id: orderId,
+          store_id: order.store_id,
         },
       },
     })
 
-    // 7. Update order with session tracking
-    await supabase
+    const { error: updateError } = await supabase
       .from('orders')
-      .update({ 
+      .update({
         checkout_session_id: session.id,
-        tip_amount: tip_amount,
-        platform_fee: itemsTotal * PLATFORM_FEE_PERCENT
+        tip_amount: tipAmount,
+        platform_fee: applicationFeeAmount / 100,
       })
-      .eq('id', order_id)
+      .eq('id', orderId)
 
-    return new Response(
-      JSON.stringify({ sessionId: session.id, url: session.url }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    )
+    if (updateError) {
+      throw updateError
+    }
+
+    return jsonResponse({ sessionId: session.id, url: session.url }, 200, origin)
   } catch (err: unknown) {
-    const error = err as Error;
+    const error = err as Error
     log.error('Checkout session creation failed', { error: error.message, stack: error.stack })
-    return new Response(
-      JSON.stringify({ error: error.message || 'Payment initialization failed' }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
+    const status = error.message.includes('token') ? 401 : 400
+    return jsonResponse({ error: error.message || 'Payment initialization failed' }, status, origin)
   }
 })
