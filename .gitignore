@@ -32,7 +32,9 @@ dist-ssr
 # dotenvx
 .env.keys
 .env.local
+.env.functions
 .env.*.local
 coverage
 playwright-report
 test-results
+
