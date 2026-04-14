@@ -14,7 +14,7 @@ export const useUpdateOrderStatus = () => {
 
     return useMutation({
         mutationFn: ({ orderId, status }) => OrderService.updateOrderStatus(orderId, status),
-        onSuccess: (data, variables) => {
+        onSuccess: () => {
             // Invalidate the store orders query to trigger a refetch
             // We could also do optimistic updates here, but invalidating is safer for now.
             queryClient.invalidateQueries({ queryKey: ['storeOrders'] });

@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
+import { AdminService } from '../../lib/services/admin.service';
+import { RefundService } from '../../lib/services/refund.service';
+import { useToast } from '../../components/ui/Toast';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
-    const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, activeVendors: 0 });
+    const { addToast } = useToast();
+    const [loading, setLoading] = useState(true);
+    const [refundingOrderId, setRefundingOrderId] = useState(null);
+    const [stats, setStats] = useState({
+        totalOrders: 0,
+        activeOrders: 0,
+        paidRevenue: 0,
+        refundedRevenue: 0,
+        statusCounts: {},
+        vendors: [],
+        notifications: { total: 0, failed: 0, whatsapp_failed: 0, email_failed: 0 },
+    });
     const [recentOrders, setRecentOrders] = useState([]);
 
     useEffect(() => {
@@ -14,55 +28,47 @@ export default function AdminDashboard() {
             return;
         }
 
-        checkAuth();
-        fetchStats();
-
-        // Subscribe to real-time order updates
-        const ordersSubscription = supabase
-            .channel('admin-order-updates')
-            .on('postgres_changes', { event: '*', table: 'orders', schema: 'public' }, () => {
-                fetchStats();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(ordersSubscription);
-        };
+        checkAuthAndLoad();
     }, []);
 
-    async function checkAuth() {
-        const session = await AuthService.getSession();
-        if (!session) {
-            navigate('/admin/login');
+    async function checkAuthAndLoad() {
+        try {
+            const session = await AuthService.getSession();
+            if (!session) {
+                navigate('/login');
+                return;
+            }
+
+            await refreshDashboard();
+        } catch (error) {
+            console.error('Error fetching admin dashboard:', error);
+            addToast('Failed to load admin dashboard.', 'error');
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function fetchStats() {
+    async function refreshDashboard() {
         try {
-            // Fetch total orders and revenue
-            const { data: orders } = await supabase
-                .from('orders')
-                .select('total, created_at, id, status, customer_phone')
-                .order('created_at', { ascending: false })
-                .limit(10);
-
-            const totalRevenue = orders?.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
-
-            // Fetch active stores (vendors)
-            const { data: stores } = await supabase
-                .from('stores')
-                .select('id')
-                .eq('status', 'active');
+            const [metrics, orders] = await Promise.all([
+                AdminService.getDashboardMetrics(),
+                AdminService.getRecentOrders(20),
+            ]);
 
             setStats({
-                totalOrders: orders?.length || 0,
-                totalRevenue,
-                activeVendors: stores?.length || 0
+                totalOrders: metrics?.totalOrders || 0,
+                activeOrders: metrics?.activeOrders || 0,
+                paidRevenue: parseFloat(metrics?.paidRevenue || 0),
+                refundedRevenue: parseFloat(metrics?.refundedRevenue || 0),
+                statusCounts: metrics?.statusCounts || {},
+                vendors: metrics?.vendors || [],
+                notifications: metrics?.notifications || { total: 0, failed: 0, whatsapp_failed: 0, email_failed: 0 },
             });
 
             setRecentOrders(orders || []);
         } catch (error) {
             console.error('Error fetching stats:', error);
+            throw error;
         }
     }
 
@@ -70,7 +76,32 @@ export default function AdminDashboard() {
         if (isSupabaseConfigured()) {
             await AuthService.signOut();
         }
-        navigate('/admin/login');
+        navigate('/login');
+    }
+
+    async function handleRefund(orderId) {
+        const reason = window.prompt('Refund reason', 'Pilot support refund');
+        if (reason === null) return;
+
+        try {
+            setRefundingOrderId(orderId);
+            await RefundService.refundOrder(orderId, reason);
+            addToast('Refund submitted successfully.', 'success');
+            await refreshDashboard();
+        } catch (error) {
+            console.error('Refund failed:', error);
+            addToast(error.message || 'Refund failed.', 'error');
+        } finally {
+            setRefundingOrderId(null);
+        }
+    }
+
+    if (loading) {
+        return (
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="spinner" style={{ width: '40px', height: '40px' }}></div>
+            </div>
+        );
     }
 
     return (
@@ -92,11 +123,11 @@ export default function AdminDashboard() {
                 {/* Stats Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px', marginBottom: '40px' }}>
                     <div className="card">
-                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Total Orders</h3>
+                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>All Orders</h3>
                         <p style={{ fontSize: '36px', fontWeight: '800', color: 'var(--accent)' }}>{stats.totalOrders}</p>
                     </div>
                     <div className="card">
-                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Total Revenue</h3>
+                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Active Orders</h3>
                         <p style={{ fontSize: '36px', fontWeight: '800', color: 'var(--accent)' }}>£{stats.totalRevenue.toFixed(2)}</p>
                     </div>
                     <div className="card">

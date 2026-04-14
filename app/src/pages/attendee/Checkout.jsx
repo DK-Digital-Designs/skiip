@@ -11,7 +11,7 @@ import { useToast } from '../../components/ui/Toast';
 export default function Checkout() {
     const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
-    const { items, getCartTotal, vendorId, clearCart } = useCart();
+    const { items, getCartTotal, vendorId } = useCart();
     const { addToast } = useToast();
 
     // Missing state variables
@@ -30,6 +30,11 @@ export default function Checkout() {
     const total = subtotal + tipAmount;
 
     useEffect(() => {
+        if (!authLoading && !user) {
+            navigate('/login', { state: { from: { pathname: '/order/checkout' } }, replace: true });
+            return;
+        }
+
         // Pre-fill from profile if available (priority) or user object
         if (profile) {
             if (profile.email && !email) setEmail(profile.email);
@@ -41,7 +46,7 @@ export default function Checkout() {
         if (vendorId) {
             fetchVendor();
         }
-    }, [user, profile, authLoading, vendorId]);
+    }, [user, profile, authLoading, vendorId, navigate]);
 
     const handleTipSelect = (percent) => {
         setSelectedTipPercent(percent);
@@ -79,6 +84,13 @@ export default function Checkout() {
                 return;
             }
 
+            if (!user) {
+                addToast('Please sign in before placing an order.', 'error');
+                navigate('/login', { state: { from: { pathname: '/order/checkout' } } });
+                setProcessing(false);
+                return;
+            }
+
             // 1. Validation
             if (!email || !phone) {
                 addToast('Please provide both an email and a phone number.', 'error');
@@ -100,14 +112,12 @@ export default function Checkout() {
             }
 
             const order = await OrderService.createOrder({
-                store_id: vendorId,
                 items: items,
-                total: total,
                 customer_email: email || user?.email,
                 customer_phone: phone,
                 whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
-                user_id: user?.id || null // Support guest checkout
+                tip_amount: tipAmount
             });
 
             // 3. Process Payment via Stripe
@@ -115,8 +125,6 @@ export default function Checkout() {
 
             const session = await StripeService.createCheckoutSession({
                 orderId: order.id,
-                items: items,
-                tip_amount: tipAmount,
                 returnUrl: window.location.origin + '/#/order/track'
             });
 
@@ -141,6 +149,7 @@ export default function Checkout() {
     }
 
     if (authLoading) return <div>Loading...</div>;
+    if (!user) return null;
     if (!items.length) {
         return (
             <div className="container" style={{ padding: '60px', textAlign: 'center' }}>

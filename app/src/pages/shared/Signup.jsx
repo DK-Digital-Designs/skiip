@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthService } from '../../lib/services/auth.service';
 import { useToast } from '../../components/ui/Toast';
 
 export default function UnifiedSignup() {
-    const navigate = useNavigate();
-    const location = useLocation();
     const { addToast } = useToast();
 
     const [formData, setFormData] = useState({ email: '', password: '', fullName: '' });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [done, setDone] = useState(false); // confirmation state
-
-    const from = location.state?.from?.pathname || '/order';
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 

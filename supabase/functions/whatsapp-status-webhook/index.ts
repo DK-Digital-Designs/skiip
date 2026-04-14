@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
+import { createServiceClient } from "../_shared/service.ts"
 
 const log = logger('whatsapp-status-webhook')
 
@@ -47,7 +47,11 @@ serve(async (req) => {
     }
 
     const authHeader = req.headers.get('authorization')
-    if (TWILIO_WEBHOOK_TOKEN && authHeader !== `Bearer ${TWILIO_WEBHOOK_TOKEN}`) {
+    const url = new URL(req.url)
+    const queryToken = url.searchParams.get('token')
+    const headerMatches = authHeader === `Bearer ${TWILIO_WEBHOOK_TOKEN}`
+    const queryMatches = queryToken === TWILIO_WEBHOOK_TOKEN
+    if (TWILIO_WEBHOOK_TOKEN && !headerMatches && !queryMatches) {
       return new Response(JSON.stringify({ error: 'unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -74,7 +78,7 @@ serve(async (req) => {
       })
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    const supabase = createServiceClient()
 
     const { error: updateError } = await supabase
       .from('notification_logs')
@@ -83,6 +87,7 @@ serve(async (req) => {
         error_message: status === 'failed' ? errorMessage || 'Unknown delivery failure' : null,
       })
       .eq('message_sid', messageSid)
+      .eq('channel', 'whatsapp')
 
     if (updateError) {
       throw new Error(`Failed to update log status: ${updateError.message}`)

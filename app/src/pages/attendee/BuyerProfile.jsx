@@ -12,7 +12,7 @@ export default function BuyerProfile() {
     useEffect(() => {
         if (authLoading) return;
         if (!user) {
-            navigate('/order/login', { replace: true });
+            navigate('/login', { replace: true });
             return;
         }
 

@@ -400,7 +400,7 @@ entrypoint = "./functions/stripe-checkout/index.ts"
 
 [functions.stripe-webhook]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/stripe-webhook/deno.json"
 entrypoint = "./functions/stripe-webhook/index.ts"
 
@@ -409,3 +409,31 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-onboarding-link/deno.json"
 entrypoint = "./functions/stripe-onboarding-link/index.ts"
+
+[functions.order-create]
+enabled = true
+verify_jwt = true
+import_map = "./functions/order-create/deno.json"
+entrypoint = "./functions/order-create/index.ts"
+
+[functions.order-transition]
+enabled = true
+verify_jwt = true
+import_map = "./functions/order-transition/deno.json"
+entrypoint = "./functions/order-transition/index.ts"
+
+[functions.stripe-refund]
+enabled = true
+verify_jwt = true
+import_map = "./functions/stripe-refund/deno.json"
+entrypoint = "./functions/stripe-refund/index.ts"
+
+[functions.whatsapp-notify]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/whatsapp-notify/index.ts"
+
+[functions.whatsapp-status-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/whatsapp-status-webhook/index.ts"

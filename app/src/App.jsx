@@ -16,7 +16,7 @@ import VendorSignup from './pages/vendor/Signup';
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
 
-import AdminDashboard from './pages/admin/Dashboard';
+import AdminDashboard from './pages/admin/DashboardV2';
 import AdminVendors from './pages/admin/Vendors';
 import AdminEvents from './pages/admin/Events';
 import NotFound from './pages/NotFound';

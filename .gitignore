@@ -33,3 +33,6 @@ dist-ssr
 .env.keys
 .env.local
 .env.*.local
+coverage
+playwright-report
+test-results

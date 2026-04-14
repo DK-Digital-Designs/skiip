@@ -1,8 +1,9 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
+import { createServiceClient } from "../_shared/service.ts"
+import { sendTransactionalNotifications } from "../_shared/notifications.ts"
 
 const log = logger('stripe-webhook')
 
@@ -33,13 +34,7 @@ serve(async (req: Request) => {
 
     const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret)
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase environment variables are not configured')
-    }
-
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseClient = createServiceClient()
 
     const { data: insertedEvent, error: idempotencyError } = await supabaseClient
       .from('stripe_processed_events')
@@ -64,7 +59,25 @@ serve(async (req: Request) => {
       const session = event.data.object as any
       const orderId = session.metadata.order_id
 
-      const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent)
+      const { data: order, error: orderLookupError } = await supabaseClient
+        .from('orders')
+        .select('id, total, store_id, inventory_committed_at, inventory_restocked_at')
+        .eq('id', orderId)
+        .single()
+
+      if (orderLookupError || !order) {
+        throw orderLookupError || new Error('Order not found during webhook processing')
+      }
+
+      const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent, {
+        expand: ['latest_charge.balance_transaction'],
+      })
+
+      const latestCharge = paymentIntent.latest_charge as any
+      const balanceTransaction = latestCharge?.balance_transaction as any
+      const applicationFeeAmount = Number(paymentIntent.application_fee_amount || 0) / 100
+      const stripeFee = Number(balanceTransaction?.fee || 0) / 100
+      const vendorNet = Number(order.total || 0) - applicationFeeAmount - stripeFee
 
       const { error: orderError } = await supabaseClient
         .from('orders')
@@ -72,7 +85,11 @@ serve(async (req: Request) => {
           status: 'paid',
           payment_status: 'succeeded',
           payment_intent_id: session.payment_intent,
-          charge_id: paymentIntent.latest_charge,
+          charge_id: latestCharge?.id || paymentIntent.latest_charge,
+          paid_at: new Date().toISOString(),
+          platform_fee: applicationFeeAmount,
+          stripe_fee: stripeFee,
+          vendor_net: vendorNet,
         })
         .eq('id', orderId)
         .neq('payment_status', 'succeeded')
@@ -81,23 +98,72 @@ serve(async (req: Request) => {
         throw orderError
       }
 
-      const { data: orderItems, error: itemsError } = await supabaseClient
-        .from('order_items')
-        .select('product_id, quantity')
-        .eq('order_id', orderId)
+      const { error: inventoryError } = await supabaseClient.rpc('finalize_paid_order_inventory', {
+        p_order_id: orderId,
+      })
 
-      if (itemsError) {
-        log.error('Error fetching order items for stock decrement', { orderId, error: itemsError })
-      } else if (orderItems) {
-        for (const item of orderItems) {
-          const { error: decrementError } = await supabaseClient.rpc('decrement_inventory', {
-            product_id: item.product_id,
-            quantity_to_decrement: item.quantity,
+      if (inventoryError) {
+        log.error('Inventory finalization failed after payment; refunding order', { orderId, error: inventoryError })
+
+        const refund = await stripe.refunds.create({
+          payment_intent: session.payment_intent,
+          reason: 'requested_by_customer',
+          metadata: { order_id: orderId, auto_refund_reason: 'inventory_unavailable' },
+        })
+
+        await supabaseClient
+          .from('orders')
+          .update({
+            status: 'refunded',
+            payment_status: 'refunded',
+            refund_id: refund.id,
+            refund_amount: Number(order.total || 0),
+            refund_reason: 'Automatic refund: insufficient inventory at payment capture',
+            refunded_at: new Date().toISOString(),
           })
-          if (decrementError) {
-            log.error('Failed to decrement inventory', { productId: item.product_id, error: decrementError })
-          }
-        }
+          .eq('id', orderId)
+
+        await supabaseClient.from('audit_logs').insert({
+          event_type: 'order_refunded',
+          entity_type: 'order',
+          entity_id: orderId,
+          actor_role: 'system',
+          payload: {
+            reason: 'inventory_unavailable',
+            refund_id: refund.id,
+          },
+        })
+
+        await sendTransactionalNotifications({
+          supabase: supabaseClient,
+          orderId,
+          eventType: 'order_refunded',
+        })
+      } else {
+        await supabaseClient
+          .from('orders')
+          .update({
+            inventory_committed_at: new Date().toISOString(),
+          })
+          .eq('id', orderId)
+
+        await supabaseClient.from('audit_logs').insert({
+          event_type: 'payment_captured',
+          entity_type: 'order',
+          entity_id: orderId,
+          actor_role: 'system',
+          payload: {
+            checkout_session_id: session.id,
+            payment_intent_id: session.payment_intent,
+            charge_id: latestCharge?.id || paymentIntent.latest_charge,
+          },
+        })
+
+        await sendTransactionalNotifications({
+          supabase: supabaseClient,
+          orderId,
+          eventType: 'order_paid',
+        })
       }
     } else if (event.type === 'account.updated') {
       const account = event.data.object as any
@@ -113,7 +179,13 @@ serve(async (req: Request) => {
       if (orderId) {
         await supabaseClient
           .from('orders')
-          .update({ status: 'refunded', payment_status: 'refunded' })
+          .update({
+            status: 'refunded',
+            payment_status: 'refunded',
+            refunded_at: new Date().toISOString(),
+            refund_id: charge.refunds?.data?.[0]?.id || null,
+            refund_amount: Number(charge.amount_refunded || 0) / 100,
+          })
           .eq('id', orderId)
       }
     } else if (event.type === 'charge.dispute.created') {

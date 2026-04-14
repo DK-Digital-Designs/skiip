@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
+import { supabase } from '../../lib/supabase';
 
 // Role-based route mapping
 function getDashboardRoute(role) {
@@ -49,7 +50,7 @@ export default function UnifiedLogin() {
                     .eq('id', authUser.id)
                     .single();
                 if (profileData?.role) role = profileData.role;
-            } catch (_) {
+            } catch {
                 // If profile fetch fails, default to buyer flow
             }
 

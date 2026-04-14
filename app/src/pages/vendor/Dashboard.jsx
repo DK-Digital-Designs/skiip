@@ -25,7 +25,7 @@ export default function VendorDashboard() {
     const { addToast } = useToast();
 
     // React Query Hooks
-    const { data: orders = [], isLoading: isOrdersLoading, refetch: fetchOrders } = useStoreOrders(store?.id, filter);
+    const { data: orders = [], refetch: fetchOrders } = useStoreOrders(store?.id, filter);
     const updateOrderStatusMutation = useUpdateOrderStatus();
 
     useEffect(() => {
@@ -63,7 +63,7 @@ export default function VendorDashboard() {
 
             const session = await AuthService.getSession();
             if (!session) {
-                navigate('/vendor/login');
+                navigate('/login');
                 return;
             }
 
@@ -79,7 +79,7 @@ export default function VendorDashboard() {
         } catch (error) {
             console.error('Auth check failed with specific error:', error);
             addToast(`Auth error: ${error.message || 'Unknown error'}`, 'error');
-            navigate('/vendor/login');
+            navigate('/login');
         } finally {
             setLoading(false);
         }
@@ -109,7 +109,7 @@ export default function VendorDashboard() {
         if (isSupabaseConfigured()) {
             await AuthService.signOut();
         }
-        navigate('/vendor/login');
+        navigate('/login');
     }
 
     function playNotificationSound() {
@@ -163,6 +163,7 @@ export default function VendorDashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button onClick={() => navigate('/vendor/products')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Manage Products</button>
+                        <button onClick={handleLogout} className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: '14px' }}>Logout</button>
                     </div>
                 </div>
             </header>
