@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getFunctionAuthHeaders } from './function-auth';
 
 export const StripeService = {
     /**
@@ -9,8 +10,10 @@ export const StripeService = {
      */
     async createCheckoutSession({ orderId, returnUrl }) {
         if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
 
         const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+            headers,
             body: {
                 orderDetails: {
                     order_id: orderId
@@ -43,8 +46,10 @@ export const StripeService = {
      */
     async createOnboardingLink({ storeId, returnUrl, refreshUrl }) {
         if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
 
         const { data, error } = await supabase.functions.invoke('stripe-onboarding-link', {
+            headers,
             body: {
                 store_id: storeId,
                 return_url: returnUrl,

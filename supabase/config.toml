@@ -389,7 +389,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.stripe-checkout]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/stripe-checkout/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -412,19 +412,19 @@ entrypoint = "./functions/stripe-onboarding-link/index.ts"
 
 [functions.order-create]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/order-create/deno.json"
 entrypoint = "./functions/order-create/index.ts"
 
 [functions.order-transition]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/order-transition/deno.json"
 entrypoint = "./functions/order-transition/index.ts"
 
 [functions.stripe-refund]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/stripe-refund/deno.json"
 entrypoint = "./functions/stripe-refund/index.ts"
 
