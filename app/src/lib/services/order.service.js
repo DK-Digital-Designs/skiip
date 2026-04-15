@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getFunctionAuthHeaders } from './function-auth';
 
 export const OrderService = {
     /**
@@ -6,6 +7,7 @@ export const OrderService = {
      */
     async createOrder({ items, customer_email, customer_phone, notes, tip_amount = 0, whatsapp_opt_in = false }) {
         if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
 
         const payload = {
             items: items.map((item) => ({
@@ -20,6 +22,7 @@ export const OrderService = {
         };
 
         const { data, error } = await supabase.functions.invoke('order-create', {
+            headers,
             body: payload,
         });
 
@@ -73,8 +76,10 @@ export const OrderService = {
      */
     async updateOrderStatus(orderId, status) {
         if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
 
         const { data, error } = await supabase.functions.invoke('order-transition', {
+            headers,
             body: {
                 orderId,
                 status,
