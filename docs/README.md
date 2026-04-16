@@ -12,6 +12,10 @@ If a statement in an old note, thread, or handover file conflicts with these doc
   Describes what is implemented now, what is working, and what is intentionally deferred.
 - [Deployment](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md)
   Covers environments, secrets, migrations, edge-function deploys, webhooks, and release verification.
+- [Secrets and Environments](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md)
+  Tracks required environment variables, pilot auth decisions, CORS/origin expectations, and secret rotation discipline.
+- [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md)
+  Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
 - [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
   Covers launch rehearsal, order lifecycle, refunds, incident handling, and troubleshooting.
 - [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md)

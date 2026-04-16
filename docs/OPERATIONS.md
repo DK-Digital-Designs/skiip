@@ -1,5 +1,7 @@
 # Operations
 
+Detailed cutover, rollback, and launch-gate steps live in [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md). This file stays focused on day-to-day operational flow and troubleshooting.
+
 ## Order Lifecycle
 
 Current intended order state flow:
@@ -35,6 +37,10 @@ Review:
 - unexpected inventory changes
 - refund activity
 
+Weekday staging smoke:
+- review the latest staging smoke run for public-route and sign-in regressions
+- if it fails, treat it as a deployment/auth/config warning first, not as proof of a payment-path incident
+
 Useful tables:
 - `orders`
 - `order_items`
@@ -56,12 +62,29 @@ Likely causes:
 - missing schema objects required by the webhook
 - webhook endpoint targeting the wrong environment
 
+If this affects more than one order, pause new order intake before retrying payment-side operations.
+
 ### Buyer gets 401 on protected edge function
 Check:
 - frontend is pointing at the correct Supabase project
 - session exists in the browser
 - auth header is being forwarded by the client
 - function still calls `requireUser()`
+- `ALLOWED_ORIGINS` still includes the active frontend origin
+- staging smoke results for buyer, seller, and admin sign-in
+
+### Buyer reports payment failure at checkout
+Check:
+- Stripe event delivery for `payment_intent.payment_failed`
+- `orders.payment_status`
+- `orders.payment_failed_at`
+- `orders.payment_failure_code`
+- `orders.payment_failure_message`
+- `audit_logs` entries for `payment_failed`
+
+Operational note:
+- failed payments now leave the order in the pending order flow with `payment_status = failed`
+- the buyer can retry checkout on the same order after the next checkout session is created
 
 ### Vendor cannot change order status
 Check:
@@ -81,6 +104,7 @@ Check:
 - `notification_logs`
 - provider secrets
 - webhook callbacks for the selected provider
+- whether the provider is intentionally optional in the current environment
 
 ## Refund Handling
 

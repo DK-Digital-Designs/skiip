@@ -3,7 +3,7 @@ import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
-import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
+import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
 import { requireUser } from "../_shared/auth.ts"
 
 const log = logger('stripe-onboarding-link')
@@ -23,17 +23,6 @@ interface OnboardingRequest {
   refresh_url: string
 }
 
-function validateRedirect(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    const isHttps = parsed.protocol === 'https:'
-    const isLocalDev = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
-    return isHttps || isLocalDev
-  } catch {
-    return false
-  }
-}
-
 serve(async (req: Request) => {
   const origin = req.headers.get('origin')
   const corsHeaders = buildCorsHeaders(origin)
@@ -44,6 +33,11 @@ serve(async (req: Request) => {
 
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405, origin)
+  }
+
+  if (!isAllowedOrigin(origin)) {
+    log.warn('Rejected request from disallowed origin', { origin })
+    return jsonResponse({ error: 'Origin not allowed' }, 403, origin)
   }
 
   try {
@@ -61,7 +55,7 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Missing required fields: store_id, return_url, refresh_url' }, 400, origin)
     }
 
-    if (!validateRedirect(return_url) || !validateRedirect(refresh_url)) {
+    if (!isAllowedRedirectUrl(return_url) || !isAllowedRedirectUrl(refresh_url)) {
       return jsonResponse({ error: 'Invalid redirect URL' }, 400, origin)
     }
 
