@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const requireAuthCredentials = process.env.PLAYWRIGHT_REQUIRE_AUTH_CREDENTIALS === 'true';
+
 const authScenarios = [
   {
     label: 'buyer',
@@ -23,6 +25,15 @@ const authScenarios = [
     readyLocator: (page) => page.getByRole('heading', { name: /admin dashboard/i }),
   },
 ];
+
+function getMissingAuthEnvVars() {
+  return authScenarios.flatMap((scenario) => {
+    const missing = [];
+    if (!process.env[scenario.emailEnv]) missing.push(scenario.emailEnv);
+    if (!process.env[scenario.passwordEnv]) missing.push(scenario.passwordEnv);
+    return missing;
+  });
+}
 
 function appPath(path) {
   return path === '/' ? '/' : `/#${path}`;
@@ -55,15 +66,28 @@ test.describe('public smoke', () => {
 });
 
 test.describe('authenticated smoke', () => {
+  test.beforeAll(() => {
+    if (!requireAuthCredentials) return;
+
+    const missingEnvVars = getMissingAuthEnvVars();
+    if (missingEnvVars.length > 0) {
+      throw new Error(
+        `Authenticated smoke requires these environment variables in CI: ${missingEnvVars.join(', ')}`,
+      );
+    }
+  });
+
   for (const scenario of authScenarios) {
     test(`${scenario.label} can sign in and reach the expected surface`, async ({ page }) => {
       const email = process.env[scenario.emailEnv];
       const password = process.env[scenario.passwordEnv];
 
-      test.skip(
-        !email || !password,
-        `Set ${scenario.emailEnv} and ${scenario.passwordEnv} to enable the ${scenario.label} smoke test.`,
-      );
+      if (!requireAuthCredentials) {
+        test.skip(
+          !email || !password,
+          `Set ${scenario.emailEnv} and ${scenario.passwordEnv} to enable the ${scenario.label} smoke test.`,
+        );
+      }
 
       await signIn(page, email, password);
       await expect(page).toHaveURL(scenario.expectedUrl);

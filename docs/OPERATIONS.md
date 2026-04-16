@@ -37,6 +37,10 @@ Review:
 - unexpected inventory changes
 - refund activity
 
+Weekday staging smoke:
+- review the latest staging smoke run for public-route and sign-in regressions
+- if it fails, treat it as a deployment/auth/config warning first, not as proof of a payment-path incident
+
 Useful tables:
 - `orders`
 - `order_items`
@@ -67,6 +71,7 @@ Check:
 - auth header is being forwarded by the client
 - function still calls `requireUser()`
 - `ALLOWED_ORIGINS` still includes the active frontend origin
+- staging smoke results for buyer, seller, and admin sign-in
 
 ### Buyer reports payment failure at checkout
 Check:

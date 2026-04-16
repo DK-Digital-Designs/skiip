@@ -144,6 +144,23 @@ After any meaningful backend deploy:
 6. confirm admin dashboard loads metrics
 7. confirm refund flow still works
 
+## Staging Smoke Workflow
+
+The deployed auth smoke lane lives in [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml).
+
+Current purpose:
+- validate that the deployed staging frontend is reachable
+- validate public routing
+- validate buyer, seller, and admin sign-in surfaces
+
+For the exact GitHub environment setup steps, required secrets, and first-run checklist, see [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md).
+
+Current limit:
+- this workflow is not yet the full payment-path rehearsal
+- it does not create orders, open Stripe Checkout, verify webhook transitions, or execute refunds
+
+Use it as an early warning for deployment drift and auth/config regressions, not as proof that the full launch-critical payment loop is healthy.
+
 For production cutovers, rollback sequencing, and incident handling, use [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md) rather than relying on this short verification list alone.
 
 ## Current Auth Deployment Note
