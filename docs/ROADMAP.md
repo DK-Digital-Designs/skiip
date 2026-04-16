@@ -143,6 +143,7 @@ These items matter, but they do not block a safe first launch if the Priority 1 
 - Add Apple SSO.
 - Decide whether passwordless or magic-link flows are desirable after launch.
 - Revisit whether email confirmation should return once SMTP and support processes are stronger.
+- Add a buyer settings/profile page that stores default checkout details such as country, email, and phone number, then reuse that data at checkout and for phone normalization instead of relying on a single deployment default.
 
 ### Notification Strategy
 
