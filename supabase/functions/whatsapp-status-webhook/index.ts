@@ -3,21 +3,15 @@ import { logger } from "../_shared/logger.ts"
 import { createServiceClient } from "../_shared/service.ts"
 
 const log = logger('whatsapp-status-webhook')
-
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-const TWILIO_WEBHOOK_TOKEN = Deno.env.get('TWILIO_WEBHOOK_TOKEN')
+const encoder = new TextEncoder()
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hub-signature-256',
 }
 
 const mapStatus = (providerStatus: string | null) => {
   switch ((providerStatus || '').toLowerCase()) {
-    case 'queued':
-    case 'accepted':
-      return 'queued'
     case 'sent':
       return 'sent'
     case 'delivered':
@@ -25,11 +19,53 @@ const mapStatus = (providerStatus: string | null) => {
     case 'read':
       return 'read'
     case 'failed':
-    case 'undelivered':
       return 'failed'
     default:
       return null
   }
+}
+
+function toHex(buffer: ArrayBuffer) {
+  return Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+async function computeMetaSignature(rawBody: string, secret: string) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody))
+  return `sha256=${toHex(signature)}`
+}
+
+function safeCompare(left: string, right: string) {
+  if (left.length !== right.length) {
+    return false
+  }
+
+  let mismatch = 0
+  for (let i = 0; i < left.length; i += 1) {
+    mismatch |= left.charCodeAt(i) ^ right.charCodeAt(i)
+  }
+
+  return mismatch === 0
+}
+
+function getMetaStatusErrorMessage(errors: any[] | undefined) {
+  if (!errors?.length) {
+    return 'Unknown delivery failure'
+  }
+
+  return errors.find((error) => typeof error?.message === 'string')?.message
+    || errors.find((error) => typeof error?.title === 'string')?.title
+    || errors.find((error) => typeof error?.error_data?.details === 'string')?.error_data?.details
+    || 'Unknown delivery failure'
 }
 
 serve(async (req) => {
@@ -37,68 +73,94 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  if (req.method === 'GET') {
+    const url = new URL(req.url)
+    const mode = url.searchParams.get('hub.mode')
+    const verifyToken = url.searchParams.get('hub.verify_token')
+    const challenge = url.searchParams.get('hub.challenge')
+    const expectedVerifyToken = Deno.env.get('META_WEBHOOK_VERIFY_TOKEN')
+
+    if (mode === 'subscribe' && verifyToken && expectedVerifyToken && verifyToken === expectedVerifyToken && challenge) {
+      return new Response(challenge, {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
+      })
+    }
+
+    return new Response('Forbidden', { status: 403, headers: corsHeaders })
+  }
+
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders })
   }
 
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing Supabase service role environment variables')
+    const rawBody = await req.text()
+    const signatureHeader = req.headers.get('x-hub-signature-256')
+    const metaAppSecret = Deno.env.get('META_APP_SECRET')
+
+    if (metaAppSecret) {
+      const expectedSignature = await computeMetaSignature(rawBody, metaAppSecret)
+      if (!signatureHeader || !safeCompare(signatureHeader, expectedSignature)) {
+        return new Response(JSON.stringify({ error: 'unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    } else {
+      log.warn('META_APP_SECRET is not configured; skipping Meta webhook signature verification')
     }
 
-    const authHeader = req.headers.get('authorization')
-    const url = new URL(req.url)
-    const queryToken = url.searchParams.get('token')
-    const headerMatches = authHeader === `Bearer ${TWILIO_WEBHOOK_TOKEN}`
-    const queryMatches = queryToken === TWILIO_WEBHOOK_TOKEN
-    if (TWILIO_WEBHOOK_TOKEN && !headerMatches && !queryMatches) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const body = await req.text()
-    const params = new URLSearchParams(body)
-
-    const messageSid = params.get('MessageSid')
-    const providerStatus = params.get('MessageStatus')
-    const errorMessage = params.get('ErrorMessage')
-
-    if (!messageSid || !providerStatus) {
-      return new Response(JSON.stringify({ skipped: true, reason: 'Missing MessageSid or MessageStatus' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const status = mapStatus(providerStatus)
-    if (!status) {
-      return new Response(JSON.stringify({ skipped: true, reason: `Unmapped status: ${providerStatus}` }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
+    const payload = rawBody ? JSON.parse(rawBody) : {}
     const supabase = createServiceClient()
+    let processedCount = 0
 
-    const { error: updateError } = await supabase
-      .from('notification_logs')
-      .update({
-        status,
-        error_message: status === 'failed' ? errorMessage || 'Unknown delivery failure' : null,
-      })
-      .eq('message_sid', messageSid)
-      .eq('channel', 'whatsapp')
+    for (const entry of payload?.entry || []) {
+      for (const change of entry?.changes || []) {
+        const statuses = change?.value?.statuses
+        if (!Array.isArray(statuses)) {
+          continue
+        }
 
-    if (updateError) {
-      throw new Error(`Failed to update log status: ${updateError.message}`)
+        for (const providerStatusRecord of statuses) {
+          const messageSid = providerStatusRecord?.id || null
+          const providerStatus = providerStatusRecord?.status || null
+
+          if (!messageSid || !providerStatus) {
+            continue
+          }
+
+          const status = mapStatus(providerStatus)
+          if (!status) {
+            log.warn('Unmapped Meta WhatsApp status received', { messageSid, providerStatus })
+            continue
+          }
+
+          const { error: updateError } = await supabase
+            .from('notification_logs')
+            .update({
+              status,
+              error_message: status === 'failed'
+                ? getMetaStatusErrorMessage(providerStatusRecord?.errors)
+                : null,
+            })
+            .eq('message_sid', messageSid)
+            .eq('channel', 'whatsapp')
+
+          if (updateError) {
+            throw new Error(`Failed to update log status: ${updateError.message}`)
+          }
+
+          processedCount += 1
+          log.info('WhatsApp delivery status updated', { messageSid, providerStatus, status })
+        }
+      }
     }
 
-    log.info('WhatsApp delivery status updated', { messageSid, providerStatus, status })
-
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, processedCount }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-  } catch (error) {
+  } catch (error: any) {
     log.error('Failed to process webhook', { error: error.message, stack: error.stack })
 
     return new Response(JSON.stringify({ error: error.message }), {

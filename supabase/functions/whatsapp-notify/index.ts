@@ -4,6 +4,8 @@ import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { sendTransactionalNotifications } from "../_shared/notifications.ts"
 
+// This bridge remains because the repo still contains deployment and database-trigger
+// dependencies for the route, and SQL cleanup is intentionally out of scope here.
 const log = logger('whatsapp-notify')
 
 const EVENT_MAP: Record<string, 'order_paid' | 'order_preparing' | 'order_ready' | 'order_cancelled' | 'order_refunded'> = {
