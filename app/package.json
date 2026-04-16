@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "seed:test-users": "node scripts/seed-test-users.js",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
   },

@@ -1,5 +1,7 @@
 # Operations
 
+Detailed cutover, rollback, and launch-gate steps live in [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md). This file stays focused on day-to-day operational flow and troubleshooting.
+
 ## Order Lifecycle
 
 Current intended order state flow:
@@ -56,12 +58,15 @@ Likely causes:
 - missing schema objects required by the webhook
 - webhook endpoint targeting the wrong environment
 
+If this affects more than one order, pause new order intake before retrying payment-side operations.
+
 ### Buyer gets 401 on protected edge function
 Check:
 - frontend is pointing at the correct Supabase project
 - session exists in the browser
 - auth header is being forwarded by the client
 - function still calls `requireUser()`
+- `ALLOWED_ORIGINS` still includes the active frontend origin
 
 ### Vendor cannot change order status
 Check:
@@ -81,6 +86,7 @@ Check:
 - `notification_logs`
 - provider secrets
 - webhook callbacks for the selected provider
+- whether the provider is intentionally optional in the current environment
 
 ## Refund Handling
 
