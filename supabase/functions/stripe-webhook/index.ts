@@ -18,6 +18,15 @@ const stripe = new Stripe(stripeSecretKey, {
 
 const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
 
+function getPaymentFailureDetails(paymentIntent: Stripe.PaymentIntent) {
+  const error = paymentIntent.last_payment_error
+
+  return {
+    failureCode: error?.code || error?.decline_code || null,
+    failureMessage: error?.message || null,
+  }
+}
+
 serve(async (req: Request) => {
   const signature = req.headers.get('stripe-signature')
   if (!signature) {
@@ -87,6 +96,9 @@ serve(async (req: Request) => {
           payment_intent_id: session.payment_intent,
           charge_id: latestCharge?.id || paymentIntent.latest_charge,
           paid_at: new Date().toISOString(),
+          payment_failed_at: null,
+          payment_failure_code: null,
+          payment_failure_message: null,
           platform_fee: applicationFeeAmount,
           stripe_fee: stripeFee,
           vendor_net: vendorNet,
@@ -164,6 +176,69 @@ serve(async (req: Request) => {
           orderId,
           eventType: 'order_paid',
         })
+      }
+    } else if (event.type === 'payment_intent.payment_failed') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent
+      const orderId = paymentIntent.metadata?.order_id
+      const { failureCode, failureMessage } = getPaymentFailureDetails(paymentIntent)
+
+      if (!orderId) {
+        log.warn('Payment failed event missing order metadata', {
+          paymentIntentId: paymentIntent.id,
+          failureCode,
+        })
+      } else {
+        const { data: order, error: orderLookupError } = await supabaseClient
+          .from('orders')
+          .select('id, status, payment_status')
+          .eq('id', orderId)
+          .maybeSingle()
+
+        if (orderLookupError) {
+          throw orderLookupError
+        }
+
+        if (!order) {
+          log.warn('Order not found for failed payment event', {
+            orderId,
+            paymentIntentId: paymentIntent.id,
+            failureCode,
+          })
+        } else if (order.payment_status === 'succeeded' || order.payment_status === 'refunded') {
+          log.info('Ignoring failed payment event for terminal payment state', {
+            orderId,
+            paymentIntentId: paymentIntent.id,
+            paymentStatus: order.payment_status,
+          })
+        } else {
+          const { error: paymentFailureUpdateError } = await supabaseClient
+            .from('orders')
+            .update({
+              payment_status: 'failed',
+              payment_intent_id: paymentIntent.id,
+              payment_failed_at: new Date().toISOString(),
+              payment_failure_code: failureCode,
+              payment_failure_message: failureMessage,
+            })
+            .eq('id', orderId)
+
+          if (paymentFailureUpdateError) {
+            throw paymentFailureUpdateError
+          }
+
+          await supabaseClient.from('audit_logs').insert({
+            event_type: 'payment_failed',
+            entity_type: 'order',
+            entity_id: orderId,
+            actor_role: 'system',
+            payload: {
+              payment_intent_id: paymentIntent.id,
+              payment_status: paymentIntent.status,
+              failure_code: failureCode,
+              failure_message: failureMessage,
+            },
+          })
+        }
       }
     } else if (event.type === 'account.updated') {
       const account = event.data.object as any

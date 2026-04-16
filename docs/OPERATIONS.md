@@ -68,6 +68,19 @@ Check:
 - function still calls `requireUser()`
 - `ALLOWED_ORIGINS` still includes the active frontend origin
 
+### Buyer reports payment failure at checkout
+Check:
+- Stripe event delivery for `payment_intent.payment_failed`
+- `orders.payment_status`
+- `orders.payment_failed_at`
+- `orders.payment_failure_code`
+- `orders.payment_failure_message`
+- `audit_logs` entries for `payment_failed`
+
+Operational note:
+- failed payments now leave the order in the pending order flow with `payment_status = failed`
+- the buyer can retry checkout on the same order after the next checkout session is created
+
 ### Vendor cannot change order status
 Check:
 - seller has a matching `user_profiles` row

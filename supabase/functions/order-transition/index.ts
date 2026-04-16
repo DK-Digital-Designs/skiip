@@ -1,6 +1,6 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
+import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
 import { requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
@@ -39,6 +39,11 @@ serve(async (req: Request) => {
 
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405, origin)
+  }
+
+  if (!isAllowedOrigin(origin)) {
+    log.warn('Rejected request from disallowed origin', { origin })
+    return jsonResponse({ error: 'Origin not allowed' }, 403, origin)
   }
 
   try {

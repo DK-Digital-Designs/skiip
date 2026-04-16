@@ -12,6 +12,7 @@ Current recommendation:
 - keep separate Supabase and Stripe environments for staging and production
 - keep Vercel env vars aligned to the matching Supabase project
 - only include preview domains in `ALLOWED_ORIGINS` when previews are intentionally connected to a backend
+- treat `ALLOWED_ORIGINS` as both a CORS list and the allow-list for checkout/onboarding return URLs
 
 ## Frontend Environment Variables
 
@@ -91,6 +92,8 @@ Current critical functions:
 - `stripe-refund`
 - `stripe-onboarding-link`
 
+Protected browser-facing functions now reject requests from disallowed `Origin` headers after the preflight stage. If staging or production starts returning `Origin not allowed`, the frontend domain and `ALLOWED_ORIGINS` are out of sync.
+
 Deploy:
 
 ```bash
@@ -113,12 +116,22 @@ https://<project-ref>.supabase.co/functions/v1/stripe-webhook
 
 Minimum subscribed events:
 - `checkout.session.completed`
+- `payment_intent.payment_failed`
 - `charge.refunded`
 - `account.updated`
 
 Important:
 - the webhook signing secret must come from the exact Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
+
+## Frontend Security Headers
+
+The app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json) to set baseline browser hardening headers:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` disabling camera, microphone, and geolocation
+- `Strict-Transport-Security`
 
 ## Post-Deploy Verification
 

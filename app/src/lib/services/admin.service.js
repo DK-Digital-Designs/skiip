@@ -14,7 +14,7 @@ export const AdminService = {
 
         const { data, error } = await supabase
             .from('orders')
-            .select('id, order_number, created_at, total, status, payment_status, customer_phone, refund_amount, stores(name)')
+            .select('id, order_number, created_at, total, status, payment_status, payment_failed_at, payment_failure_code, payment_failure_message, customer_phone, refund_amount, stores(name)')
             .order('created_at', { ascending: false })
             .limit(limit);
 

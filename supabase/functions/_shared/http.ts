@@ -1,4 +1,9 @@
-const DEFAULT_ALLOWED_ORIGINS = ['https://skiip.co.uk', 'http://localhost:5173', 'http://127.0.0.1:5173']
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://skiip.co.uk',
+  'https://www.skiip.co.uk',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
 
 function parseAllowedOrigins(): Set<string> {
   const fromEnv = Deno.env.get('ALLOWED_ORIGINS')
@@ -9,14 +14,31 @@ function parseAllowedOrigins(): Set<string> {
   return new Set(origins)
 }
 
+export function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) {
+    return true
+  }
+
+  return parseAllowedOrigins().has(origin)
+}
+
+export function isAllowedRedirectUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return isAllowedOrigin(parsed.origin)
+  } catch {
+    return false
+  }
+}
+
 export function buildCorsHeaders(origin: string | null): HeadersInit {
-  const allowedOrigins = parseAllowedOrigins()
-  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : 'null'
+  const allowOrigin = origin && isAllowedOrigin(origin) ? origin : 'null'
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   }
 }

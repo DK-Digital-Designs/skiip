@@ -6,6 +6,19 @@ import { AdminService } from '../../lib/services/admin.service';
 import { RefundService } from '../../lib/services/refund.service';
 import { useToast } from '../../components/ui/Toast';
 
+function getPaymentStatusColor(paymentStatus) {
+    switch (paymentStatus) {
+        case 'failed':
+            return '#ef4444';
+        case 'refunded':
+            return '#f59e0b';
+        case 'succeeded':
+            return '#10b981';
+        default:
+            return 'var(--accent)';
+    }
+}
+
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const { addToast } = useToast();
@@ -14,6 +27,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState({
         totalOrders: 0,
         activeOrders: 0,
+        failedPayments: 0,
         paidRevenue: 0,
         refundedRevenue: 0,
         statusCounts: {},
@@ -57,6 +71,7 @@ export default function AdminDashboard() {
         setStats({
             totalOrders: metrics?.totalOrders || 0,
             activeOrders: metrics?.activeOrders || 0,
+            failedPayments: metrics?.failedPayments || 0,
             paidRevenue: parseFloat(metrics?.paidRevenue || 0),
             refundedRevenue: parseFloat(metrics?.refundedRevenue || 0),
             statusCounts: metrics?.statusCounts || {},
@@ -125,6 +140,10 @@ export default function AdminDashboard() {
                     <div className="card">
                         <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Paid Revenue</h3>
                         <p style={{ fontSize: '36px', fontWeight: '800', color: 'var(--accent)' }}>GBP {stats.paidRevenue.toFixed(2)}</p>
+                    </div>
+                    <div className="card">
+                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Failed Payments</h3>
+                        <p style={{ fontSize: '36px', fontWeight: '800', color: stats.failedPayments ? '#ef4444' : 'var(--accent)' }}>{stats.failedPayments}</p>
                     </div>
                     <div className="card">
                         <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Refunded Revenue</h3>
@@ -211,7 +230,12 @@ export default function AdminDashboard() {
                                 <div style={{ textAlign: 'right', display: 'grid', gap: '8px', justifyItems: 'end' }}>
                                     <div>
                                         <p style={{ fontSize: '20px', fontWeight: '700' }}>GBP {parseFloat(order.total || 0).toFixed(2)}</p>
-                                        <p className="text-accent" style={{ fontSize: '13px' }}>{order.status} • {order.payment_status}</p>
+                                        <p style={{ fontSize: '13px', color: getPaymentStatusColor(order.payment_status) }}>{order.status} | {order.payment_status}</p>
+                                        {order.payment_status === 'failed' && order.payment_failure_message && (
+                                            <p style={{ fontSize: '12px', color: '#ef4444', maxWidth: '280px' }}>
+                                                {order.payment_failure_message}
+                                            </p>
+                                        )}
                                     </div>
                                     {order.payment_status === 'succeeded' && order.status !== 'refunded' && (
                                         <button

@@ -1,7 +1,7 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
+import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
 import { requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
@@ -25,15 +25,6 @@ interface CheckoutRequest {
   returnUrl: string
 }
 
-function validateReturnUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    return parsed.protocol === 'https:' || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
-  } catch {
-    return false
-  }
-}
-
 serve(async (req: Request) => {
   const origin = req.headers.get('origin')
   const corsHeaders = buildCorsHeaders(origin)
@@ -46,13 +37,18 @@ serve(async (req: Request) => {
     return jsonResponse({ error: 'Method not allowed' }, 405, origin)
   }
 
+  if (!isAllowedOrigin(origin)) {
+    log.warn('Rejected request from disallowed origin', { origin })
+    return jsonResponse({ error: 'Origin not allowed' }, 403, origin)
+  }
+
   try {
     const user = await requireUser(req)
     const body = (await req.json()) as CheckoutRequest
     const orderId = body.orderDetails?.order_id
     const returnUrl = body.returnUrl
 
-    if (!orderId || !validateReturnUrl(returnUrl)) {
+    if (!orderId || !isAllowedRedirectUrl(returnUrl)) {
       return jsonResponse({ error: 'Missing order_id or valid returnUrl' }, 400, origin)
     }
 
@@ -72,7 +68,7 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Forbidden' }, 403, origin)
     }
 
-    if (order.status !== 'pending' || order.payment_status !== 'pending') {
+    if (order.status !== 'pending' || !['pending', 'failed'].includes(order.payment_status)) {
       return jsonResponse({ error: 'Order is not in a payable state' }, 409, origin)
     }
 
@@ -169,6 +165,10 @@ serve(async (req: Request) => {
         checkout_session_id: session.id,
         tip_amount: tipAmount,
         platform_fee: applicationFeeAmount / 100,
+        payment_status: 'pending',
+        payment_failed_at: null,
+        payment_failure_code: null,
+        payment_failure_message: null,
       })
       .eq('id', orderId)
 
