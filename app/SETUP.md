@@ -51,9 +51,16 @@ Run these commands in your terminal (requires [Supabase CLI](https://supabase.co
 supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 supabase secrets set SENTRY_DSN=your-sentry-dsn-here
-supabase secrets set TWILIO_ACCOUNT_SID=your_sid_here
-supabase secrets set TWILIO_AUTH_TOKEN=your_token_here
-supabase secrets set TWILIO_WHATSAPP_NUMBER=your_twilio_whatsapp_number
+supabase secrets set WHATSAPP_ACCESS_TOKEN=your_meta_access_token
+supabase secrets set WHATSAPP_PHONE_NUMBER_ID=your_meta_phone_number_id
+supabase secrets set META_APP_SECRET=your_meta_app_secret
+supabase secrets set META_WEBHOOK_VERIFY_TOKEN=your_meta_webhook_verify_token
+supabase secrets set WHATSAPP_DEFAULT_COUNTRY_CODE=44
+supabase secrets set META_TEMPLATE_ORDER_PAID=order_paid
+supabase secrets set META_TEMPLATE_ORDER_PREPARING=order_preparing
+supabase secrets set META_TEMPLATE_ORDER_READY=order_ready
+supabase secrets set META_TEMPLATE_ORDER_CANCELLED=order_cancelled
+supabase secrets set META_TEMPLATE_ORDER_REFUNDED=order_refunded
 ```
 
 ### Run the App
@@ -111,18 +118,16 @@ vercel
 
 Or connect your GitHub repo to Vercel for automatic deployments.
 
-## 6. WhatsApp Notifications (Twilio)
+## 6. WhatsApp Notifications (Meta Cloud API)
 To enable automated WhatsApp notifications:
-1. Create a Twilio account and enable the [WhatsApp Sandbox](https://www.twilio.com/console/sms/whatsapp/learn) (or production).
-2. Set the `TWILIO_*` secrets in Supabase (see section 3).
-3. Create a **Database Webhook** in the Supabase Dashboard:
-    - **Name**: `whatsapp-on-status-change`
-    - **Table**: `orders`
-    - **Events**: `UPDATE`
-    - **Trigger Condition**: `status`
-    - **Webhook Method**: `POST`
-    - **Webhook URL**: `https://your-project.supabase.co/functions/v1/whatsapp-notify`
-    - **HTTP Headers**: Add `Authorization: Bearer YOUR_ANON_KEY`
+1. Create a Meta app, enable WhatsApp Cloud API, and provision the sending phone number.
+2. Set the Meta/WhatsApp secrets in Supabase (see section 3).
+3. Register the status webhook endpoint:
+   - `https://your-project.supabase.co/functions/v1/whatsapp-status-webhook`
+4. Use `META_WEBHOOK_VERIFY_TOKEN` for the initial GET verification handshake.
+5. Set `META_APP_SECRET` so POST status updates can be verified with `x-hub-signature-256`.
+6. Ensure the `META_TEMPLATE_*` values match the approved template names in Meta.
+7. Keep the existing `whatsapp-notify` route deployed if your database trigger still calls it; it now acts as a bridge into the shared notification helper rather than a Twilio-specific sender.
 
 ### 7. Product Images (Supabase Storage)
 To enable product image uploads:
@@ -140,7 +145,7 @@ To enable product image uploads:
 - [x] Setup Frontend Error Tracking (Sentry)
 - [x] Configure Backend Logging (logger.ts)
 - [ ] Finalize Stripe Production Account (UK)
-- [ ] Set up WhatsApp notifications via Twilio
+- [ ] Verify WhatsApp notifications via Meta Cloud API
 - [ ] Add vendor menu management UI
 - [ ] Support London staging/production deployment
 

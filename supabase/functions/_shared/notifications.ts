@@ -86,14 +86,20 @@ function getDefaultCountryCode() {
 
 function normalizePhone(customerPhone: string) {
   const stripped = customerPhone.trim().replace(/[\s\-()]/g, '')
-  const hasExplicitCountryCode = stripped.startsWith('+')
+  const hasExplicitCountryCode = stripped.startsWith('+') || stripped.startsWith('00')
   const defaultCountryCode = getDefaultCountryCode()
 
   if (!defaultCountryCode) {
     return null
   }
 
-  let normalized = hasExplicitCountryCode ? stripped.slice(1) : stripped
+  let normalized = stripped
+
+  if (stripped.startsWith('+')) {
+    normalized = stripped.slice(1)
+  } else if (stripped.startsWith('00')) {
+    normalized = stripped.slice(2)
+  }
 
   if (!normalized) {
     log.error('Invalid WhatsApp phone number', { customerPhone, normalized, reason: 'non_digit_characters' })

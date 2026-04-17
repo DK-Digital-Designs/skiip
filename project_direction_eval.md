@@ -61,7 +61,7 @@ collected → (terminal)
 ---
 
 ### 6. Notifications Architecture (`_shared/notifications.ts`)
-All transactional notifications (email via Resend, WhatsApp via Twilio) are now dispatched server-side, gated on environment variables being present. If `RESEND_API_KEY` is missing, email is silently skipped. If `TWILIO_*` vars are missing, WhatsApp is silently skipped. Both are logged.
+All transactional notifications (email via Resend, WhatsApp via Meta Cloud API) are now dispatched server-side, gated on environment variables being present. If `RESEND_API_KEY` is missing, email is silently skipped. If the Meta WhatsApp vars are missing, WhatsApp is silently skipped. Both are logged.
 
 **Verdict**: ✅ The graceful degradation pattern is correct. The system doesn't crash if you only have some notification providers configured. The dual `Promise.allSettled` dispatch means one failing provider doesn't kill the other.
 
@@ -75,7 +75,7 @@ All transactional notifications (email via Resend, WhatsApp via Twilio) are now 
 | `fix_seller_order_updates.sql` not applied | 🟡 Medium | Vendors can't update orders until pushed |
 | No `RESEND_API_KEY` configured | 🟡 Medium | Email receipts silently skipped |
 | `stripe-onboarding-link` uses `verify_jwt = false` | 🟡 Medium | Acceptable now; tighten before scale |
-| WhatsApp deferred (no Twilio keys) | 🟢 Low | Correctly skipped, no crash risk |
+| WhatsApp deferred (no Meta keys) | 🟢 Low | Correctly skipped, no crash risk |
 | Blank screen bug (TO-DO) | 🟡 Medium | Still open from earlier work |
 | Real-time push dropping on vendor dashboard | 🟡 Medium | Still open |
 

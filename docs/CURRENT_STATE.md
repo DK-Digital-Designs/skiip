@@ -66,8 +66,8 @@ This is being corrected now by consolidating docs into the `docs/` directory.
 ### 3. Marketing site drift
 The static marketing site still contains some old wording and links that do not fully match the current product architecture.
 
-### 4. Notifications are not fully settled
-The code supports transactional notifications, but WhatsApp provider direction is still open. The current backend is Twilio-oriented. A future move to Meta Cloud API would require implementation changes.
+### 4. Notifications need operational verification, not a provider decision
+The current backend uses Resend for email and Meta WhatsApp Cloud API for WhatsApp delivery. The remaining weakness is end-to-end environment verification: template names, webhook verification, and real-world phone normalization still need disciplined launch checks.
 
 ## Intentional Scope Limits
 
@@ -75,7 +75,6 @@ These areas are intentionally not treated as complete yet:
 - full multi-event tenancy
 - social login as the primary auth path
 - polished staging/prod database branching workflow
-- final WhatsApp provider decision
 - final auth-hardening decision on `verify_jwt`
 
 ## What Changed Recently

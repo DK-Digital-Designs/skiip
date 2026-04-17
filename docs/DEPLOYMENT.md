@@ -6,7 +6,7 @@ SKIIP uses multiple deployment surfaces:
 - Vercel for the React app
 - Supabase for database, auth, realtime, and edge functions
 - Stripe for checkout, onboarding, and webhooks
-- optional notification providers such as Twilio and Resend
+- optional notification providers such as Meta WhatsApp Cloud API and Resend
 
 Current recommendation:
 - keep separate Supabase and Stripe environments for staging and production
@@ -40,11 +40,12 @@ Email:
 - `NOTIFICATION_FROM_EMAIL`
 
 WhatsApp with current implementation:
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_WHATSAPP_NUMBER`
-- `TWILIO_WEBHOOK_TOKEN`
-- template identifiers used by the notification helper
+- `WHATSAPP_ACCESS_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `META_APP_SECRET`
+- `META_WEBHOOK_VERIFY_TOKEN`
+- `WHATSAPP_DEFAULT_COUNTRY_CODE`
+- `META_TEMPLATE_*` values used by the notification helper
 
 Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template. Keep `supabase/.env.functions` local and untracked.
 
@@ -91,6 +92,11 @@ Current critical functions:
 - `order-transition`
 - `stripe-refund`
 - `stripe-onboarding-link`
+- `whatsapp-status-webhook`
+
+Notification dispatch currently happens in two ways:
+- `stripe-webhook`, `order-transition`, and `stripe-refund` call the shared notification helper directly for launch-critical events
+- `whatsapp-notify` remains as a compatibility bridge for the older database-trigger route that still exists in the schema
 
 Protected browser-facing functions now reject requests from disallowed `Origin` headers after the preflight stage. If staging or production starts returning `Origin not allowed`, the frontend domain and `ALLOWED_ORIGINS` are out of sync.
 
@@ -123,6 +129,20 @@ Minimum subscribed events:
 Important:
 - the webhook signing secret must come from the exact Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
+
+## Meta WhatsApp Webhook
+
+Status webhook endpoint:
+
+```text
+https://<project-ref>.supabase.co/functions/v1/whatsapp-status-webhook
+```
+
+Important:
+- Meta will perform a GET verification using `META_WEBHOOK_VERIFY_TOKEN`
+- POST delivery updates should be protected with `META_APP_SECRET`
+- template names must match the approved templates configured in Meta
+- local phone entry can be normalized from domestic format by setting `WHATSAPP_DEFAULT_COUNTRY_CODE`
 
 ## Frontend Security Headers
 

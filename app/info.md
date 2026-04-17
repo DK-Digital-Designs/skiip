@@ -15,7 +15,7 @@
 *   **Database (Supabase)**:
     *   **Free Tier**: 500MB storage, 50k monthly active users. (Risk: Limited concurrency).
     *   **Pro Tier ($25/mo)**: Required for the pilot to ensure **London region deployment** and higher connection limits.
-*   **WhatsApp (Twilio)**:
+*   **WhatsApp (Meta Cloud API)**:
     *   **User Estimate**: ~8k users.
     *   **Cost**: UK WhatsApp templates are ~1.5p - 2.5p per notification. 
     *   **Total Est**: 8,000 users * 2 notifications = ~16,000 msgs = **~$300 - $400 for pilot day**. 

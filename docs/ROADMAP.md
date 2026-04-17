@@ -147,8 +147,10 @@ These items matter, but they do not block a safe first launch if the Priority 1 
 
 ### Notification Strategy
 
-- Finalize the long-term WhatsApp provider decision.
-- If moving away from Twilio, define and execute a migration plan to Meta Cloud API or another provider.
+- Harden the Meta WhatsApp Cloud API operational setup:
+  - verify template approvals and names per environment
+  - verify webhook handshake and signature enforcement
+  - verify domestic and international phone normalization against real pilot data
 - Add provider abstraction if multiple notification backends will be supported.
 
 ## Priority 3: Later

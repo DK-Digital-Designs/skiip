@@ -18,10 +18,16 @@ Do not commit real secrets. Use [`supabase/.env.functions.example`](C:/Users/dea
 | Supabase functions | `ALLOWED_ORIGINS` | Yes | Must include every intentional frontend origin and nothing broader. |
 | Supabase functions | `RESEND_API_KEY` | Optional | Required only if email notifications are launch-critical in that environment. |
 | Supabase functions | `NOTIFICATION_FROM_EMAIL` | Optional | Required together with `RESEND_API_KEY`. |
-| Supabase functions | `TWILIO_ACCOUNT_SID` | Optional | Required only if WhatsApp via Twilio is enabled. |
-| Supabase functions | `TWILIO_AUTH_TOKEN` | Optional | Required only if WhatsApp via Twilio is enabled. |
-| Supabase functions | `TWILIO_WHATSAPP_NUMBER` | Optional | Required only if WhatsApp via Twilio is enabled. |
-| Supabase functions | `TWILIO_WEBHOOK_TOKEN` | Optional | Required if Twilio status callbacks are enabled. |
+| Supabase functions | `WHATSAPP_ACCESS_TOKEN` | Optional | Required if Meta WhatsApp delivery is enabled in that environment. |
+| Supabase functions | `WHATSAPP_PHONE_NUMBER_ID` | Optional | Required with `WHATSAPP_ACCESS_TOKEN` for the sending phone number. |
+| Supabase functions | `META_APP_SECRET` | Recommended | Used to verify POST signatures from Meta status webhooks. |
+| Supabase functions | `META_WEBHOOK_VERIFY_TOKEN` | Recommended | Used for the initial GET verification handshake from Meta. |
+| Supabase functions | `WHATSAPP_DEFAULT_COUNTRY_CODE` | Recommended | Defaults to `44`; set explicitly if local phone entry should normalize to another country. |
+| Supabase functions | `META_TEMPLATE_ORDER_PAID` | Optional | Required only if the `order_paid` WhatsApp template should send. |
+| Supabase functions | `META_TEMPLATE_ORDER_PREPARING` | Optional | Required only if the `order_preparing` WhatsApp template should send. |
+| Supabase functions | `META_TEMPLATE_ORDER_READY` | Optional | Required only if the `order_ready` WhatsApp template should send. |
+| Supabase functions | `META_TEMPLATE_ORDER_CANCELLED` | Optional | Required only if the `order_cancelled` WhatsApp template should send. |
+| Supabase functions | `META_TEMPLATE_ORDER_REFUNDED` | Optional | Required only if the `order_refunded` WhatsApp template should send. |
 | Supabase auth config | `auth.email.enable_confirmations` | Decision required | Intentionally `false` for the closed pilot. See decision below. |
 | Stripe dashboard | Webhook endpoint + subscribed events | Yes | Keep staging and production endpoints separate. |
 
@@ -70,5 +76,5 @@ Immediate rotation triggers:
 ## Local Files
 
 - [`app/.env.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/.env.example) documents frontend env shape.
-- [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) documents function-secret shape.
+- [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) documents function-secret shape, including the Meta WhatsApp variables now used by the notification helper.
 - `supabase/.env.functions` should remain local and untracked.
