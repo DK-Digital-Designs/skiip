@@ -3,12 +3,14 @@
 ## Environment Model
 
 SKIIP uses multiple deployment surfaces:
+
 - Vercel for the React app
 - Supabase for database, auth, realtime, and edge functions
 - Stripe for checkout, onboarding, and webhooks
-- optional notification providers such as Meta WhatsApp Cloud API and Resend
+- optional notification providers such as Twilio WhatsApp and Resend
 
 Current recommendation:
+
 - keep separate Supabase and Stripe environments for staging and production
 - keep Vercel env vars aligned to the matching Supabase project
 - only include preview domains in `ALLOWED_ORIGINS` when previews are intentionally connected to a backend
@@ -17,6 +19,7 @@ Current recommendation:
 ## Frontend Environment Variables
 
 Required in Vercel for the app:
+
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_STRIPE_PUBLIC_KEY`
@@ -30,22 +33,25 @@ For the full inventory and rotation discipline, see [Secrets and Environment Inv
 Current backend expects these as needed:
 
 Core:
+
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ALLOWED_ORIGINS`
 
 Email:
+
 - `RESEND_API_KEY`
 - `NOTIFICATION_FROM_EMAIL`
 
 WhatsApp with current implementation:
-- `WHATSAPP_ACCESS_TOKEN`
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `META_APP_SECRET`
-- `META_WEBHOOK_VERIFY_TOKEN`
+
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM`
+- `TWILIO_WEBHOOK_TOKEN`
 - `WHATSAPP_DEFAULT_COUNTRY_CODE`
-- `META_TEMPLATE_*` values used by the notification helper
+- `TWILIO_TEMPLATE_*` values used by the notification helper
 
 Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template. Keep `supabase/.env.functions` local and untracked.
 
@@ -54,6 +60,7 @@ Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub
 Closed-pilot launch keeps `auth.email.enable_confirmations = false`.
 
 That is intentional for the current pilot because:
+
 - accounts are operator-created or directly supported
 - support staff can verify buyer, seller, and admin access manually
 - SMTP and support processes are not yet treated as fully launch-ready
@@ -65,10 +72,12 @@ Revisit this before any open self-serve launch. Re-enabling confirmations should
 Migrations live in [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations).
 
 Important rule:
+
 - production should not rely on undocumented manual SQL
 - if a manual fix is applied, it must be encoded as a migration immediately
 
 The current live-working schema depends on:
+
 - [20260414000000_production_readiness.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260414000000_production_readiness.sql)
 - [20260415000000_reconcile_live_schema.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260415000000_reconcile_live_schema.sql)
 - [20260415000001_user_profile_reconciliation.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260415000001_user_profile_reconciliation.sql)
@@ -86,6 +95,7 @@ supabase db push
 Functions live in [`supabase/functions`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions).
 
 Current critical functions:
+
 - `order-create`
 - `stripe-checkout`
 - `stripe-webhook`
@@ -95,6 +105,7 @@ Current critical functions:
 - `whatsapp-status-webhook`
 
 Notification dispatch currently happens in two ways:
+
 - `stripe-webhook`, `order-transition`, and `stripe-refund` call the shared notification helper directly for launch-critical events
 - `whatsapp-notify` remains as a compatibility bridge for the older database-trigger route that still exists in the schema
 
@@ -121,16 +132,18 @@ https://<project-ref>.supabase.co/functions/v1/stripe-webhook
 ```
 
 Minimum subscribed events:
+
 - `checkout.session.completed`
 - `payment_intent.payment_failed`
 - `charge.refunded`
 - `account.updated`
 
 Important:
+
 - the webhook signing secret must come from the exact Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
 
-## Meta WhatsApp Webhook
+## Twilio WhatsApp Status Webhook
 
 Status webhook endpoint:
 
@@ -139,14 +152,24 @@ https://<project-ref>.supabase.co/functions/v1/whatsapp-status-webhook
 ```
 
 Important:
-- Meta will perform a GET verification using `META_WEBHOOK_VERIFY_TOKEN`
-- POST delivery updates should be protected with `META_APP_SECRET`
-- template names must match the approved templates configured in Meta
+
+- outbound WhatsApp sends automatically attach this endpoint as the Twilio `StatusCallback`
+- if `TWILIO_WEBHOOK_TOKEN` is set, it is appended to the callback URL and required by the webhook
+- the `TWILIO_TEMPLATE_*` values must match the Twilio Content Template SIDs configured for each event
 - local phone entry can be normalized from domestic format by setting `WHATSAPP_DEFAULT_COUNTRY_CODE`
+
+## Resend Email
+
+Important:
+
+- `NOTIFICATION_FROM_EMAIL` must be a sender that is verified in Resend
+- `RESEND_API_KEY` must be present in the same Supabase environment as the notification functions
+- transactional emails now cover the same paid, preparing, ready, cancelled, and refunded events emitted by the backend
 
 ## Frontend Security Headers
 
 The app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json) to set baseline browser hardening headers:
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy: strict-origin-when-cross-origin`
@@ -156,6 +179,7 @@ The app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub
 ## Post-Deploy Verification
 
 After any meaningful backend deploy:
+
 1. sign in as a buyer
 2. create a test order
 3. complete Stripe Checkout in test mode
@@ -163,12 +187,15 @@ After any meaningful backend deploy:
 5. confirm vendor can move the order through statuses
 6. confirm admin dashboard loads metrics
 7. confirm refund flow still works
+8. confirm the buyer receives Resend emails and Twilio WhatsApp updates for the applicable order events
+9. confirm `notification_logs` records both email and WhatsApp delivery states
 
 ## Staging Smoke Workflow
 
 The deployed auth smoke lane lives in [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml).
 
 Current purpose:
+
 - validate that the deployed staging frontend is reachable
 - validate public routing
 - validate buyer, seller, and admin sign-in surfaces
@@ -176,6 +203,7 @@ Current purpose:
 For the exact GitHub environment setup steps, required secrets, and first-run checklist, see [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md).
 
 Current limit:
+
 - this workflow is not yet the full payment-path rehearsal
 - it does not create orders, open Stripe Checkout, verify webhook transitions, or execute refunds
 
@@ -186,16 +214,19 @@ For production cutovers, rollback sequencing, and incident handling, use [Launch
 ## Current Auth Deployment Note
 
 Protected edge functions currently rely on:
+
 - explicit bearer token forwarding from the frontend
 - manual validation inside the function
 
 That means deployment success depends on both:
+
 - the frontend shipping the auth header
 - the function code continuing to call `requireUser()`
 
 ## Release Discipline
 
 Before any staging or production release:
+
 1. confirm all live schema changes exist in [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
 2. confirm no production-only manual SQL is being relied on
 3. sync Vercel env vars and Supabase secrets for the same environment pair

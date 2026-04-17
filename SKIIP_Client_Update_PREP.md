@@ -27,14 +27,14 @@ SKIIP is now in a workable closed-pilot state and is roughly 80% complete. The c
 
 More accurate wording:
 
-- Notifications are implemented at code level, but final provider setup and end-to-end verification are still being completed.
+- Notifications are implemented at code level, and the final provider setup is now centered on Twilio WhatsApp plus Resend email, pending end-to-end verification.
 - The platform is stable enough for closed-pilot validation, but several launch-critical checks remain before go-live.
 
 ## High-Priority Work Before Launch
 
 1. Continue user-case testing and UAT with Khaya, then capture and resolve the defects that come out of that testing.
 2. Finish and verify launch-critical notifications, especially order confirmation, order-ready, and refund communications.
-3. Confirm the final WhatsApp/provider direction and make sure the selected provider is configured and proven end to end.
+3. Provision and verify Twilio WhatsApp and Resend email end to end in the target environment.
 4. Run a full payment rehearsal from buyer checkout through vendor fulfilment and admin refund handling.
 5. Complete the remaining auth and security review, including protected edge-function posture and role-access checks.
 6. Expand smoke testing beyond the current baseline so launch confidence is based on real flow coverage, not just manual checks.

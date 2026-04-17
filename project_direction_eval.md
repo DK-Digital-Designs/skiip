@@ -9,6 +9,7 @@
 ## What Changed Today & Why It Matters
 
 ### 1. Server-Authoritative Order Creation (`order-create`)
+
 **Old approach**: The frontend called a database RPC (`create_order_v1`) directly with client-supplied prices.
 **New approach**: A server-side Edge Function validates the order, fetches prices from the database itself, and inserts the order.
 
@@ -22,6 +23,7 @@ New: Frontend → Edge Function → DB (server re-prices everything)
 ---
 
 ### 2. Price Re-Validation at Checkout (`stripe-checkout`)
+
 The `stripe-checkout` function not only takes the order to Stripe — it re-validates the subtotal **again** by summing `order_items` and comparing against the stored total:
 
 ```
@@ -33,13 +35,15 @@ if (Math.abs(computedSubtotal - storedSubtotal) > 0.01) → reject
 ---
 
 ### 3. Atomic Inventory Finalization (`stripe-webhook` + `finalize_paid_order_inventory`)
-Payment confirmation now triggers an atomic DB function that decrements stock under a row-level lock. If stock is insufficient *at the moment of payment*, it auto-refunds via Stripe and creates an audit entry.
+
+Payment confirmation now triggers an atomic DB function that decrements stock under a row-level lock. If stock is insufficient _at the moment of payment_, it auto-refunds via Stripe and creates an audit entry.
 
 **Verdict**: ✅ This is the right answer for a festival/concurrency environment. The failure path (refund + restock + audit) is clean. The remaining known risk `Double buys` in the TO-DO list is now significantly reduced by this locking approach.
 
 ---
 
 ### 4. Idempotent Webhook Processing
+
 The `stripe_processed_events` table prevents the same Stripe event from being processed twice by catching the unique constraint error (`23505`).
 
 **Verdict**: ✅ Production essential. Stripe can and does re-deliver events. Without this, a network hiccup could result in double inventory deductions or double refunds.
@@ -47,7 +51,9 @@ The `stripe_processed_events` table prevents the same Stripe event from being pr
 ---
 
 ### 5. State-Machine Order Transitions (`order-transition`)
+
 The `ALLOWED_TRANSITIONS` map enforces that orders can only move through legal states:
+
 ```
 pending → (payment only, no manual skip)
 paid → preparing | cancelled
@@ -61,7 +67,8 @@ collected → (terminal)
 ---
 
 ### 6. Notifications Architecture (`_shared/notifications.ts`)
-All transactional notifications (email via Resend, WhatsApp via Meta Cloud API) are now dispatched server-side, gated on environment variables being present. If `RESEND_API_KEY` is missing, email is silently skipped. If the Meta WhatsApp vars are missing, WhatsApp is silently skipped. Both are logged.
+
+All transactional notifications (email via Resend, WhatsApp via Twilio) are now dispatched server-side, gated on environment variables being present. If `RESEND_API_KEY` is missing, email is silently skipped. If the Twilio WhatsApp vars are missing, WhatsApp is silently skipped. Both are logged.
 
 **Verdict**: ✅ The graceful degradation pattern is correct. The system doesn't crash if you only have some notification providers configured. The dual `Promise.allSettled` dispatch means one failing provider doesn't kill the other.
 
@@ -69,15 +76,15 @@ All transactional notifications (email via Resend, WhatsApp via Meta Cloud API) 
 
 ## Remaining Risks & Open Items
 
-| Risk | Severity | Status |
-| :--- | :--- | :--- |
-| 401 on `order-create` in production | 🔴 High | Blocked — suspected Vercel env var mismatch |
-| `fix_seller_order_updates.sql` not applied | 🟡 Medium | Vendors can't update orders until pushed |
-| No `RESEND_API_KEY` configured | 🟡 Medium | Email receipts silently skipped |
-| `stripe-onboarding-link` uses `verify_jwt = false` | 🟡 Medium | Acceptable now; tighten before scale |
-| WhatsApp deferred (no Meta keys) | 🟢 Low | Correctly skipped, no crash risk |
-| Blank screen bug (TO-DO) | 🟡 Medium | Still open from earlier work |
-| Real-time push dropping on vendor dashboard | 🟡 Medium | Still open |
+| Risk                                               | Severity  | Status                                      |
+| :------------------------------------------------- | :-------- | :------------------------------------------ |
+| 401 on `order-create` in production                | 🔴 High   | Blocked — suspected Vercel env var mismatch |
+| `fix_seller_order_updates.sql` not applied         | 🟡 Medium | Vendors can't update orders until pushed    |
+| No `RESEND_API_KEY` configured                     | 🟡 Medium | Email receipts silently skipped             |
+| `stripe-onboarding-link` uses `verify_jwt = false` | 🟡 Medium | Acceptable now; tighten before scale        |
+| WhatsApp deferred (no Twilio keys)                 | 🟢 Low    | Correctly skipped, no crash risk            |
+| Blank screen bug (TO-DO)                           | 🟡 Medium | Still open from earlier work                |
+| Real-time push dropping on vendor dashboard        | 🟡 Medium | Still open                                  |
 
 ---
 
@@ -99,10 +106,10 @@ That is a complete, production-quality order lifecycle. **The architecture suppo
 
 ## Overall Assessment
 
-| Dimension | Score | Notes |
-| :--- | :--- | :--- |
-| **Security** | 9/10 | Server-authoritative, price-validated, idempotent webhooks. Only gap: onboarding link doesn't verify JWT. |
-| **Data Integrity** | 9/10 | Atomic inventory, audit logs, state machine transitions. |
-| **Resilience** | 8/10 | Graceful notification degradation, auto-refund on inventory failure. Real-time reliability still a known risk. |
-| **Operational Readiness** | 7/10 | Functions deployed, secrets pushed, tests passing. Still need confirmed Vercel env sync and one live order to prove the loop. |
-| **Code Quality** | 8/10 | Shared auth/service/notification helpers are clean and reusable. Minor: `any` types in notifications.ts could be tightened. |
+| Dimension                 | Score | Notes                                                                                                                         |
+| :------------------------ | :---- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Security**              | 9/10  | Server-authoritative, price-validated, idempotent webhooks. Only gap: onboarding link doesn't verify JWT.                     |
+| **Data Integrity**        | 9/10  | Atomic inventory, audit logs, state machine transitions.                                                                      |
+| **Resilience**            | 8/10  | Graceful notification degradation, auto-refund on inventory failure. Real-time reliability still a known risk.                |
+| **Operational Readiness** | 7/10  | Functions deployed, secrets pushed, tests passing. Still need confirmed Vercel env sync and one live order to prove the loop. |
+| **Code Quality**          | 8/10  | Shared auth/service/notification helpers are clean and reusable. Minor: `any` types in notifications.ts could be tightened.   |
