@@ -27,6 +27,7 @@ Required in Vercel for the app:
 These must all belong to the same environment pair. A mixed project URL/key setup will break auth and edge-function calls.
 
 For the full inventory and rotation discipline, see [Secrets and Environment Inventory](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md).
+For the provider-account setup checklist and exact notification handover values, see [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md).
 
 ## Supabase Secrets
 
@@ -50,8 +51,25 @@ WhatsApp with current implementation:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_WHATSAPP_FROM`
 - `TWILIO_WEBHOOK_TOKEN`
+- `WHATSAPP_PROVIDER`
+- `WHATSAPP_NOTIFICATION_EVENTS`
 - `WHATSAPP_DEFAULT_COUNTRY_CODE`
-- `TWILIO_TEMPLATE_*` values used by the notification helper
+- `TWILIO_TEMPLATE_*` values for the WhatsApp events you intentionally enable
+
+Notification outbox:
+
+- `NOTIFICATION_DISPATCH_SECRET` for manual or scheduled dispatcher runs
+- `NOTIFICATION_DISPATCH_BATCH_SIZE`
+- `NOTIFICATION_DISPATCH_MAX_BATCHES_PER_RUN`
+- `NOTIFICATION_DISPATCH_MAX_ATTEMPTS`
+- `NOTIFICATION_PROCESSING_TIMEOUT_SECONDS`
+- `NOTIFICATION_RETRY_BASE_DELAY_SECONDS`
+
+Email delivery tracking:
+
+- `EMAIL_PROVIDER`
+- `EMAIL_NOTIFICATION_EVENTS`
+- `RESEND_WEBHOOK_SECRET`
 
 Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template. Keep `supabase/.env.functions` local and untracked.
 
@@ -102,12 +120,15 @@ Current critical functions:
 - `order-transition`
 - `stripe-refund`
 - `stripe-onboarding-link`
+- `notification-dispatch`
+- `resend-email-webhook`
 - `whatsapp-status-webhook`
 
-Notification dispatch currently happens in two ways:
+Notification dispatch currently happens in three ways:
 
-- `stripe-webhook`, `order-transition`, and `stripe-refund` call the shared notification helper directly for launch-critical events
-- `whatsapp-notify` remains as a compatibility bridge for the older database-trigger route that still exists in the schema
+- business flows queue notifications into `notification_logs` after the authoritative order mutation succeeds
+- the shared notification helper drains that queue in the background through the edge runtime, so provider calls are not awaited inline on the mutation request
+- `notification-dispatch` exists for manual or scheduled backlog sweeps, and `whatsapp-notify` remains as a compatibility bridge that queues WhatsApp-only events for the older database-trigger route
 
 Protected browser-facing functions now reject requests from disallowed `Origin` headers after the preflight stage. If staging or production starts returning `Origin not allowed`, the frontend domain and `ALLOWED_ORIGINS` are out of sync.
 
@@ -155,7 +176,8 @@ Important:
 
 - outbound WhatsApp sends automatically attach this endpoint as the Twilio `StatusCallback`
 - if `TWILIO_WEBHOOK_TOKEN` is set, it is appended to the callback URL and required by the webhook
-- the `TWILIO_TEMPLATE_*` values must match the Twilio Content Template SIDs configured for each event
+- launch-safe default WhatsApp scope is `order_ready`; widen `WHATSAPP_NOTIFICATION_EVENTS` only if you deliberately want more events
+- the `TWILIO_TEMPLATE_*` values must match the Twilio Content Template SIDs configured for each enabled event
 - local phone entry can be normalized from domestic format by setting `WHATSAPP_DEFAULT_COUNTRY_CODE`
 
 ## Resend Email
@@ -164,7 +186,29 @@ Important:
 
 - `NOTIFICATION_FROM_EMAIL` must be a sender that is verified in Resend
 - `RESEND_API_KEY` must be present in the same Supabase environment as the notification functions
-- transactional emails now cover the same paid, preparing, ready, cancelled, and refunded events emitted by the backend
+- transactional emails remain the broader durable channel for paid, preparing, ready, cancelled, and refunded events
+- Resend webhook endpoint:
+
+```text
+https://<project-ref>.supabase.co/functions/v1/resend-email-webhook
+```
+
+- `RESEND_WEBHOOK_SECRET` must match the webhook signing secret from the Resend dashboard
+- subscribe at least to `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`
+
+## Notification Outbox
+
+Manual or scheduled dispatcher endpoint:
+
+```text
+https://<project-ref>.supabase.co/functions/v1/notification-dispatch
+```
+
+Important:
+
+- the endpoint requires `Authorization: Bearer <NOTIFICATION_DISPATCH_SECRET>`
+- the background dispatcher handles immediate sends, but this endpoint is the clean way to sweep delayed retries or backlog
+- `notification_logs` is now both the delivery log and the durable outbox
 
 ## Frontend Security Headers
 
@@ -187,8 +231,9 @@ After any meaningful backend deploy:
 5. confirm vendor can move the order through statuses
 6. confirm admin dashboard loads metrics
 7. confirm refund flow still works
-8. confirm the buyer receives Resend emails and Twilio WhatsApp updates for the applicable order events
-9. confirm `notification_logs` records both email and WhatsApp delivery states
+8. confirm the buyer can complete checkout without opting into WhatsApp
+9. confirm the buyer receives Resend emails and, when opted in, Twilio WhatsApp updates for the enabled order events
+10. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
 
 ## Staging Smoke Workflow
 

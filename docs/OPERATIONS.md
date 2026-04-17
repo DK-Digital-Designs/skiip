@@ -45,6 +45,7 @@ Useful tables:
 - `orders`
 - `order_items`
 - `notification_logs`
+- `notification_webhook_events`
 - `audit_logs`
 - `stripe_processed_events`
 
@@ -102,9 +103,15 @@ Check:
 ### Notifications fail
 Check:
 - `notification_logs`
+- `notification_webhook_events`
+- `notification-dispatch`
 - provider secrets
 - webhook callbacks for the selected provider
 - whether the provider is intentionally optional in the current environment
+
+Operational note:
+- immediate sends are usually handled by background dispatch after the business mutation completes
+- delayed retries or backlog sweeps can be triggered through `notification-dispatch` with the shared dispatch secret
 
 ## Refund Handling
 

@@ -123,6 +123,7 @@ serve(async (req: Request) => {
       supabase,
       orderId: order.id,
       eventType: 'order_refunded',
+      correlationId: crypto.randomUUID(),
     })
 
     return jsonResponse({ refundId: refund.id }, 200, origin)

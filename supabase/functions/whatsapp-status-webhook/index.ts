@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { logger } from "../_shared/logger.ts";
 import { createServiceClient } from "../_shared/service.ts";
+import { applyWebhookStatusToNotification } from "../_shared/notifications.ts";
 
 const log = logger("whatsapp-status-webhook");
 const TWILIO_WEBHOOK_TOKEN = Deno.env.get("TWILIO_WEBHOOK_TOKEN")?.trim();
@@ -94,21 +95,21 @@ serve(async (req) => {
 
     const supabase = createServiceClient();
 
-    const { error: updateError } = await supabase
-      .from("notification_logs")
-      .update({
-        status,
-        error_message:
-          status === "failed"
-            ? errorMessage || "Unknown delivery failure"
-            : null,
-      })
-      .eq("message_sid", messageSid)
-      .eq("channel", "whatsapp");
-
-    if (updateError) {
-      throw new Error(`Failed to update log status: ${updateError.message}`);
-    }
+    await applyWebhookStatusToNotification({
+      supabase,
+      channel: "whatsapp",
+      messageSid,
+      status,
+      provider: "twilio",
+      errorMessage:
+        status === "failed"
+          ? errorMessage || "Unknown delivery failure"
+          : null,
+      metadata: {
+        twilio_status: providerStatus,
+        twilio_error_message: errorMessage,
+      },
+    });
 
     log.info("WhatsApp delivery status updated", {
       messageSid,

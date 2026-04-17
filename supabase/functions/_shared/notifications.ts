@@ -1,479 +1,162 @@
 import { logger } from "./logger.ts";
+import {
+  getConfiguredProvider,
+  getRetryDelaySeconds,
+  isEventEnabledForChannel,
+  NOTIFICATION_DISPATCH_BATCH_SIZE,
+  NOTIFICATION_DISPATCH_MAX_ATTEMPTS,
+  NOTIFICATION_DISPATCH_MAX_BATCHES_PER_RUN,
+  NOTIFICATION_PROCESSING_TIMEOUT_SECONDS,
+} from "./notification-config.ts";
+import { createNotificationPayloadSnapshot } from "./notification-content.ts";
+import { sendResendEmailMessage } from "./providers/resend-email.ts";
+import { sendTwilioWhatsAppMessage } from "./providers/twilio-whatsapp.ts";
+import {
+  ProviderDispatchError,
+  type NotificationChannel,
+  type NotificationContext,
+  type NotificationLogRecord,
+  type NotificationPayloadSnapshot,
+  type OrderNotificationRecord,
+  type ProviderDispatchInput,
+  type ProviderDispatchResult,
+} from "./notification-types.ts";
 
 const log = logger("notifications");
 
-type NotificationEvent =
-  | "order_paid"
-  | "order_preparing"
-  | "order_ready"
-  | "order_cancelled"
-  | "order_refunded";
+type DeliveryStatus =
+  | "queued"
+  | "processing"
+  | "sent"
+  | "delivered"
+  | "read"
+  | "failed";
 
-interface NotificationContext {
-  supabase: any;
-  orderId: string;
-  eventType: NotificationEvent;
-}
+type ProviderSender = (
+  input: ProviderDispatchInput,
+) => Promise<ProviderDispatchResult>;
 
-interface OrderRecord {
-  id: string;
-  order_number: string;
-  customer_email: string | null;
-  customer_phone: string | null;
-  total: number | string;
-  status: string;
-  whatsapp_opt_in: boolean;
-  refund_amount?: number | string | null;
-  stores?: {
-    name?: string | null;
-    pickup_location?: string | null;
-  } | null;
-}
-
-const EVENT_COPY: Record<
-  NotificationEvent,
-  { subject: string; headline: string; statusLabel: string }
+const PROVIDER_SENDERS: Partial<
+  Record<NotificationChannel, Record<string, ProviderSender>>
 > = {
-  order_paid: {
-    subject: "Your SKIIP order is confirmed",
-    headline: "Your order has been confirmed and sent to the vendor.",
-    statusLabel: "Confirmed",
+  email: {
+    resend: sendResendEmailMessage,
   },
-  order_preparing: {
-    subject: "Your SKIIP order is being prepared",
-    headline: "The vendor has started preparing your order.",
-    statusLabel: "Preparing",
-  },
-  order_ready: {
-    subject: "Your SKIIP order is ready for pickup",
-    headline: "Your order is ready to collect now.",
-    statusLabel: "Ready for pickup",
-  },
-  order_cancelled: {
-    subject: "Your SKIIP order was cancelled",
-    headline:
-      "Your order has been cancelled. If payment was taken, support will advise on the next step.",
-    statusLabel: "Cancelled",
-  },
-  order_refunded: {
-    subject: "Your SKIIP order has been refunded",
-    headline: "Your refund has been issued.",
-    statusLabel: "Refunded",
+  whatsapp: {
+    twilio: sendTwilioWhatsAppMessage,
   },
 };
 
-function getConfiguredEnv(...keys: string[]) {
-  for (const key of keys) {
-    const value = Deno.env.get(key)?.trim();
-    if (value) {
-      return value;
+function mergeMetadata(
+  ...parts: Array<Record<string, unknown> | null | undefined>
+) {
+  return parts.reduce<Record<string, unknown>>((merged, part) => {
+    if (!part) {
+      return merged;
     }
-  }
 
-  return undefined;
+    return { ...merged, ...part };
+  }, {});
 }
 
-const TWILIO_TEMPLATE_MAP: Record<NotificationEvent, string | undefined> = {
-  order_paid: getConfiguredEnv(
-    "TWILIO_TEMPLATE_ORDER_PAID",
-    "TWILIO_TEMPLATE_ORDER_CONFIRMATION",
-  ),
-  order_preparing: getConfiguredEnv("TWILIO_TEMPLATE_ORDER_PREPARING"),
-  order_ready: getConfiguredEnv(
-    "TWILIO_TEMPLATE_ORDER_READY",
-    "TWILIO_TEMPLATE_READY_FOR_COLLECTION",
-  ),
-  order_cancelled: getConfiguredEnv("TWILIO_TEMPLATE_ORDER_CANCELLED"),
-  order_refunded: getConfiguredEnv("TWILIO_TEMPLATE_ORDER_REFUNDED"),
-};
+function statusRank(status: string | null | undefined) {
+  switch (status) {
+    case "queued":
+      return 0;
+    case "processing":
+      return 1;
+    case "sent":
+      return 2;
+    case "delivered":
+      return 3;
+    case "read":
+      return 4;
+    case "failed":
+      return 5;
+    default:
+      return -1;
+  }
+}
 
-function getDefaultCountryCode() {
-  const configuredCountryCode = (
-    getConfiguredEnv("WHATSAPP_DEFAULT_COUNTRY_CODE") || "44"
-  )
-    .trim()
-    .replace(/^\+/, "");
+function getProviderSender(notification: NotificationLogRecord) {
+  const configuredProvider =
+    notification.provider || getConfiguredProvider(notification.channel);
+  const channelProviders = PROVIDER_SENDERS[notification.channel];
 
-  if (!/^\d{1,3}$/.test(configuredCountryCode)) {
-    log.error("Invalid WhatsApp default country code", {
-      configuredCountryCode,
-      reason: "invalid_default_country_code",
-    });
+  if (!configuredProvider || !channelProviders) {
     return null;
   }
 
-  return configuredCountryCode;
+  return channelProviders[configuredProvider] || null;
 }
 
-function normalizePhone(customerPhone: string) {
-  const stripped = customerPhone.trim().replace(/[\s\-()]/g, "");
-  const hasExplicitCountryCode =
-    stripped.startsWith("+") || stripped.startsWith("00");
-  const defaultCountryCode = getDefaultCountryCode();
-
-  if (!defaultCountryCode) {
-    return null;
-  }
-
-  let normalized = stripped;
-
-  if (stripped.startsWith("+")) {
-    normalized = stripped.slice(1);
-  } else if (stripped.startsWith("00")) {
-    normalized = stripped.slice(2);
-  }
-
-  if (!normalized) {
-    log.error("Invalid WhatsApp phone number", {
-      customerPhone,
-      normalized,
-      reason: "non_digit_characters",
-    });
-    return null;
-  }
-
-  if (!hasExplicitCountryCode) {
-    if (normalized.startsWith("0")) {
-      normalized = `${defaultCountryCode}${normalized.slice(1)}`;
-    } else if (!normalized.startsWith(defaultCountryCode)) {
-      log.error("Invalid WhatsApp phone number", {
-        customerPhone,
-        normalized,
-        defaultCountryCode,
-        reason: "missing_explicit_or_default_country_code",
-      });
-      return null;
-    }
-  }
-
-  if (/\D/.test(normalized)) {
-    log.error("Invalid WhatsApp phone number", {
-      customerPhone,
-      normalized,
-      reason: "non_digit_characters",
-    });
-    return null;
-  }
-
-  if (normalized.length < 8 || normalized.length > 15) {
-    log.error("Invalid WhatsApp phone number", {
-      customerPhone,
-      normalized,
-      reason: "invalid_length",
-    });
-    return null;
-  }
-
-  return `+${normalized}`;
-}
-
-function formatMoney(value: number | string | null | undefined) {
-  return Number(value || 0).toFixed(2);
-}
-
-function getWhatsAppAmount(order: OrderRecord, eventType: NotificationEvent) {
-  return formatMoney(
-    eventType === "order_refunded"
-      ? order.refund_amount || order.total
-      : order.total,
-  );
-}
-
-function buildEmailBody(order: OrderRecord, eventType: NotificationEvent) {
-  const copy = EVENT_COPY[eventType];
-  const storeName = order.stores?.name || "your vendor";
-  const pickupLocation = order.stores?.pickup_location;
-  const refundLine =
-    eventType === "order_refunded"
-      ? `<p><strong>Refund amount:</strong> GBP ${formatMoney(order.refund_amount || order.total)}</p>`
-      : "";
-  const pickupLine =
-    pickupLocation && eventType === "order_ready"
-      ? `<p><strong>Pickup location:</strong> ${pickupLocation}</p>`
-      : "";
-
-  return `
-    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
-      <h2>${copy.headline}</h2>
-      <p><strong>Order:</strong> ${order.order_number}</p>
-      <p><strong>Vendor:</strong> ${storeName}</p>
-      <p><strong>Status:</strong> ${copy.statusLabel}</p>
-      <p><strong>Total:</strong> GBP ${formatMoney(order.total)}</p>
-      ${refundLine}
-      ${pickupLine}
-      <p>You can track the latest order state in the SKIIP app.</p>
-    </div>
-  `;
-}
-
-function buildEmailText(order: OrderRecord, eventType: NotificationEvent) {
-  const copy = EVENT_COPY[eventType];
-  const lines = [
-    copy.headline,
-    `Order: ${order.order_number}`,
-    `Vendor: ${order.stores?.name || "your vendor"}`,
-    `Status: ${copy.statusLabel}`,
-    `Total: GBP ${formatMoney(order.total)}`,
-  ];
-
-  if (eventType === "order_refunded") {
-    lines.push(
-      `Refund amount: GBP ${formatMoney(order.refund_amount || order.total)}`,
-    );
-  }
-
-  if (eventType === "order_ready" && order.stores?.pickup_location) {
-    lines.push(`Pickup location: ${order.stores.pickup_location}`);
-  }
-
-  lines.push("You can track the latest order state in the SKIIP app.");
-
-  return lines.join("\n");
-}
-
-async function insertNotificationLog(
-  supabase: any,
-  values: Record<string, unknown>,
+function getRecipientForChannel(
+  channel: NotificationChannel,
+  payload: NotificationPayloadSnapshot,
 ) {
-  const { data, error } = await supabase
-    .from("notification_logs")
-    .insert(values)
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    throw new Error(
-      `Failed to persist notification log: ${error?.message || "unknown error"}`,
-    );
+  if (channel === "email") {
+    return payload.customerEmail;
   }
 
-  return data.id as string;
-}
-
-async function sendEmailNotification(
-  supabase: any,
-  order: OrderRecord,
-  eventType: NotificationEvent,
-) {
-  const resendApiKey = getConfiguredEnv("RESEND_API_KEY");
-  const fromEmail = getConfiguredEnv("NOTIFICATION_FROM_EMAIL");
-
-  if (!resendApiKey || !fromEmail || !order.customer_email) {
-    return { skipped: true };
+  if (channel === "whatsapp") {
+    return payload.customerPhone;
   }
 
-  const logId = await insertNotificationLog(supabase, {
-    order_id: order.id,
-    channel: "email",
-    event_type: eventType,
-    provider: "resend",
-    recipient: order.customer_email,
-    status: "queued",
-  });
-
-  const copy = EVENT_COPY[eventType];
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [order.customer_email],
-      subject: copy.subject,
-      html: buildEmailBody(order, eventType),
-      text: buildEmailText(order, eventType),
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    await supabase
-      .from("notification_logs")
-      .update({
-        status: "failed",
-        error_message: payload?.message || response.statusText,
-        metadata: payload || {},
-      })
-      .eq("id", logId);
-
-    throw new Error(
-      `Resend API error: ${payload?.message || response.statusText}`,
-    );
-  }
-
-  await supabase
-    .from("notification_logs")
-    .update({
-      status: "sent",
-      message_sid: payload?.id || null,
-      metadata: payload || {},
-      error_message: null,
-    })
-    .eq("id", logId);
-
-  return { skipped: false };
+  return null;
 }
 
-function formatTwilioWhatsappAddress(sender: string) {
-  return sender.startsWith("whatsapp:") ? sender : `whatsapp:${sender}`;
-}
-
-function buildTwilioStatusCallbackUrl(
-  supabaseUrl?: string,
-  webhookToken?: string,
-) {
-  if (!supabaseUrl) {
+function coercePayloadSnapshot(
+  value: unknown,
+): NotificationPayloadSnapshot | null {
+  if (!value || typeof value !== "object") {
     return null;
   }
 
-  const callbackBase = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/whatsapp-status-webhook`;
-  return webhookToken
-    ? `${callbackBase}?token=${encodeURIComponent(webhookToken)}`
-    : callbackBase;
+  const snapshot = value as Record<string, unknown>;
+  const orderId = String(snapshot.orderId || "");
+  const orderNumber = String(snapshot.orderNumber || "");
+  if (!orderId || !orderNumber) {
+    return null;
+  }
+
+  return {
+    orderId,
+    storeId:
+      snapshot.storeId === null || snapshot.storeId === undefined
+        ? null
+        : String(snapshot.storeId),
+    orderNumber,
+    customerEmail:
+      snapshot.customerEmail === null || snapshot.customerEmail === undefined
+        ? null
+        : String(snapshot.customerEmail),
+    customerPhone:
+      snapshot.customerPhone === null || snapshot.customerPhone === undefined
+        ? null
+        : String(snapshot.customerPhone),
+    total: String(snapshot.total || "0.00"),
+    refundAmount:
+      snapshot.refundAmount === null || snapshot.refundAmount === undefined
+        ? null
+        : String(snapshot.refundAmount),
+    status: String(snapshot.status || ""),
+    whatsappOptIn: snapshot.whatsappOptIn === true,
+    storeName:
+      snapshot.storeName === null || snapshot.storeName === undefined
+        ? null
+        : String(snapshot.storeName),
+    pickupLocation:
+      snapshot.pickupLocation === null || snapshot.pickupLocation === undefined
+        ? null
+        : String(snapshot.pickupLocation),
+  };
 }
 
-async function sendWhatsAppNotification(
-  supabase: any,
-  order: OrderRecord,
-  eventType: NotificationEvent,
-) {
-  const twilioAccountSid = getConfiguredEnv("TWILIO_ACCOUNT_SID");
-  const twilioAuthToken = getConfiguredEnv("TWILIO_AUTH_TOKEN");
-  const twilioWhatsappFrom = getConfiguredEnv(
-    "TWILIO_WHATSAPP_FROM",
-    "TWILIO_WHATSAPP_NUMBER",
-  );
-  const twilioWebhookToken = getConfiguredEnv("TWILIO_WEBHOOK_TOKEN");
-  const supabaseUrl = getConfiguredEnv("SUPABASE_URL");
-  const templateSid = TWILIO_TEMPLATE_MAP[eventType];
-
-  if (
-    !twilioAccountSid ||
-    !twilioAuthToken ||
-    !twilioWhatsappFrom ||
-    !templateSid ||
-    !order.whatsapp_opt_in ||
-    !order.customer_phone
-  ) {
-    return { skipped: true };
-  }
-
-  const normalizedPhone = normalizePhone(order.customer_phone);
-  if (!normalizedPhone) {
-    return { skipped: true };
-  }
-
-  const logId = await insertNotificationLog(supabase, {
-    order_id: order.id,
-    channel: "whatsapp",
-    event_type: eventType,
-    provider: "twilio",
-    recipient: order.customer_phone,
-    status: "queued",
-  });
-
-  const formData = new URLSearchParams();
-  formData.append("To", `whatsapp:${normalizedPhone}`);
-  formData.append("From", formatTwilioWhatsappAddress(twilioWhatsappFrom));
-  formData.append("ContentSid", templateSid);
-  formData.append(
-    "ContentVariables",
-    JSON.stringify({
-      1: order.order_number,
-      2: order.stores?.name || "SKIIP vendor",
-      3: getWhatsAppAmount(order, eventType),
-    }),
-  );
-
-  const statusCallbackUrl = buildTwilioStatusCallbackUrl(
-    supabaseUrl,
-    twilioWebhookToken,
-  );
-  if (statusCallbackUrl) {
-    formData.append("StatusCallback", statusCallbackUrl);
-  }
-
-  const response = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
-    },
-  );
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const errorMessage = payload?.message || response.statusText;
-
-    log.error("Twilio WhatsApp API error", {
-      orderId: order.id,
-      eventType,
-      status: response.status,
-      payload,
-    });
-
-    await supabase
-      .from("notification_logs")
-      .update({
-        status: "failed",
-        error_message: errorMessage,
-        metadata: payload || {},
-      })
-      .eq("id", logId);
-
-    throw new Error(`Twilio API error: ${errorMessage}`);
-  }
-
-  const messageSid = payload?.sid;
-  if (!messageSid) {
-    const errorMessage = "Twilio API response missing sid";
-
-    log.error(errorMessage, {
-      orderId: order.id,
-      eventType,
-      payload,
-    });
-
-    await supabase
-      .from("notification_logs")
-      .update({
-        status: "failed",
-        error_message: errorMessage,
-        metadata: payload || {},
-      })
-      .eq("id", logId);
-
-    throw new Error(errorMessage);
-  }
-
-  await supabase
-    .from("notification_logs")
-    .update({
-      status: "sent",
-      message_sid: messageSid,
-      metadata: payload || {},
-      error_message: null,
-    })
-    .eq("id", logId);
-
-  return { skipped: false };
-}
-
-export async function sendTransactionalNotifications({
-  supabase,
-  orderId,
-  eventType,
-}: NotificationContext) {
+async function fetchOrderForNotifications(supabase: any, orderId: string) {
   const { data: order, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, customer_email, customer_phone, total, refund_amount, status, whatsapp_opt_in, stores(name, pickup_location)",
+      "id, store_id, order_number, customer_email, customer_phone, total, refund_amount, status, whatsapp_opt_in, stores(name, pickup_location)",
     )
     .eq("id", orderId)
     .single();
@@ -484,18 +167,401 @@ export async function sendTransactionalNotifications({
     );
   }
 
-  const outcomes = await Promise.allSettled([
-    sendEmailNotification(supabase, order as OrderRecord, eventType),
-    sendWhatsAppNotification(supabase, order as OrderRecord, eventType),
-  ]);
+  return order as OrderNotificationRecord;
+}
 
-  outcomes.forEach((result) => {
-    if (result.status === "rejected") {
-      log.error("Notification dispatch failed", {
-        orderId,
-        eventType,
-        error: result.reason?.message || String(result.reason),
-      });
+function buildQueuedNotificationRows(
+  order: OrderNotificationRecord,
+  eventType: NotificationContext["eventType"],
+  channels: NotificationChannel[] | undefined,
+  correlationId: string,
+  sourceEventId: string | null | undefined,
+) {
+  const payloadSnapshot = createNotificationPayloadSnapshot(order);
+  const requestedChannels: NotificationChannel[] = channels?.length
+    ? Array.from(new Set(channels))
+    : ["email", "whatsapp"];
+  const queuedAt = new Date().toISOString();
+
+  return requestedChannels.flatMap((channel) => {
+    const provider = getConfiguredProvider(channel);
+    if (!provider) {
+      return [];
     }
+
+    if (!isEventEnabledForChannel(channel, eventType)) {
+      return [];
+    }
+
+    const recipient = getRecipientForChannel(channel, payloadSnapshot);
+    if (!recipient) {
+      return [];
+    }
+
+    if (channel === "whatsapp" && !payloadSnapshot.whatsappOptIn) {
+      return [];
+    }
+
+    return [{
+      order_id: order.id,
+      store_id: order.store_id,
+      channel,
+      event_type: eventType,
+      provider,
+      recipient,
+      status: "queued",
+      correlation_id: correlationId,
+      source_event_id: sourceEventId || null,
+      payload_snapshot: payloadSnapshot,
+      metadata: {
+        queued_at: queuedAt,
+        scope: "transactional",
+      },
+    }];
   });
+}
+
+function getBackgroundRuntime() {
+  const runtime = (
+    globalThis as typeof globalThis & {
+      EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
+    }
+  ).EdgeRuntime;
+
+  return runtime?.waitUntil ? runtime : null;
+}
+
+function scheduleNotificationDispatch(
+  supabase: any,
+  reason: string,
+) {
+  const runtime = getBackgroundRuntime();
+  if (!runtime) {
+    log.warn("Background notification dispatch is unavailable", { reason });
+    return false;
+  }
+
+  runtime.waitUntil(
+    dispatchPendingNotifications({
+      supabase,
+      reason,
+    }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error("Background notification dispatch failed", {
+        reason,
+        error: message,
+      });
+    }),
+  );
+
+  return true;
+}
+
+async function markNotificationSent(
+  supabase: any,
+  notification: NotificationLogRecord,
+  result: ProviderDispatchResult,
+) {
+  const metadata = mergeMetadata(notification.metadata, {
+    last_provider_response: result.metadata || {},
+    last_dispatched_at: result.sentAt || new Date().toISOString(),
+  });
+
+  const { error } = await supabase
+    .from("notification_logs")
+    .update({
+      status: "sent",
+      message_sid: result.messageSid || notification.message_sid,
+      metadata,
+      error_message: null,
+      sent_at: notification.sent_at || result.sentAt || new Date().toISOString(),
+      processing_started_at: null,
+      next_attempt_at: null,
+    })
+    .eq("id", notification.id);
+
+  if (error) {
+    throw new Error(`Failed to mark notification as sent: ${error.message}`);
+  }
+}
+
+function toDispatchError(error: unknown) {
+  if (error instanceof ProviderDispatchError) {
+    return error;
+  }
+
+  return new ProviderDispatchError(
+    error instanceof Error ? error.message : String(error),
+    { retryable: true },
+  );
+}
+
+async function markNotificationFailed(
+  supabase: any,
+  notification: NotificationLogRecord,
+  error: unknown,
+) {
+  const dispatchError = toDispatchError(error);
+  const attemptNumber = notification.dispatch_attempts || 1;
+  const shouldRetry = dispatchError.retryable &&
+    attemptNumber < NOTIFICATION_DISPATCH_MAX_ATTEMPTS;
+  const nextAttemptAt = shouldRetry
+    ? new Date(
+      Date.now() + (getRetryDelaySeconds(attemptNumber) * 1000),
+    ).toISOString()
+    : null;
+
+  const metadata = mergeMetadata(notification.metadata, {
+    last_dispatch_error: dispatchError.message,
+    last_dispatch_error_at: new Date().toISOString(),
+    last_dispatch_error_metadata: dispatchError.metadata || {},
+  });
+
+  const { error: updateError } = await supabase
+    .from("notification_logs")
+    .update({
+      status: "failed",
+      error_message: dispatchError.message,
+      metadata,
+      failed_at: new Date().toISOString(),
+      processing_started_at: null,
+      next_attempt_at: nextAttemptAt,
+    })
+    .eq("id", notification.id);
+
+  if (updateError) {
+    throw new Error(
+      `Failed to mark notification as failed: ${updateError.message}`,
+    );
+  }
+
+  log.error("Notification dispatch failed", {
+    notificationId: notification.id,
+    orderId: notification.order_id,
+    eventType: notification.event_type,
+    channel: notification.channel,
+    retryable: dispatchError.retryable,
+    nextAttemptAt,
+    error: dispatchError.message,
+  });
+}
+
+async function dispatchNotificationLog(
+  supabase: any,
+  notification: NotificationLogRecord,
+) {
+  const payload = coercePayloadSnapshot(notification.payload_snapshot);
+  if (!payload) {
+    await markNotificationFailed(
+      supabase,
+      notification,
+      new ProviderDispatchError("Notification payload snapshot is missing", {
+        retryable: false,
+      }),
+    );
+    return;
+  }
+
+  const sender = getProviderSender(notification);
+  if (!sender) {
+    await markNotificationFailed(
+      supabase,
+      notification,
+      new ProviderDispatchError("Notification provider is unavailable", {
+        retryable: false,
+      }),
+    );
+    return;
+  }
+
+  try {
+    const result = await sender({
+      notification,
+      payload,
+      eventType: notification.event_type,
+    });
+
+    await markNotificationSent(supabase, notification, result);
+  } catch (error: unknown) {
+    await markNotificationFailed(supabase, notification, error);
+  }
+}
+
+export async function dispatchPendingNotifications(
+  {
+    supabase,
+    reason = "manual",
+    batchSize = NOTIFICATION_DISPATCH_BATCH_SIZE,
+    maxBatches = NOTIFICATION_DISPATCH_MAX_BATCHES_PER_RUN,
+  }: {
+    supabase: any;
+    reason?: string;
+    batchSize?: number;
+    maxBatches?: number;
+  },
+) {
+  let processed = 0;
+
+  for (let batchIndex = 0; batchIndex < maxBatches; batchIndex += 1) {
+    const { data, error } = await supabase.rpc("claim_notification_logs", {
+      p_limit: batchSize,
+      p_processing_timeout_seconds: NOTIFICATION_PROCESSING_TIMEOUT_SECONDS,
+    });
+
+    if (error) {
+      throw new Error(`Failed to claim notification logs: ${error.message}`);
+    }
+
+    const notifications = (data || []) as NotificationLogRecord[];
+    if (!notifications.length) {
+      break;
+    }
+
+    for (const notification of notifications) {
+      await dispatchNotificationLog(supabase, notification);
+      processed += 1;
+    }
+
+    if (notifications.length < batchSize) {
+      break;
+    }
+  }
+
+  log.info("Notification dispatch sweep completed", {
+    reason,
+    processed,
+  });
+
+  return { processed };
+}
+
+export async function sendTransactionalNotifications({
+  supabase,
+  orderId,
+  eventType,
+  channels,
+  correlationId,
+  sourceEventId,
+}: NotificationContext) {
+  const order = await fetchOrderForNotifications(supabase, orderId);
+  const resolvedCorrelationId =
+    correlationId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(correlationId)
+      ? correlationId
+      : crypto.randomUUID();
+  const queuedRows = buildQueuedNotificationRows(
+    order,
+    eventType,
+    channels,
+    resolvedCorrelationId,
+    sourceEventId,
+  );
+
+  if (!queuedRows.length) {
+    log.info("No transactional notifications queued for event", {
+      orderId,
+      eventType,
+      channels,
+    });
+    return { queued: 0 };
+  }
+
+  const { error } = await supabase
+    .from("notification_logs")
+    .insert(queuedRows);
+
+  if (error) {
+    throw new Error(`Failed to queue notifications: ${error.message}`);
+  }
+
+  scheduleNotificationDispatch(supabase, `event:${eventType}`);
+
+  return { queued: queuedRows.length };
+}
+
+export async function applyWebhookStatusToNotification(
+  {
+    supabase,
+    channel,
+    messageSid,
+    status,
+    provider,
+    occurredAt,
+    errorMessage,
+    metadata,
+  }: {
+    supabase: any;
+    channel: "email" | "whatsapp";
+    messageSid: string;
+    status: DeliveryStatus;
+    provider: string;
+    occurredAt?: string | null;
+    errorMessage?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  const { data: notification, error } = await supabase
+    .from("notification_logs")
+    .select(
+      "id, order_id, store_id, channel, event_type, provider, recipient, status, message_sid, error_message, metadata, payload_snapshot, dispatch_attempts, correlation_id, source_event_id, sent_at, delivered_at, failed_at",
+    )
+    .eq("message_sid", messageSid)
+    .eq("channel", channel)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load notification log: ${error.message}`);
+  }
+
+  if (!notification) {
+    return { matched: false };
+  }
+
+  const existingNotification = notification as NotificationLogRecord;
+  const currentRank = statusRank(existingNotification.status);
+  const incomingRank = statusRank(status);
+
+  if (incomingRank < currentRank && status !== "failed") {
+    return { matched: true, skipped: true };
+  }
+
+  const timestamp = occurredAt || new Date().toISOString();
+  const mergedMetadata = mergeMetadata(existingNotification.metadata, {
+    last_provider_webhook_at: timestamp,
+    last_provider_webhook_status: status,
+    last_provider_webhook_payload: metadata || {},
+    provider,
+  });
+
+  const updates: Record<string, unknown> = {
+    status,
+    provider,
+    error_message: status === "failed" ? errorMessage || "Delivery failed" : null,
+    metadata: mergedMetadata,
+  };
+
+  if (status === "sent") {
+    updates.sent_at = existingNotification.sent_at || timestamp;
+  }
+
+  if (status === "delivered" || status === "read") {
+    updates.sent_at = existingNotification.sent_at || timestamp;
+    updates.delivered_at = existingNotification.delivered_at || timestamp;
+  }
+
+  if (status === "failed") {
+    updates.failed_at = existingNotification.failed_at || timestamp;
+  }
+
+  const { error: updateError } = await supabase
+    .from("notification_logs")
+    .update(updates)
+    .eq("id", existingNotification.id);
+
+  if (updateError) {
+    throw new Error(
+      `Failed to update notification delivery status: ${updateError.message}`,
+    );
+  }
+
+  return { matched: true, notificationId: existingNotification.id };
 }

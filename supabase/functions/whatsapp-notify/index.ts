@@ -46,6 +46,8 @@ serve(async (req) => {
       supabase,
       orderId: resolvedOrderId,
       eventType: derivedEventType,
+      channels: ['whatsapp'],
+      correlationId: crypto.randomUUID(),
     })
 
     return jsonResponse({ success: true }, 200, origin)

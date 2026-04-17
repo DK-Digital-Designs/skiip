@@ -132,6 +132,7 @@ serve(async (req: Request) => {
         supabase,
         orderId: order.id,
         eventType: notificationEvent,
+        correlationId: crypto.randomUUID(),
       })
     }
 

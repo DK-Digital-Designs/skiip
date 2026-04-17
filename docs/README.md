@@ -12,6 +12,8 @@ If a statement in an old note, thread, or handover file conflicts with these doc
   Describes what is implemented now, what is working, and what is intentionally deferred.
 - [Deployment](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md)
   Covers environments, secrets, migrations, edge-function deploys, webhooks, and release verification.
+- [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md)
+  Covers the current Resend + Twilio setup, remaining provider-account tasks, required secrets, and live verification steps.
 - [Secrets and Environments](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md)
   Tracks required environment variables, pilot auth decisions, CORS/origin expectations, and secret rotation discipline.
 - [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md)

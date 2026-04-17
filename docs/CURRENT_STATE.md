@@ -77,7 +77,7 @@ The static marketing site still contains some old wording and links that do not 
 
 ### 4. Notifications need operational verification, not a provider decision
 
-The current backend uses Resend for email and Twilio WhatsApp for WhatsApp delivery. The remaining weakness is end-to-end environment verification: template SIDs, callback security, and real-world phone normalization still need disciplined launch checks.
+The current backend uses Resend for email and Twilio WhatsApp for WhatsApp delivery through a queue-backed notification layer. The remaining weakness is end-to-end environment verification: verified senders, template SIDs, callback security, real-world phone normalization, and a scheduled retry sweep still need disciplined launch checks.
 
 ## Intentional Scope Limits
 
@@ -97,6 +97,10 @@ Recent hardening work introduced:
 - admin metrics RPC
 - audit logging
 - Stripe webhook idempotency tracking
+- optional WhatsApp at checkout with launch-safe scope narrowed to `order_ready` by default
+- provider adapter modules for email and WhatsApp
+- queue-backed notification dispatch with richer delivery timestamps
+- Resend delivery webhook ingestion
 - reconciliation migrations for live schema and user profile consistency
 
 The current system should be treated as the first stable operational baseline, not the final architecture endpoint.
