@@ -20,6 +20,8 @@ If a statement in an old note, thread, or handover file conflicts with these doc
   Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
 - [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
   Covers launch rehearsal, order lifecycle, refunds, incident handling, and troubleshooting.
+- [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
+  Defines the intended branch roles, PR targets, release promotion flow, hotfix handling, and branch hygiene rules.
 - [GitHub Setup](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
   Covers GitHub Actions, the delivery board, labels, milestones, current issues, PR review tooling, and the current PR snapshot.
 - [Pull Request Review](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)

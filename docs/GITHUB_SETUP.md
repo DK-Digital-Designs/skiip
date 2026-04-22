@@ -14,6 +14,7 @@ It covers:
 - Repository: [DK-Digital-Designs/skiip](https://github.com/DK-Digital-Designs/skiip)
 - Default branch: `main`
 - The current workflow history shows `staging` being used as an integration branch before merging to `main`
+- The intended branching model now lives in [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
 - No issue templates, pull request templates, or `CODEOWNERS` file are currently present in the repository
 
 ## GitHub Actions
@@ -272,7 +273,7 @@ Observed PR flow:
 - feature/topic branches commonly target `staging`
 - `staging` is then merged into `main`
 
-This is the observed practice from current PR history, not a separately enforced rule in the repository.
+This is the observed practice from current PR history. The intended operating model is documented in [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md), but it is not yet fully enforced by repository settings.
 
 ## Operational Notes
 
