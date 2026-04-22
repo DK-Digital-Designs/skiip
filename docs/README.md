@@ -20,6 +20,10 @@ If a statement in an old note, thread, or handover file conflicts with these doc
   Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
 - [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
   Covers launch rehearsal, order lifecycle, refunds, incident handling, and troubleshooting.
+- [GitHub Setup](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
+  Covers GitHub Actions, the delivery board, labels, milestones, current issues, PR review tooling, and the current PR snapshot.
+- [Pull Request Review](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)
+  Covers the Qodo GitHub app setup, repository-level AI review defaults, and the evaluation checklist.
 - [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md)
   Lists the shared test accounts and login details currently used for local and pilot verification.
 - [Roadmap](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ROADMAP.md)
