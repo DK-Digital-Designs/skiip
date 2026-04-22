@@ -167,3 +167,6 @@ BEGIN
     FROM updated_logs;
 END;
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.claim_notification_logs(INTEGER, INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.claim_notification_logs(INTEGER, INTEGER) TO service_role;
