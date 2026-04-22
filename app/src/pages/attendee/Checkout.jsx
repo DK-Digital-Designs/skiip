@@ -92,14 +92,17 @@ export default function Checkout() {
             }
 
             // 1. Validation
-            if (!email || !phone) {
-                addToast('Please provide both an email and a phone number.', 'error');
+            const trimmedEmail = email.trim();
+            const trimmedPhone = phone.trim();
+
+            if (!trimmedEmail) {
+                addToast('Please provide an email address.', 'error');
                 setProcessing(false);
                 return;
             }
 
-            if (!whatsappOptIn) {
-                addToast('Please confirm WhatsApp opt-in to continue checkout.', 'error');
+            if (whatsappOptIn && !trimmedPhone) {
+                addToast('Add a WhatsApp number if you want WhatsApp order updates.', 'error');
                 setProcessing(false);
                 return;
             }
@@ -113,8 +116,8 @@ export default function Checkout() {
 
             const order = await OrderService.createOrder({
                 items: items,
-                customer_email: email || user?.email,
-                customer_phone: phone,
+                customer_email: trimmedEmail || user?.email,
+                customer_phone: trimmedPhone || null,
                 whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
                 tip_amount: tipAmount
@@ -245,15 +248,17 @@ export default function Checkout() {
                             style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
 
-                        <label>WhatsApp Number</label>
+                        <label>WhatsApp Number (Optional)</label>
                         <input
                             type="tel"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="+44 XX XXX XXXX"
-                            required
                             style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
+                        <p className="text-muted" style={{ fontSize: '13px', marginTop: '-4px', marginBottom: '16px' }}>
+                            Only needed if you want transactional WhatsApp updates, such as when your order is ready.
+                        </p>
 
                         <label>Notes (Optional)</label>
                         <textarea
@@ -267,7 +272,7 @@ export default function Checkout() {
                     <div className="card" style={{ marginBottom: '24px' }}>
                         <h3 style={{ marginBottom: '8px' }}>WhatsApp Updates</h3>
                         <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
-                            Purely transactional. No marketing. Standard rates apply.
+                            Optional and purely transactional. No marketing. Standard rates may apply.
                         </p>
 
                         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
@@ -276,9 +281,8 @@ export default function Checkout() {
                                 checked={whatsappOptIn}
                                 onChange={(e) => setWhatsappOptIn(e.target.checked)}
                                 style={{ marginTop: '2px' }}
-                                required
                             />
-                            <span>Opt-in to receiving order updates via WhatsApp.</span>
+                            <span>Send me WhatsApp updates for my order.</span>
                         </label>
                     </div>
 

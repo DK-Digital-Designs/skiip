@@ -12,12 +12,18 @@ If a statement in an old note, thread, or handover file conflicts with these doc
   Describes what is implemented now, what is working, and what is intentionally deferred.
 - [Deployment](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md)
   Covers environments, secrets, migrations, edge-function deploys, webhooks, and release verification.
+- [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md)
+  Covers the current Resend + Twilio setup, remaining provider-account tasks, required secrets, and live verification steps.
 - [Secrets and Environments](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md)
   Tracks required environment variables, pilot auth decisions, CORS/origin expectations, and secret rotation discipline.
 - [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md)
   Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
 - [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
   Covers launch rehearsal, order lifecycle, refunds, incident handling, and troubleshooting.
+- [GitHub Setup](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
+  Covers GitHub Actions, the delivery board, labels, milestones, current issues, PR review tooling, and the current PR snapshot.
+- [Pull Request Review](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)
+  Covers the Qodo GitHub app setup, repository-level AI review defaults, and the evaluation checklist.
 - [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md)
   Lists the shared test accounts and login details currently used for local and pilot verification.
 - [Roadmap](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ROADMAP.md)

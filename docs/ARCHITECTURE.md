@@ -86,13 +86,19 @@ The buyer checkout flow is server-authoritative.
 Sequence:
 1. Buyer signs in.
 2. Buyer builds a cart in the frontend.
-3. [`Checkout.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/Checkout.jsx) submits product IDs, quantities, contact details, notes, and tip.
+3. [`Checkout.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/Checkout.jsx) submits product IDs, quantities, email, optional WhatsApp details, notes, and tip.
 4. [`order-create`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-create/index.ts) validates the user, looks up products, computes totals, and writes `orders` plus `order_items`.
 5. [`stripe-checkout`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-checkout/index.ts) creates a Stripe Checkout session using authoritative order data.
 6. Stripe redirects the buyer back to the order tracker.
-7. [`stripe-webhook`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) verifies the signature, marks the order paid, records fees, finalizes inventory, writes audit logs, and dispatches notifications.
+7. [`stripe-webhook`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) verifies the signature, marks the order paid, records fees, finalizes inventory, writes audit logs, and queues notifications.
 8. Vendor updates the order via [`order-transition`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-transition/index.ts).
 9. Admin refunds are handled through [`stripe-refund`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-refund/index.ts).
+
+Notification delivery now uses a small outbox pattern:
+- business flows write durable notification rows into `notification_logs`
+- the shared notification service resolves the provider per channel
+- edge runtime background work drains queued notifications after the mutation response path
+- provider webhooks update delivery state back onto the same log rows
 
 ## Realtime
 
@@ -115,6 +121,7 @@ Important tables:
 - `orders`
 - `order_items`
 - `notification_logs`
+- `notification_webhook_events`
 - `audit_logs`
 - `stripe_processed_events`
 

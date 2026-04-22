@@ -241,7 +241,13 @@ export default function VendorDashboard() {
                                         <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>
                                             {order.status === 'pending' ? 'WAITING FOR PAYMENT' : order.status.replace('_', ' ').toUpperCase()}
                                         </p>
-                                        <p style={{ fontSize: '14px' }}>📱 {order.customer_phone}</p>
+                                        <p style={{ fontSize: '14px' }}>
+                                            {order.customer_phone
+                                                ? `📱 ${order.customer_phone}`
+                                                : order.customer_email
+                                                    ? `✉️ ${order.customer_email}`
+                                                    : 'No direct contact'}
+                                        </p>
                                     </div>
                                 </div>
 

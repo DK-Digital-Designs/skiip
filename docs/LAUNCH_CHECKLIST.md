@@ -8,6 +8,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 - auth posture is explicitly signed off
 - RLS audit is complete for buyer, seller, admin, and service-role boundaries
 - Vercel env vars, Supabase secrets, and Stripe keys all match the same environment pair
+- notification provider accounts, webhook endpoints, and template IDs are configured for the target environment
 - one full buyer -> payment -> vendor -> refund rehearsal has passed
 - Playwright smoke checks pass for public routes and any configured role credentials
 - logging is sufficient to diagnose webhook, refund, and auth failures
@@ -18,13 +19,14 @@ Do not treat an environment as launch-ready until all of the following are true:
 
 1. Freeze unrelated changes and identify the exact commit being deployed.
 2. Confirm the target environment's frontend vars, Supabase secrets, and Stripe webhook config.
-3. Confirm migrations are complete and no manual production-only SQL is pending.
-4. Deploy database migrations.
-5. Deploy Supabase edge functions.
-6. Deploy the frontend.
-7. Run `npm run test:e2e` against the target with `PLAYWRIGHT_BASE_URL` set.
-8. Run one manual operator rehearsal for the highest-risk flow if payments or auth changed.
-9. Only then open traffic or announce the release.
+3. Confirm the notification provider setup in [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md) is complete for the target environment.
+4. Confirm migrations are complete and no manual production-only SQL is pending.
+5. Deploy database migrations.
+6. Deploy Supabase edge functions.
+7. Deploy the frontend.
+8. Run `npm run test:e2e` against the target with `PLAYWRIGHT_BASE_URL` set.
+9. Run one manual operator rehearsal for the highest-risk flow if payments or auth changed.
+10. Only then open traffic or announce the release.
 
 ## Rollback Checklist
 
@@ -80,6 +82,7 @@ Check:
 - `notification_logs`
 - provider callbacks
 - provider credentials and account health
+- the manual setup checklist in [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md)
 
 Actions:
 - distinguish intentional optional-provider skips from actual failures

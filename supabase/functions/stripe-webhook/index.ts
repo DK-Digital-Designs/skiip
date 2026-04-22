@@ -150,6 +150,7 @@ serve(async (req: Request) => {
           supabase: supabaseClient,
           orderId,
           eventType: 'order_refunded',
+          sourceEventId: event.id,
         })
       } else {
         await supabaseClient
@@ -175,6 +176,7 @@ serve(async (req: Request) => {
           supabase: supabaseClient,
           orderId,
           eventType: 'order_paid',
+          sourceEventId: event.id,
         })
       }
     } else if (event.type === 'payment_intent.payment_failed') {

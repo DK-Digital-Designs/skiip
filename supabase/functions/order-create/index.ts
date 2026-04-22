@@ -56,8 +56,16 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'At least one item is required' }, 400, origin)
     }
 
-    if (!customerEmail || !customerPhone) {
-      return jsonResponse({ error: 'Customer email and phone are required' }, 400, origin)
+    if (!customerEmail) {
+      return jsonResponse({ error: 'Customer email is required' }, 400, origin)
+    }
+
+    if (body.whatsapp_opt_in === true && !customerPhone) {
+      return jsonResponse(
+        { error: 'Customer phone is required when WhatsApp updates are enabled' },
+        400,
+        origin,
+      )
     }
 
     const normalizedItems = items.map((item) => ({
@@ -126,7 +134,7 @@ serve(async (req: Request) => {
         total,
         tip_amount: tipAmount,
         customer_email: customerEmail,
-        customer_phone: customerPhone,
+        customer_phone: customerPhone || null,
         notes: body.notes?.trim() || null,
         whatsapp_opt_in: body.whatsapp_opt_in === true,
         payment_status: 'pending',

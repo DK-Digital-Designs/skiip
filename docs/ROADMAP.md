@@ -147,9 +147,9 @@ These items matter, but they do not block a safe first launch if the Priority 1 
 
 ### Notification Strategy
 
-- Harden the Meta WhatsApp Cloud API operational setup:
-  - verify template approvals and names per environment
-  - verify webhook handshake and signature enforcement
+- Harden the Twilio WhatsApp operational setup:
+  - verify template/content SIDs per environment
+  - verify status callback protection and delivery logging
   - verify domestic and international phone normalization against real pilot data
 - Add provider abstraction if multiple notification backends will be supported.
 

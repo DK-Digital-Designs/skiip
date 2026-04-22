@@ -437,3 +437,13 @@ entrypoint = "./functions/whatsapp-notify/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/whatsapp-status-webhook/index.ts"
+
+[functions.notification-dispatch]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/notification-dispatch/index.ts"
+
+[functions.resend-email-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/resend-email-webhook/index.ts"

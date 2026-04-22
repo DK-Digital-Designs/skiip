@@ -224,7 +224,7 @@ export default function AdminDashboard() {
                                 <div>
                                     <h4>{order.order_number || `Order #${order.id.slice(0, 8)}`}</h4>
                                     <p className="text-muted" style={{ fontSize: '14px' }}>
-                                        {new Date(order.created_at).toLocaleString()} • {order.stores?.name || 'Unknown Store'} • {order.customer_phone}
+                                        {new Date(order.created_at).toLocaleString()} • {order.stores?.name || 'Unknown Store'} • {order.customer_phone || order.customer_email || 'No direct contact'}
                                     </p>
                                 </div>
                                 <div style={{ textAlign: 'right', display: 'grid', gap: '8px', justifyItems: 'end' }}>
