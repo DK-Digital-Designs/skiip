@@ -2,31 +2,35 @@
 
 ## Summary
 
-SKIIP is currently in a workable closed-pilot state.
+SKIIP is currently in a workable closed-pilot state for the core buyer -> payment -> vendor -> admin loop.
 
-The core order loop is functioning:
+The production-critical path that exists in code today is:
 
-- buyer can sign up and log in
-- buyer can create an order
+- buyer signs in
+- buyer creates an order through a server-authoritative edge function
 - buyer is redirected to Stripe Checkout
-- Stripe webhook marks the order as paid
-- vendor sees the paid order and can move it through the lifecycle
+- Stripe webhook marks the order as paid and finalizes inventory
+- vendor sees the paid order and moves it through the active lifecycle
 - admin can view operational metrics and issue refunds
 
 ## What Is Working
 
 ### Buyer
 
+- shared email/password login
+- buyer signup route
 - authenticated checkout only
 - cart to order creation
 - Stripe Checkout redirect
 - order tracker with live updates
-- success return flow after payment
+- buyer order history view
 
 ### Vendor
 
 - seller login
-- store lookup from authenticated user
+- invite-code-gated vendor signup route
+- store lookup from authenticated seller
+- product management
 - order list with active/all filtering
 - `paid -> preparing -> ready -> collected`
 - cancellation path
@@ -34,73 +38,141 @@ The core order loop is functioning:
 
 ### Admin
 
-- admin dashboard metrics
+- admin dashboard metrics RPC
 - recent order listing
 - vendor performance summary
 - notification health summary
 - refund actions
+- vendor store management
 
 ### Backend
 
 - server-authoritative order creation
 - Stripe webhook idempotency tracking
 - inventory finalization on successful payment
+- automatic refund on paid-order inventory failure
+- payment failure recording
 - refund recording
-- audit logging
+- audit logging for key order and payment events
 - user profile reconciliation trigger/backfill support
+- queue-backed notification dispatch with delivery webhooks
 
 ## Current Runtime Truth
 
-These statements reflect the actual current implementation:
+These statements reflect the actual current implementation.
 
-- guest checkout is no longer a supported buyer path
+- buyer checkout is authenticated only
 - order totals are computed on the server
 - payment finalization is webhook-driven
-- vendor/admin status changes flow through edge functions
+- vendor/admin order status changes go through edge functions
 - protected edge functions currently use manual bearer validation rather than Supabase gateway JWT enforcement
+- checkout currency is GBP
+- vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
+- the repo still deploys a separate static marketing site, but it is not part of the order/payment source of truth
+
+## Important Clarifications
+
+### Signup behavior is mixed
+
+Current code exposes:
+
+- buyer signup at `/signup`
+- vendor signup at `/vendor/signup`
+
+Vendor signup is guarded by `VITE_VENDOR_INVITE_CODE` and creates a pending seller store.
+
+Also note:
+
+- repo auth config keeps email confirmations disabled
+- signup UIs still tell users to check their inbox for verification
+
+That means signup copy and auth configuration are not currently aligned.
+
+### Admin operations are not uniformly server-authoritative
+
+The admin dashboard refund flow is edge-function mediated, but vendor management is not.
+
+[`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx) currently performs direct browser-side writes for:
+
+- creating stores
+- upgrading users to `seller`
+- activating/suspending stores
+- deleting stores
+
+Store status changes are audit logged by database trigger. Store creation and deletion are not handled through a dedicated edge-function boundary.
+
+### Notifications are durable, but retries are not scheduled in-repo
+
+Current notification behavior:
+
+- business flows queue rows into `notification_logs`
+- edge-runtime background work attempts immediate dispatch
+- provider webhooks update delivery state
+
+Important operational limit:
+
+- there is no scheduler defined in this repository for delayed retry sweeps
+- [`notification-dispatch`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/notification-dispatch/index.ts) must be triggered manually or by an external scheduler if backlog recovery matters
+
+### The static marketing site is not operational lead capture
+
+The `site/` directory is a separate marketing surface.
+
+Current reality:
+
+- waitlist and contact forms write only to browser `localStorage`
+- analytics is a stub
+- some links and copy are still demo-oriented or stale
+
+Do not treat the marketing site as a backend-integrated operational surface.
 
 ## Known Weak Spots
 
-These are the main remaining risks, but they do not invalidate the current working baseline.
+These are the main remaining risks in the current baseline.
 
 ### 1. Auth posture is pragmatic, not final
 
 `verify_jwt = false` is still used for protected edge functions, with manual auth enforcement in code.
 
-### 2. Documentation was historically inconsistent
+### 2. Environment drift remains easy to introduce
 
-This is being corrected now by consolidating docs into the `docs/` directory.
+- `VITE_VENDOR_INVITE_CODE` is used by the app but not documented in `app/.env.example`
+- `ALLOWED_ORIGINS` has a hardcoded fallback list in code if the env var is missing
+- `VITE_STRIPE_PUBLIC_KEY` is still documented in places even though the current redirect-based checkout flow does not read it
 
-### 3. Marketing site drift
+### 3. Local reset and schema guidance still have drift
 
-The static marketing site still contains some old wording and links that do not fully match the current product architecture.
+- `supabase/config.toml` points `db reset` at `supabase/seed.sql`, but that file is not committed
+- legacy schema snapshots still exist in `supabase/` and can be mistaken for the authoritative schema if someone ignores migrations
 
-### 4. Notifications need operational verification, not a provider decision
+### 4. Some schema and UI remnants are legacy
 
-The current backend uses Resend for email and Twilio WhatsApp for WhatsApp delivery through a queue-backed notification layer. The remaining weakness is end-to-end environment verification: verified senders, template SIDs, callback security, real-world phone normalization, and a scheduled retry sweep still need disciplined launch checks.
+- legacy order statuses such as `processing`, `shipped`, and `delivered` still exist in the schema
+- the current UI and edge-function lifecycle do not use them
+- `/admin/events` is still a placeholder route, not implemented event management
 
 ## Intentional Scope Limits
 
-These areas are intentionally not treated as complete yet:
+These areas are still intentionally incomplete:
 
 - full multi-event tenancy
-- social login as the primary auth path
-- polished staging/prod database branching workflow
-- final auth-hardening decision on `verify_jwt`
+- fully finalized edge-function auth posture
+- automated retry scheduling for notification backlog recovery
+- event-management tooling beyond the placeholder admin route
+- production-grade marketing-site lead capture
 
 ## What Changed Recently
 
 Recent hardening work introduced:
 
 - production-oriented order/payment flow
-- authoritative edge functions
-- admin metrics RPC
+- authoritative edge functions for order creation, transitions, onboarding, and refunds
+- admin metrics RPC with failed-payment reporting
 - audit logging
 - Stripe webhook idempotency tracking
-- optional WhatsApp at checkout with launch-safe scope narrowed to `order_ready` by default
-- provider adapter modules for email and WhatsApp
+- payment failure fields on orders
 - queue-backed notification dispatch with richer delivery timestamps
-- Resend delivery webhook ingestion
-- reconciliation migrations for live schema and user profile consistency
+- Resend webhook ingestion
+- schema and auth-profile reconciliation migrations
 
-The current system should be treated as the first stable operational baseline, not the final architecture endpoint.
+The repo now represents a first operational baseline. It does not yet represent a finished platform or a fully hardened open-launch posture.

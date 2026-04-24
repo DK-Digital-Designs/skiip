@@ -4,34 +4,54 @@
 
 SKIIP uses multiple deployment surfaces:
 
-- Vercel for the React app
-- Supabase for database, auth, realtime, and edge functions
-- Stripe for checkout, onboarding, and webhooks
-- optional notification providers such as Twilio WhatsApp and Resend
+- Vercel for the React product app in `app/`
+- Supabase for database, auth, realtime, storage, and edge functions
+- Stripe for checkout, Connect onboarding, refunds, and webhooks
+- GitHub Pages for the static marketing site in `site/`
+- optional notification providers: Resend for email and Twilio for WhatsApp
+
+Current deployment split in the repo:
+
+- the product app and marketing site are separate deployables
+- only the marketing site has an in-repo deployment workflow
+- the product app's Vercel deployment is configured outside the repo, with repo-side behavior defined mainly by [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json)
 
 Current recommendation:
 
 - keep separate Supabase and Stripe environments for staging and production
 - keep Vercel env vars aligned to the matching Supabase project
-- only include preview domains in `ALLOWED_ORIGINS` when previews are intentionally connected to a backend
-- treat `ALLOWED_ORIGINS` as both a CORS list and the allow-list for checkout/onboarding return URLs
+- keep `ALLOWED_ORIGINS` explicit per environment
+- treat `ALLOWED_ORIGINS` as both the CORS allow-list and the allow-list for checkout/onboarding redirect origins
 
 ## Frontend Environment Variables
 
-Required in Vercel for the app:
+Current product-app runtime variables:
+
+Required:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_STRIPE_PUBLIC_KEY`
 
-These must all belong to the same environment pair. A mixed project URL/key setup will break auth and edge-function calls.
+Conditionally required:
+
+- `VITE_VENDOR_INVITE_CODE`
+  Only required if the public `/vendor/signup` path is expected to work in that environment.
+
+Recommended:
+
+- `VITE_SENTRY_DSN`
+
+Important current clarification:
+
+- `VITE_STRIPE_PUBLIC_KEY` is still present in [`app/.env.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/.env.example)
+- the current app does not load Stripe.js or read `VITE_STRIPE_PUBLIC_KEY`
+- checkout is redirect-based through the `stripe-checkout` edge function, so this variable is not currently required for runtime
 
 For the full inventory and rotation discipline, see [Secrets and Environment Inventory](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md).
-For the provider-account setup checklist and exact notification handover values, see [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md).
 
-## Supabase Secrets
+## Supabase Function Secrets
 
-Current backend expects these as needed:
+Current backend expects these secrets as needed.
 
 Core:
 
@@ -40,65 +60,106 @@ Core:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ALLOWED_ORIGINS`
 
+Recommended for function error visibility:
+
+- `SENTRY_DSN`
+
 Email:
 
+- `EMAIL_PROVIDER`
+- `EMAIL_NOTIFICATION_EVENTS`
 - `RESEND_API_KEY`
 - `NOTIFICATION_FROM_EMAIL`
+- `RESEND_WEBHOOK_SECRET`
 
-WhatsApp with current implementation:
+WhatsApp:
 
+- `WHATSAPP_PROVIDER`
+- `WHATSAPP_NOTIFICATION_EVENTS`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_WHATSAPP_FROM`
 - `TWILIO_WEBHOOK_TOKEN`
-- `WHATSAPP_PROVIDER`
-- `WHATSAPP_NOTIFICATION_EVENTS`
 - `WHATSAPP_DEFAULT_COUNTRY_CODE`
-- `TWILIO_TEMPLATE_*` values for the WhatsApp events you intentionally enable
+- `TWILIO_TEMPLATE_ORDER_READY`
+- `TWILIO_TEMPLATE_ORDER_PAID` when `order_paid` is enabled
+- `TWILIO_TEMPLATE_ORDER_PREPARING` when `order_preparing` is enabled
+- `TWILIO_TEMPLATE_ORDER_CANCELLED` when `order_cancelled` is enabled
+- `TWILIO_TEMPLATE_ORDER_REFUNDED` when `order_refunded` is enabled
 
-Notification outbox:
+Notification outbox / retry tuning:
 
-- `NOTIFICATION_DISPATCH_SECRET` for manual or scheduled dispatcher runs
+- `NOTIFICATION_DISPATCH_SECRET`
 - `NOTIFICATION_DISPATCH_BATCH_SIZE`
 - `NOTIFICATION_DISPATCH_MAX_BATCHES_PER_RUN`
 - `NOTIFICATION_DISPATCH_MAX_ATTEMPTS`
 - `NOTIFICATION_PROCESSING_TIMEOUT_SECONDS`
 - `NOTIFICATION_RETRY_BASE_DELAY_SECONDS`
 
-Email delivery tracking:
+Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template.
 
-- `EMAIL_PROVIDER`
-- `EMAIL_NOTIFICATION_EVENTS`
-- `RESEND_WEBHOOK_SECRET`
+Keep `supabase/.env.functions` local and untracked.
 
-Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template. Keep `supabase/.env.functions` local and untracked.
+Notes:
+
+- Supabase edge functions also read `SUPABASE_URL` and `SUPABASE_ANON_KEY`, which are typically injected by the Supabase runtime rather than managed as custom secrets
+- local Node scripts under [`app/scripts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/scripts) may additionally use `SUPABASE_SERVICE_ROLE_KEY` or legacy `VITE_SUPABASE_SERVICE_ROLE_KEY`
+
+## Allowed Origins
+
+Protected browser-facing functions reject disallowed origins after preflight.
+
+Important current behavior:
+
+- if `ALLOWED_ORIGINS` is set, it becomes the effective allow-list
+- if `ALLOWED_ORIGINS` is missing, [`_shared/http.ts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/_shared/http.ts) falls back to this hardcoded list:
+  - `https://skiip.co.uk`
+  - `https://www.skiip.co.uk`
+  - `https://skiip-4nzf8krt6-dkdigital.vercel.app`
+  - `http://localhost:5173`
+  - `http://127.0.0.1:5173`
+
+Hosted environments should not rely on that fallback. Set `ALLOWED_ORIGINS` explicitly.
+
+Because the app uses `HashRouter`, deep links such as `/#/order/track/...` are fine. The allow-list checks only the origin, not the hash path.
 
 ## Pilot Auth Decision
 
-Closed-pilot launch keeps `auth.email.enable_confirmations = false`.
+The repo configuration currently keeps `auth.email.enable_confirmations = false`.
 
-That is intentional for the current pilot because:
+That is the configuration source of truth for the pilot.
 
-- accounts are operator-created or directly supported
-- support staff can verify buyer, seller, and admin access manually
-- SMTP and support processes are not yet treated as fully launch-ready
+Important caveat:
 
-Revisit this before any open self-serve launch. Re-enabling confirmations should happen together with a verified SMTP setup, updated support docs, and a smoke pass over signup and password recovery.
+- the buyer and vendor signup UIs still show a "check your inbox" verification screen
 
-## Migrations
+Before any broader launch:
 
-Migrations live in [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations).
+- decide whether confirmations stay off or are re-enabled
+- align the frontend copy with that decision
+- run end-to-end signup, login, and recovery verification in the target environment
 
-Important rule:
+## Migrations and Schema Truth
 
-- production should not rely on undocumented manual SQL
-- if a manual fix is applied, it must be encoded as a migration immediately
+Authoritative schema source:
 
-The current live-working schema depends on:
+- [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
 
-- [20260414000000_production_readiness.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260414000000_production_readiness.sql)
-- [20260415000000_reconcile_live_schema.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260415000000_reconcile_live_schema.sql)
-- [20260415000001_user_profile_reconciliation.sql](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260415000001_user_profile_reconciliation.sql)
+Do not treat these files as the current live-working schema source of truth:
+
+- [`supabase/schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/schema.sql)
+- [`supabase/skiip-schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema.sql)
+- [`supabase/skiip-schema-full-reset.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema-full-reset.sql)
+
+Important current caveat:
+
+- [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml) enables `db reset` seeding from `./seed.sql`
+- `supabase/seed.sql` is not committed in this repo
+
+That means:
+
+- `supabase db push` is the reliable repo-supported database sync path
+- `supabase db reset` should not be treated as guaranteed working without local seed overrides or a restored seed file
 
 Recommended CLI flow:
 
@@ -124,15 +185,24 @@ Current critical functions:
 - `resend-email-webhook`
 - `whatsapp-status-webhook`
 
-Notification dispatch currently happens in three ways:
+Current notification-dispatch behavior:
 
-- business flows queue notifications into `notification_logs` after the authoritative order mutation succeeds
-- the shared notification helper drains that queue in the background through the edge runtime, so provider calls are not awaited inline on the mutation request
-- `notification-dispatch` exists for manual or scheduled backlog sweeps, and `whatsapp-notify` remains as a compatibility bridge that queues WhatsApp-only events for the older database-trigger route
+- business flows queue notification rows
+- immediate sends are attempted in edge-runtime background work
+- delayed retries or backlog sweeps require `notification-dispatch`
 
-Protected browser-facing functions now reject requests from disallowed `Origin` headers after the preflight stage. If staging or production starts returning `Origin not allowed`, the frontend domain and `ALLOWED_ORIGINS` are out of sync.
+Important current limitation:
 
-Deploy:
+- no scheduler for `notification-dispatch` is defined in this repository
+- if retry sweeps are required in staging or production, they must be triggered manually or by an external scheduler
+
+Legacy compatibility note:
+
+- `whatsapp-notify` is still configured and deployable
+- the ordered migration chain removes the old database trigger that called it
+- do not treat `whatsapp-notify` as part of the intended current production flow
+
+Deploy functions:
 
 ```bash
 supabase functions deploy
@@ -152,17 +222,26 @@ Webhook endpoint:
 https://<project-ref>.supabase.co/functions/v1/stripe-webhook
 ```
 
-Minimum subscribed events:
+Events currently handled by code:
 
 - `checkout.session.completed`
 - `payment_intent.payment_failed`
-- `charge.refunded`
 - `account.updated`
+- `charge.refunded`
+- `charge.dispute.created`
+
+Current payment specifics:
+
+- checkout currency is `gbp`
+- vendor onboarding creates Stripe Express accounts with `country = GB`
+- onboarding currently requests `card_payments` and `transfers`
+- application fees are calculated as `10%` of order subtotal in `stripe-checkout`
 
 Important:
 
-- the webhook signing secret must come from the exact Stripe webhook endpoint in use
+- the webhook signing secret must come from the exact hosted Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
+- seeded test seller accounts are not automatically Stripe-onboarded by the repo seeding scripts
 
 ## Twilio WhatsApp Status Webhook
 
@@ -176,29 +255,37 @@ Important:
 
 - outbound WhatsApp sends automatically attach this endpoint as the Twilio `StatusCallback`
 - if `TWILIO_WEBHOOK_TOKEN` is set, it is appended to the callback URL and required by the webhook
-- launch-safe default WhatsApp scope is `order_ready`; widen `WHATSAPP_NOTIFICATION_EVENTS` only if you deliberately want more events
-- the `TWILIO_TEMPLATE_*` values must match the Twilio Content Template SIDs configured for each enabled event
-- local phone entry can be normalized from domestic format by setting `WHATSAPP_DEFAULT_COUNTRY_CODE`
+- launch-safe default WhatsApp scope is `order_ready`
+- `TWILIO_TEMPLATE_*` values must match the actual enabled event scope
+- phone normalization defaults to country code `44` unless overridden
 
 ## Resend Email
 
 Important:
 
-- `NOTIFICATION_FROM_EMAIL` must be a sender that is verified in Resend
-- `RESEND_API_KEY` must be present in the same Supabase environment as the notification functions
-- transactional emails remain the broader durable channel for paid, preparing, ready, cancelled, and refunded events
-- Resend webhook endpoint:
+- `NOTIFICATION_FROM_EMAIL` must be a sender verified in Resend
+- `RESEND_API_KEY` must exist in the same Supabase environment as the notification functions
+- transactional email defaults to the full order event set unless `EMAIL_NOTIFICATION_EVENTS` narrows it
+
+Webhook endpoint:
 
 ```text
 https://<project-ref>.supabase.co/functions/v1/resend-email-webhook
 ```
 
-- `RESEND_WEBHOOK_SECRET` must match the webhook signing secret from the Resend dashboard
-- subscribe at least to `email.sent`, `email.delivered`, `email.delivery_delayed`, `email.failed`, `email.bounced`, `email.complained`, and `email.suppressed`
+Subscribe at least to:
+
+- `email.sent`
+- `email.delivered`
+- `email.delivery_delayed`
+- `email.failed`
+- `email.bounced`
+- `email.complained`
+- `email.suppressed`
 
 ## Notification Outbox
 
-Manual or scheduled dispatcher endpoint:
+Manual or externally scheduled dispatcher endpoint:
 
 ```text
 https://<project-ref>.supabase.co/functions/v1/notification-dispatch
@@ -207,12 +294,12 @@ https://<project-ref>.supabase.co/functions/v1/notification-dispatch
 Important:
 
 - the endpoint requires `Authorization: Bearer <NOTIFICATION_DISPATCH_SECRET>`
-- the background dispatcher handles immediate sends, but this endpoint is the clean way to sweep delayed retries or backlog
-- `notification_logs` is now both the delivery log and the durable outbox
+- `notification_logs` is both the delivery log and the durable outbox
+- there is no repo-defined scheduler that calls this endpoint for you
 
 ## Frontend Security Headers
 
-The app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json) to set baseline browser hardening headers:
+The product app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json) to set baseline browser hardening headers:
 
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
@@ -220,20 +307,36 @@ The app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub
 - `Permissions-Policy` disabling camera, microphone, and geolocation
 - `Strict-Transport-Security`
 
+## Static Marketing Site Deployment
+
+The static site deploy is defined in [deploy-site.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/deploy-site.yml).
+
+Current behavior:
+
+- pushes to `main` that touch `site/**` publish to GitHub Pages
+- the site is uploaded as static files from `./site`
+
+Current caution:
+
+- site waitlist/contact capture is still localStorage-only and should not be treated as backend-integrated deployment behavior
+
 ## Post-Deploy Verification
 
-After any meaningful backend deploy:
+After any meaningful backend or frontend deploy:
 
-1. sign in as a buyer
-2. create a test order
-3. complete Stripe Checkout in test mode
-4. confirm the order flips to `paid`
-5. confirm vendor can move the order through statuses
-6. confirm admin dashboard loads metrics
-7. confirm refund flow still works
-8. confirm the buyer can complete checkout without opting into WhatsApp
-9. confirm the buyer receives Resend emails and, when opted in, Twilio WhatsApp updates for the enabled order events
-10. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
+1. confirm the frontend is pointed at the intended Supabase project
+2. confirm `ALLOWED_ORIGINS` is set explicitly for that environment
+3. sign in as a buyer
+4. create a test order
+5. complete Stripe Checkout in test mode
+6. confirm the order flips to `paid`
+7. confirm vendor can move the order through statuses
+8. confirm admin dashboard loads metrics
+9. confirm admin refund flow still works
+10. confirm the buyer can complete checkout without opting into WhatsApp
+11. confirm Resend emails and, when enabled and opted in, Twilio WhatsApp updates
+12. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
+13. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
 
 ## Staging Smoke Workflow
 
@@ -245,36 +348,24 @@ Current purpose:
 - validate public routing
 - validate buyer, seller, and admin sign-in surfaces
 
-For the exact GitHub environment setup steps, required secrets, and first-run checklist, see [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md).
-
 Current limit:
 
-- this workflow is not yet the full payment-path rehearsal
+- it is not the full payment-path rehearsal
 - it does not create orders, open Stripe Checkout, verify webhook transitions, or execute refunds
 
 Use it as an early warning for deployment drift and auth/config regressions, not as proof that the full launch-critical payment loop is healthy.
-
-For production cutovers, rollback sequencing, and incident handling, use [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md) rather than relying on this short verification list alone.
-
-## Current Auth Deployment Note
-
-Protected edge functions currently rely on:
-
-- explicit bearer token forwarding from the frontend
-- manual validation inside the function
-
-That means deployment success depends on both:
-
-- the frontend shipping the auth header
-- the function code continuing to call `requireUser()`
 
 ## Release Discipline
 
 Before any staging or production release:
 
 1. confirm all live schema changes exist in [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
-2. confirm no production-only manual SQL is being relied on
-3. sync Vercel env vars and Supabase secrets for the same environment pair
-4. deploy migrations before or alongside dependent function changes
-5. run the Playwright smoke suite locally or against the deployed target
-6. capture any emergency manual fix as a committed migration immediately afterward
+2. confirm no deployable behavior still depends on legacy schema snapshot files
+3. confirm no production-only manual SQL is being relied on
+4. sync frontend env vars and Supabase secrets for the same environment pair
+5. set `ALLOWED_ORIGINS` explicitly for the target environment
+6. deploy migrations before or alongside dependent function changes
+7. run the Playwright smoke suite locally or against the deployed target
+8. run one manual payment-path rehearsal when payments, auth, onboarding, or notifications changed
+9. if notification retry recovery matters in that environment, confirm who or what will call `notification-dispatch`
+10. capture any emergency manual fix as a committed migration immediately afterward
