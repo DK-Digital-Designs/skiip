@@ -114,6 +114,16 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
     }
 
+    const hasInvalidItemQuantity = orderItems.some((item) => {
+      const quantity = Number(item.quantity)
+      return !Number.isSafeInteger(quantity) || quantity <= 0
+    })
+
+    if (hasInvalidItemQuantity) {
+      log.warn('Order has invalid item quantities', { orderId })
+      return jsonResponse({ error: 'Order item quantity is invalid' }, 409, origin)
+    }
+
     const lineItems = orderItems.map((item) => ({
       price_data: {
         currency: 'gbp',
@@ -122,7 +132,7 @@ serve(async (req: Request) => {
         },
         unit_amount: Math.max(1, Math.round(Number(item.price) * 100)),
       },
-      quantity: Math.max(1, Number(item.quantity) || 1),
+      quantity: Number(item.quantity),
     }))
 
     if (tipAmount > 0) {
