@@ -402,6 +402,12 @@ Suggested wording:
 
 The proposed monthly support fee should not be treated as payment for unlimited new feature development.
 
+Proposed structure:
+
+- R2,000/month.
+- Includes 4 hours of support per month.
+- Additional work billed at R500/hour unless otherwise agreed.
+
 Suggested position:
 
 - Maintenance covers agreed bug fixes, light support, and small technical tasks.
@@ -419,6 +425,15 @@ Suggested position:
 - Event-day support should be billed separately.
 - This can be a per-event support fee or an hourly event-support rate.
 - The support expectation must be clear: standby only, active monitoring, refund support, vendor support, or full operational support.
+- Recommended starting model: a per-event support fee, because operational responsibility scales with event activity.
+
+Possible event-support models:
+
+| Model | When It Makes Sense | Notes |
+| --- | --- | --- |
+| Per-event fee | Recommended starting model | Cleanest fit for an event-driven platform; more events means more operational responsibility |
+| Hourly on-call | Occasional or irregular event support | Could use R500-R750/hour with a minimum booking |
+| Monthly event package | Regular event schedule | Must define included events, included hours, response expectations, urgent-support scope, and overage billing |
 
 ## Third-Party Costs Are Separate
 
@@ -479,6 +494,8 @@ The contract should clearly include:
 - Stripe/payment-provider responsibilities
 - handover terms
 - six-month support review or renegotiation clause
+- early review trigger if workload, event volume, support requests, or platform usage exceeds expectations
+- clear statement that DK Digital is not obligated to continue under outdated support pricing if no revised agreement is reached after the review
 
 Suggested wording:
 
@@ -578,7 +595,216 @@ Thanks again, and we are looking forward to getting SKIIP ready for launch.
 
 ---
 
-# Appendix B: Internal Reminder
+# Appendix B: Internal Partner Alignment
+
+This appendix is for internal partner alignment before finalising the SKIIP agreement. It should inform the meeting position, but it does not need to be shared word-for-word with the client.
+
+## Core Concern
+
+SKIIP is not a typical website project.
+
+It is:
+
+- a live, revenue-generating platform
+- event-driven, with usage spikes and real-time pressure
+- connected to customers, vendors, orders, payments, refunds, and operational support
+- a product that will require ongoing technical ownership if it succeeds
+
+If pricing and responsibilities are structured incorrectly now, DK Digital risks:
+
+- being locked into low monthly revenue with high responsibility
+- absorbing event-day operational stress for free
+- supporting a growing platform without proportional compensation
+- letting maintenance become a catch-all for unlimited future work
+- blurring the line between development, support, hosting, and event operations
+
+## Required Contract Mechanism: Six-Month Review
+
+A mandatory six-month pricing and support review clause should be included in the agreement.
+
+Reason:
+
+- event volume is unknown
+- vendor adoption is unknown
+- system load is unknown
+- support demand is unknown
+- live-event support demand is unknown
+- future feature request volume is unknown
+
+The agreement should state:
+
+- initial support pricing is valid for the first six months after launch
+- a mandatory review happens at month six
+- pricing, support scope, included hours, and responsibilities can be adjusted based on actual usage
+- an earlier review can be triggered if workload exceeds expectations
+- if no revised agreement is reached, DK Digital is not obligated to continue under outdated pricing
+
+This protects both sides: SKIIP gets a clear starting support arrangement, and DK Digital is not permanently locked into an unsustainable support model.
+
+## Three Separate Services
+
+We are delivering three distinct services. They must be separated clearly.
+
+### Service 1: Once-Off Software Development
+
+This covers the initial SKIIP Version 1 build based on agreed scope.
+
+It includes the core platform work:
+
+- buyer/attendee app
+- vendor dashboard
+- admin functionality
+- core ordering flow
+- core payment flow
+- refund/admin operations
+- initial platform foundation
+
+Pricing position:
+
+> The once-off development fee is being discussed around the R25,000-R31,000 range, depending on final confirmed scope. We are delivering Version 1 based on agreed scope, not a complete future-proof platform.
+
+Risk if unclear:
+
+- endless feature requests after launch
+- future roadmap work treated as already included
+- launch-hardening work absorbed into the original MVP price
+- no clear boundary between Version 1 and future development
+
+### Service 2: Monthly Maintenance Retainer
+
+Proposed structure:
+
+- R2,000/month
+- includes 4 hours of support per month
+- additional work billed at R500/hour unless otherwise agreed
+
+Maintenance can cover:
+
+- bug fixes for existing agreed features
+- minor adjustments
+- light support communication
+- basic stability checks
+- small technical fixes within included monthly hours
+
+Maintenance should not include:
+
+- new features
+- major UI/UX changes
+- major product changes
+- infrastructure scaling
+- event-day support
+- new payment models
+- new business-model logic
+- full vendor onboarding operations
+- marketing-site lead capture work
+- major reporting/dashboard expansion
+
+Risk if unclear:
+
+> Maintenance becomes a catch-all, creating unlimited expectations under a fixed monthly fee.
+
+### Service 3: Event / On-Call Support
+
+Event support is the highest-risk service and must be treated separately.
+
+SKIIP events involve:
+
+- live orders
+- live payment issues
+- vendor issues affecting customer experience immediately
+- urgent response expectations
+- potential client expectation of instant technical support
+
+Key principle:
+
+> Event support is operational responsibility, not standard maintenance.
+
+Recommended internal position:
+
+> A per-event support fee is the cleanest starting model because event workload scales with event activity.
+
+Other possible models:
+
+- hourly on-call at R500-R750/hour with a minimum booking
+- monthly event support package with defined event count, included hours, response expectations, urgent-support definition, and overage billing
+
+Risk if bundled into maintenance:
+
+- high-stress live-event work becomes unpaid
+- increasing events create increasing workload without increasing revenue
+- DK Digital becomes operationally responsible without matching compensation
+- the project can become unsustainable even if SKIIP succeeds
+
+## Infrastructure and Third-Party Costs
+
+Hosting, database, payment processing, messaging, and related platform costs should be the client's responsibility unless explicitly agreed otherwise.
+
+This includes:
+
+- Vercel hosting
+- Supabase database and auth costs
+- Stripe processing fees
+- Stripe Connect/payment-related costs, if any
+- Resend/email costs
+- Twilio/WhatsApp/SMS costs
+- domains
+- logging/monitoring tools
+- required paid platform upgrades
+
+DK Digital should not silently absorb these costs into the once-off build fee or monthly maintenance fee.
+
+## Strategic Positioning
+
+DK Digital is not only acting as a basic website developer on this project.
+
+We are contributing as:
+
+- platform developers
+- technical architects
+- payment-flow implementers
+- operational support providers
+- ongoing system maintainers
+
+If SKIIP succeeds:
+
+- usage will increase
+- support demand may increase
+- event pressure will increase
+- reliance on DK Digital may increase
+- system complexity will increase
+
+Therefore:
+
+- pricing must be able to scale with usage
+- responsibilities must be clearly separated
+- flexibility must be built into the contract
+- future work must be scoped and priced properly
+
+## Internal Decisions Required
+
+Before finalising the agreement, align on:
+
+- six-month support/pricing review clause
+- early review triggers if workload exceeds expectations
+- separation of once-off development, monthly maintenance, and event/on-call support
+- preferred event support model
+- maintenance boundaries
+- initial Version 1 build boundaries
+
+Recommended final internal position:
+
+- clear service separation
+- mandatory six-month pricing/support review clause
+- independent event support pricing
+- explicit maintenance boundaries
+- clear infrastructure and third-party cost responsibility
+- written scope confirmation before major final launch work continues
+
+Do not proceed without these commercial protections being included in some form.
+
+---
+
+# Appendix C: Internal Reminder
 
 Do not allow the meeting to become only about price.
 
