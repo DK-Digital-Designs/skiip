@@ -21,6 +21,7 @@ import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import GlobalHeader from './components/shared/GlobalHeader';
+import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
@@ -85,6 +86,7 @@ function App() {
                 {/* 404 Catch-all */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            <AppFooter />
             <ToastContainer />
         </>
     );

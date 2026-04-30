@@ -21,13 +21,6 @@ export default function LandingPage() {
                     </div>
                 </div>
             </main>
-
-            {/* Footer */}
-            <footer style={{ padding: '40px 0', borderTop: '1px solid var(--stroke)', marginTop: '80px' }}>
-                <div className="container" style={{ textAlign: 'center' }}>
-                    <p className="text-muted">© 2026 Skiip Technologies. MVP Demo Version.</p>
-                </div>
-            </footer>
         </div>
     );
 }

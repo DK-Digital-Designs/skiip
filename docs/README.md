@@ -18,6 +18,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
   Tracks required environment variables, pilot auth decisions, current allow-list behavior, and secret rotation discipline.
 - [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md)
   Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
+- [Releases](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/RELEASES.md)
+  Defines pre-launch versioning, sync rules, and GitHub tag timing.
 - [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
   Covers day-to-day order operations, troubleshooting, refund handling, and operational caveats.
 - [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)

@@ -1,7 +1,7 @@
 {
   "name": "skiip",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.20.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "seed:test-users": "node scripts/seed-test-users.js",
     "format": "prettier --check .",
+    "version:sync": "node ../scripts/sync-version.mjs",
     "format:write": "prettier --write ."
   },
   "devDependencies": {
