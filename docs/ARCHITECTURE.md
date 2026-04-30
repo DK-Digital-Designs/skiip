@@ -33,11 +33,11 @@ Current routed surfaces in [App.jsx](C:/Users/deang/OneDrive/Documents/GitHub/sk
 
 - landing page
 - shared buyer/admin/seller login and buyer signup
-- invite-code-gated vendor signup at `/vendor/signup`
+- admin-created vendor onboarding for launch; `/vendor/signup` is not exposed in the app router
 - buyer ordering flow
 - vendor dashboard and product management
 - admin dashboard and vendor management
-- placeholder admin events page
+- admin events are deferred and `/admin/events` is not exposed for launch
 
 Legacy files still exist in the repo but are not part of the routed app today, including:
 
@@ -58,8 +58,8 @@ Current roles:
 Current account-entry paths:
 
 - buyer self-signup through `/signup`
-- seller self-signup through `/vendor/signup` when `VITE_VENDOR_INVITE_CODE` is configured
 - admin-created seller/store setup through the admin vendor management UI
+- no public or invite-code vendor self-signup for the May 2026 launch
 
 Current backend profile lifecycle:
 
@@ -69,13 +69,16 @@ Current backend profile lifecycle:
 Important current mismatch:
 
 - [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml) keeps `auth.email.enable_confirmations = false`
-- the buyer and vendor signup UIs still show a "check your inbox" confirmation message
-
-Treat the configuration as the source of truth and the signup confirmation copy as current UX drift.
+- buyer signup messaging assumes immediate account availability
+- vendor onboarding is admin-created for launch
 
 ## Function Auth Posture
 
-Protected edge functions currently use this pattern:
+Launch decision for May 2026: protected browser-facing edge functions keep Supabase gateway `verify_jwt = false` and enforce auth manually inside the function with `requireUser()`.
+
+This is intentional for launch because the project also has webhook and secret-protected functions that must remain gateway-unauthenticated. Keeping one explicit in-function pattern avoids mixing gateway JWT behavior with manual bearer validation during the staging test window.
+
+Protected edge functions use this pattern:
 
 - `verify_jwt = false` in [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml)
 - the browser forwards the Supabase access token explicitly
@@ -86,6 +89,7 @@ Protected functions using this model:
 - `order-create`
 - `stripe-checkout`
 - `order-transition`
+- `admin-store`
 - `stripe-refund`
 - `stripe-onboarding-link`
 
@@ -97,6 +101,13 @@ Functions that must remain unauthenticated at the gateway:
 - `notification-dispatch` uses its own bearer secret instead of user auth
 
 Browser-facing functions also gate by allowed `Origin`.
+
+Auth response contract for protected functions:
+
+- missing bearer token: `401`
+- invalid or expired bearer token: `401`
+- authenticated user without a readable profile: `403`
+- authenticated user without the required role or store ownership: `403`
 
 Important current behavior:
 
@@ -210,26 +221,25 @@ Non-authoritative legacy schema files still present in the repo:
 
 Do not use those files as the live-working schema source of truth.
 
-## Admin and Operational Caveats
+## Admin Vendor Operations
 
-Not all admin actions are server-authoritative today.
+Admin vendor/store mutations go through [`admin-store`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/admin-store/index.ts) for launch.
 
-Current direct browser-side admin writes:
+Current admin vendor operations:
 
-- [`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx) creates stores directly with Supabase JS
-- it also upgrades selected users to `seller`
-- it can suspend/activate stores directly
-- it can hard-delete stores directly
+- create a vendor store and promote the selected owner to `seller`
+- activate or suspend a store
+- archive a store by setting `deleted_at` instead of hard-deleting it
 
-Current audit coverage is uneven:
+Audit coverage:
 
-- store status changes are audit logged by database trigger
+- store creation and archival write explicit admin audit events
+- store status changes are audit logged by database trigger with the admin actor supplied by the RPC boundary
 - order creation, payment, status transitions, and refunds are audit logged
-- store creation and store deletion are not routed through a dedicated edge function
 
 Also note:
 
-- [`AdminEvents.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Events.jsx) is still a placeholder and does not implement event management
+- event management is deferred and `/admin/events` is not exposed in launch routing
 
 ## Marketing Site
 
@@ -238,7 +248,7 @@ The `site/` directory is not the product app. It is a separate static marketing 
 Current reality for the marketing site:
 
 - it is deployed independently from the product app
-- waitlist and contact forms currently write only to browser `localStorage`
+- waitlist and contact forms open email drafts for launch rather than writing browser-only leads
 - [`analytics.js`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/site/assets/js/analytics.js) is a stub, not a live analytics integration
 - several links and claims remain marketing/demo oriented and should not be treated as operational product behavior
 

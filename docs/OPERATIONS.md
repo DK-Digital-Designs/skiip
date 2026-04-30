@@ -41,10 +41,11 @@ Before a real launch or high-confidence release:
 2. verify the seller has completed Stripe onboarding
 3. place a Stripe test-mode order
 4. verify the webhook changes the order to `paid`
-5. verify the vendor can move to `preparing`, `ready`, and `collected`
-6. verify admin can refund a paid order
-7. verify audit and notification records are written
-8. if notification retry recovery matters, verify who or what will invoke `notification-dispatch`
+5. verify the admin recent-orders view shows the Stripe payment intent, charge, platform fee, Stripe fee, and vendor net
+6. verify the vendor can move to `preparing`, `ready`, and `collected`
+7. verify admin can refund a paid order
+8. verify audit and notification records are written
+9. if notification retry recovery matters, verify who or what will invoke `notification-dispatch`
 
 ## Daily Operational Checks
 
@@ -56,6 +57,7 @@ Review:
 - webhook processing errors
 - unexpected inventory changes
 - refund activity
+- Stripe reconciliation fields on paid/refunded orders
 - whether any notification backlog is accumulating without a retry sweep
 
 Useful tables:
@@ -119,6 +121,24 @@ Operational note:
 - failed payments currently leave the order in the pending flow with `payment_status = failed`
 - the buyer can retry checkout on the same order once a new checkout session is created
 
+### Stripe reconciliation check
+
+For each staging payment rehearsal, compare:
+
+- Stripe test-mode Checkout Session ID
+- Stripe test-mode Payment Intent ID
+- Stripe test-mode Charge ID
+- `orders.platform_fee`
+- `orders.stripe_fee`
+- `orders.vendor_net`
+- the values shown in the admin recent-orders reconciliation line
+
+Operational notes:
+
+- May 12 testing must remain in Stripe test mode
+- `vendor_net` is calculated from order total minus platform fee and Stripe fee after the webhook retrieves the expanded balance transaction
+- older orders may show missing fee values if they were paid before reconciliation fields were populated
+
 ### Vendor cannot change order status
 
 Check:
@@ -166,28 +186,27 @@ Current refund path:
 
 Refunds should be treated as financial operations, not simple UI status changes.
 
-## Admin Operations Caveat
+## Admin Vendor Operations
 
-Not all admin operations currently go through server-authoritative endpoints.
+Launch vendor/store mutations go through `admin-store`, an admin-only Edge Function that calls service-role RPCs and writes audit records.
 
-Current direct browser-side admin writes in [`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx):
+Current admin vendor operations:
 
-- create store
-- promote user to `seller`
-- activate/suspend store
-- delete store
+- create a vendor store and promote the selected owner to `seller`
+- activate or suspend a store
+- archive a store by setting `deleted_at` and suspending it
 
 Operational consequence:
 
-- store status changes are audit logged by database trigger
-- store creation and store deletion are not protected by a dedicated edge-function boundary
-- store deletion is currently a hard delete
+- store creation, status changes, and archival are actor-audited
+- browser-side admin writes to `stores` and `user_profiles` are not part of the launch path
+- archival is used instead of hard delete for launch safety
 
 ## Vendor Onboarding
 
 Before a vendor can accept orders:
 
-1. decide whether the vendor is being created through admin tooling or invite-code self-signup
+1. create or confirm the vendor through admin tooling
 2. confirm the vendor account exists
 3. confirm the vendor has a `stores` row
 4. confirm Stripe onboarding is completed
@@ -204,5 +223,5 @@ The static marketing site is not part of day-to-day order operations.
 
 Current reality:
 
-- contact and waitlist capture is still localStorage-only
-- do not rely on it for operational lead intake or support workflow
+- contact and waitlist forms open an email draft for launch
+- do not rely on browser localStorage for operational lead intake or support workflow

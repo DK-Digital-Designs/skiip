@@ -11,7 +11,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 - Vercel app vars, Supabase secrets, and Stripe keys all match the same environment pair
 - `ALLOWED_ORIGINS` is explicitly set for the target environment and hosted traffic is not relying on fallback origins in code
 - notification provider accounts, webhook endpoints, and template IDs are configured for the target environment
-- one full buyer -> payment -> vendor -> refund rehearsal has passed with a Stripe-onboarded seller account
+- one full buyer -> Stripe test-mode payment -> reconciliation -> vendor -> refund rehearsal has passed with a Stripe-onboarded seller account
 - Playwright smoke checks pass for public routes and configured role credentials
 - logging is sufficient to diagnose webhook, refund, notification, and auth failures
 - vendor onboarding has been rehearsed with the actual path you plan to use
@@ -21,6 +21,7 @@ Do not treat an environment as launch-ready until all of the following are true:
   - or an external scheduler exists for `notification-dispatch`
 - if public buyer or vendor signup is in scope, the signup UX matches the actual auth confirmation policy
 - if the marketing site is part of the launch surface, its contact/waitlist forms are either replaced with real capture or explicitly treated as non-operational
+- `product-images` storage bucket exists with public reads, seller/admin `products/<store_id>/*` uploads, PNG/JPG/WebP MIME limits, and a 5MB size limit
 
 ## Release Sequence
 
@@ -33,7 +34,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 7. Deploy Supabase edge functions.
 8. Deploy the frontend.
 9. Run `npm run test:e2e` against the target with `PLAYWRIGHT_BASE_URL` set.
-10. Run one manual operator rehearsal for the highest-risk flow if payments, auth, onboarding, or notifications changed.
+10. Run one manual operator rehearsal for the highest-risk flow if payments, auth, onboarding, or notifications changed. Payment rehearsals must use Stripe test mode before the May 2026 launch gate.
 11. Only then open traffic or announce the release.
 
 ## Rollback Checklist
@@ -65,6 +66,25 @@ Actions:
 - confirm the environment still has the required inventory/audit SQL objects from current migrations
 - if multiple orders are affected, pause new order intake before retrying
 
+### Stripe reconciliation mismatch
+
+Check:
+
+- the Stripe dashboard is in test mode for staging rehearsals
+- `orders.checkout_session_id`
+- `orders.payment_intent_id`
+- `orders.charge_id`
+- `orders.platform_fee`
+- `orders.stripe_fee`
+- `orders.vendor_net`
+- admin recent-orders reconciliation display
+
+Actions:
+
+- compare the order against the Stripe test-mode Checkout Session, Payment Intent, Charge, and balance transaction
+- verify the latest `stripe-webhook` function is deployed
+- confirm the webhook retrieved `latest_charge.balance_transaction` before marking the order reconciled
+
 ### Edge functions return `401` or `403`
 
 Check:
@@ -79,6 +99,13 @@ Actions:
 
 - fix environment mismatches first
 - redeploy the affected function if the auth guard changed
+
+Expected launch behavior:
+
+- protected browser-facing functions keep `verify_jwt = false` and validate the forwarded bearer token with `requireUser()`
+- missing, invalid, or expired bearer tokens return `401`
+- valid users without the required role, store ownership, or readable profile return `403`
+- webhook and secret-protected functions remain gateway-unauthenticated and enforce their own signature or bearer-secret checks
 
 ### Refunds fail
 
@@ -127,7 +154,7 @@ Actions:
 Before a real vendor can accept orders:
 
 1. Decide which onboarding path is being used:
-   admin-created seller/store or invite-code vendor self-signup.
+   admin-created seller/store for the May 2026 launch.
 2. Confirm the vendor has a valid `user_profiles` row with role `seller`.
 3. Confirm the vendor has a valid `stores` row.
 4. Confirm Stripe onboarding is complete and payout details are submitted.
@@ -136,7 +163,8 @@ Before a real vendor can accept orders:
 7. Place one test order and verify it reaches the vendor dashboard.
 8. Verify the vendor can move the order through `paid -> preparing -> ready -> collected`.
 9. Verify admin refund access for that order path.
-10. Share the operator support contact and escalation path with the vendor.
+10. Verify vendor create/status/archive actions are routed through `admin-store` and visible in `audit_logs`.
+11. Share the operator support contact and escalation path with the vendor.
 
 ## Schema Verification Rule
 
