@@ -139,6 +139,21 @@ function coercePayloadSnapshot(
       snapshot.refundAmount === null || snapshot.refundAmount === undefined
         ? null
         : String(snapshot.refundAmount),
+    scheduledCollectionAt:
+      snapshot.scheduledCollectionAt === null ||
+        snapshot.scheduledCollectionAt === undefined
+        ? null
+        : String(snapshot.scheduledCollectionAt),
+    scheduledCollectionTimezone:
+      snapshot.scheduledCollectionTimezone === null ||
+        snapshot.scheduledCollectionTimezone === undefined
+        ? null
+        : String(snapshot.scheduledCollectionTimezone),
+    scheduledCollectionLabel:
+      snapshot.scheduledCollectionLabel === null ||
+        snapshot.scheduledCollectionLabel === undefined
+        ? null
+        : String(snapshot.scheduledCollectionLabel),
     status: String(snapshot.status || ""),
     whatsappOptIn: snapshot.whatsappOptIn === true,
     storeName:
@@ -156,7 +171,7 @@ async function fetchOrderForNotifications(supabase: any, orderId: string) {
   const { data: order, error } = await supabase
     .from("orders")
     .select(
-      "id, store_id, order_number, customer_email, customer_phone, total, refund_amount, status, whatsapp_opt_in, stores(name, pickup_location)",
+      "id, store_id, order_number, customer_email, customer_phone, total, refund_amount, scheduled_collection_at, scheduled_collection_timezone, status, whatsapp_opt_in, stores(name, pickup_location)",
     )
     .eq("id", orderId)
     .single();

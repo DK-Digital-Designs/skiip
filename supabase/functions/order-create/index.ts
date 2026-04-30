@@ -1,9 +1,10 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
+import { normalizeScheduledCollection } from "../_shared/scheduled-collection.ts"
 
 const log = logger('order-create')
 
@@ -19,6 +20,8 @@ interface CreateOrderRequest {
   notes?: string
   whatsapp_opt_in?: boolean
   tip_amount?: number
+  scheduled_collection_at?: string | null
+  scheduled_collection_timezone?: string | null
 }
 
 function roundMoney(value: number) {
@@ -51,6 +54,7 @@ serve(async (req: Request) => {
     const tipAmount = roundMoney(Math.max(Number(body.tip_amount || 0), 0))
     const customerEmail = (body.customer_email || '').trim()
     const customerPhone = (body.customer_phone || '').trim()
+    const scheduledCollection = normalizeScheduledCollection(body)
 
     if (items.length === 0) {
       return jsonResponse({ error: 'At least one item is required' }, 400, origin)
@@ -137,9 +141,11 @@ serve(async (req: Request) => {
         customer_phone: customerPhone || null,
         notes: body.notes?.trim() || null,
         whatsapp_opt_in: body.whatsapp_opt_in === true,
+        scheduled_collection_at: scheduledCollection.scheduled_collection_at,
+        scheduled_collection_timezone: scheduledCollection.scheduled_collection_timezone,
         payment_status: 'pending',
       })
-      .select('id, order_number, subtotal, total, tip_amount, store_id, status')
+      .select('id, order_number, subtotal, total, tip_amount, store_id, status, scheduled_collection_at, scheduled_collection_timezone')
       .single()
 
     if (orderError || !order) {
@@ -182,6 +188,6 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Order creation failed', { error: error.message, stack: error.stack })
-    return jsonResponse({ error: error.message || 'Order creation failed' }, 400, origin)
+    return jsonResponse({ error: error.message || 'Order creation failed' }, getAuthErrorStatus(err) || 400, origin)
   }
 })

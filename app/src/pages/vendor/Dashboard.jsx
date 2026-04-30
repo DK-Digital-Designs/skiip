@@ -6,6 +6,7 @@ import { StoreService } from '../../lib/services/store.service';
 import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
+import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 
 const STATUS_COLORS = {
     pending: '#9b9ba5',
@@ -21,7 +22,7 @@ export default function VendorDashboard() {
     const navigate = useNavigate();
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('active'); // active | all
+    const [filter, setFilter] = useState('active'); // active | scheduled | all
     const { addToast } = useToast();
 
     // React Query Hooks
@@ -213,6 +214,12 @@ export default function VendorDashboard() {
                         Active Orders
                     </button>
                     <button
+                        onClick={() => setFilter('scheduled')}
+                        className={filter === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
+                    >
+                        Scheduled Orders
+                    </button>
+                    <button
                         onClick={() => setFilter('all')}
                         className={filter === 'all' ? 'btn btn-primary' : 'btn btn-ghost'}
                     >
@@ -236,6 +243,11 @@ export default function VendorDashboard() {
                                         <p className="text-muted" style={{ fontSize: '14px' }}>
                                             {new Date(order.created_at).toLocaleTimeString()}
                                         </p>
+                                        {getScheduledCollectionLabel(order) && (
+                                            <p className="text-accent" style={{ fontSize: '14px', marginTop: '6px' }}>
+                                                Scheduled collection: {getScheduledCollectionLabel(order)}
+                                            </p>
+                                        )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>

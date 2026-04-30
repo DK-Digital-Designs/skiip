@@ -7,6 +7,12 @@ import { StoreService } from '../../lib/services/store.service';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
+import {
+    collectionInputToIso,
+    getMinimumScheduledCollectionInputValue,
+    getScheduledCollectionLabel,
+    toScheduledCollectionPayload,
+} from '../../lib/scheduledCollection';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -21,6 +27,8 @@ export default function Checkout() {
     const [notes, setNotes] = useState('');
     const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [collectionMode, setCollectionMode] = useState('immediate');
+    const [scheduledCollection, setScheduledCollection] = useState('');
 
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
@@ -107,6 +115,23 @@ export default function Checkout() {
                 return;
             }
 
+            if (collectionMode === 'scheduled' && !scheduledCollection) {
+                addToast('Choose a scheduled collection time.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            let scheduledPayload;
+            try {
+                scheduledPayload = collectionMode === 'scheduled'
+                    ? toScheduledCollectionPayload(scheduledCollection)
+                    : toScheduledCollectionPayload('');
+            } catch (error) {
+                addToast(error.message || 'Choose a valid scheduled collection time.', 'error');
+                setProcessing(false);
+                return;
+            }
+
             // 2. Pre-check Vendor Payment Readiness
             if (vendor && !vendor.stripe_onboarding_complete) {
                 addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
@@ -120,7 +145,8 @@ export default function Checkout() {
                 customer_phone: trimmedPhone || null,
                 whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
-                tip_amount: tipAmount
+                tip_amount: tipAmount,
+                ...scheduledPayload,
             });
 
             // 3. Process Payment via Stripe
@@ -164,6 +190,16 @@ export default function Checkout() {
         );
     }
 
+    const scheduledPreviewIso = collectionMode === 'scheduled'
+        ? collectionInputToIso(scheduledCollection)
+        : null;
+    const scheduledPreview = scheduledPreviewIso
+        ? getScheduledCollectionLabel({
+            scheduled_collection_at: scheduledPreviewIso,
+            scheduled_collection_timezone: 'Europe/London',
+        })
+        : '';
+
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
             <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
@@ -199,6 +235,45 @@ export default function Checkout() {
                         <span>Total</span>
                         <span className="text-accent">£{total.toFixed(2)}</span>
                     </div>
+                </div>
+
+                {/* Collection Time */}
+                <div className="card" style={{ marginBottom: '24px' }}>
+                    <h3 style={{ marginBottom: '16px' }}>Collection Time</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                        <button
+                            type="button"
+                            onClick={() => setCollectionMode('immediate')}
+                            className={collectionMode === 'immediate' ? 'btn btn-primary' : 'btn btn-ghost'}
+                        >
+                            As soon as ready
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setCollectionMode('scheduled')}
+                            className={collectionMode === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
+                        >
+                            Scheduled
+                        </button>
+                    </div>
+
+                    {collectionMode === 'scheduled' && (
+                        <>
+                            <label>Collection date and time</label>
+                            <input
+                                type="datetime-local"
+                                value={scheduledCollection}
+                                min={getMinimumScheduledCollectionInputValue()}
+                                onChange={(e) => setScheduledCollection(e.target.value)}
+                                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
+                            />
+                            {scheduledPreview && (
+                                <p className="text-accent" style={{ fontSize: '14px', marginTop: '12px' }}>
+                                    Scheduled for {scheduledPreview}
+                                </p>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Tip Selection */}

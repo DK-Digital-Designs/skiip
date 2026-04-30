@@ -5,7 +5,16 @@ export const OrderService = {
     /**
      * Create a new server-authoritative order
      */
-    async createOrder({ items, customer_email, customer_phone, notes, tip_amount = 0, whatsapp_opt_in = false }) {
+    async createOrder({
+        items,
+        customer_email,
+        customer_phone,
+        notes,
+        tip_amount = 0,
+        whatsapp_opt_in = false,
+        scheduled_collection_at = null,
+        scheduled_collection_timezone = 'Europe/London',
+    }) {
         if (!supabase) throw new Error('Supabase not configured');
         const headers = await getFunctionAuthHeaders();
 
@@ -19,6 +28,8 @@ export const OrderService = {
             notes,
             tip_amount,
             whatsapp_opt_in,
+            scheduled_collection_at,
+            scheduled_collection_timezone,
         };
 
         const { data, error } = await supabase.functions.invoke('order-create', {
@@ -57,11 +68,18 @@ export const OrderService = {
         let query = supabase
             .from('orders')
             .select('*, order_items(*)')
-            .eq('store_id', storeId)
-            .order('created_at', { ascending: false });
+            .eq('store_id', storeId);
 
-        if (filter === 'active') {
+        if (filter === 'scheduled') {
+            query = query
+                .not('scheduled_collection_at', 'is', null)
+                .in('status', ['pending', 'paid', 'processing', 'preparing', 'ready'])
+                .order('scheduled_collection_at', { ascending: true });
+        } else if (filter === 'active') {
             query = query.in('status', ['pending', 'paid', 'processing', 'preparing', 'ready']);
+            query = query.order('created_at', { ascending: false });
+        } else {
+            query = query.order('created_at', { ascending: false });
         }
 
         const { data, error } = await query;
