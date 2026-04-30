@@ -2,7 +2,7 @@ import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 
@@ -180,7 +180,7 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Checkout session creation failed', { error: error.message, stack: error.stack })
-    const status = error.message.includes('token') ? 401 : 400
+    const status = getAuthErrorStatus(err) || 400
     return jsonResponse({ error: error.message || 'Payment initialization failed' }, status, origin)
   }
 })

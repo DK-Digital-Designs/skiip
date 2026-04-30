@@ -128,8 +128,8 @@ export default function VendorLogin() {
                         </p>
                     )}
 
-                    <p className="text-center" style={{ fontSize: '14px', marginTop: '24px' }}>
-                        Want to become a vendor? <Link to="/vendor/signup" className="text-accent">Apply here</Link>
+                    <p className="text-center text-muted" style={{ fontSize: '14px', marginTop: '24px' }}>
+                        Vendor accounts are created by SKIIP admins for launch.
                     </p>
                 </form>
             </div>

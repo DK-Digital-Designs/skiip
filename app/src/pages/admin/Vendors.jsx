@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/ui/Toast';
 import AttendeeHeader from '../../components/shared/AttendeeHeader';
+import { AdminStoreService } from '../../lib/services/adminStore.service';
 
 export default function AdminVendors() {
     const [stores, setStores] = useState([]);
@@ -23,7 +24,8 @@ export default function AdminVendors() {
             // Fetch stores without relational join
             const { data: storesData, error: storesError } = await supabase
                 .from('stores')
-                .select('id, name, slug, status, created_at, user_id')
+                .select('id, name, slug, status, created_at, user_id, deleted_at')
+                .is('deleted_at', null)
                 .order('created_at', { ascending: false });
 
             if (storesError) throw storesError;
@@ -32,6 +34,7 @@ export default function AdminVendors() {
             const { data: usersData, error: usersError } = await supabase
                 .from('user_profiles')
                 .select('id, email, full_name, role')
+                .in('role', ['buyer', 'seller'])
                 .order('created_at', { ascending: false });
 
             if (usersError) throw usersError;
@@ -57,12 +60,7 @@ export default function AdminVendors() {
 
     const handleUpdateStatus = async (storeId, newStatus) => {
         try {
-            const { error } = await supabase
-                .from('stores')
-                .update({ status: newStatus })
-                .eq('id', storeId);
-
-            if (error) throw error;
+            await AdminStoreService.updateStoreStatus(storeId, newStatus);
             addToast(`Store marked as ${newStatus}`, 'success');
             fetchData();
         } catch (error) {
@@ -70,17 +68,12 @@ export default function AdminVendors() {
         }
     };
 
-    const handleDeleteStore = async (storeId) => {
-        if (!window.confirm('Are you sure you want to delete this store?')) return;
+    const handleArchiveStore = async (storeId) => {
+        if (!window.confirm('Archive this store for launch? It will be hidden from buyer and seller operational views.')) return;
         
         try {
-            const { error } = await supabase
-                .from('stores')
-                .delete()
-                .eq('id', storeId);
-
-            if (error) throw error;
-            addToast('Store deleted permanently', 'success');
+            await AdminStoreService.archiveStore(storeId);
+            addToast('Store archived', 'success');
             fetchData();
         } catch (error) {
             addToast(error.message, 'error');
@@ -90,22 +83,11 @@ export default function AdminVendors() {
     const handleCreateStore = async (e) => {
         e.preventDefault();
         try {
-            // Ensure owner role is seller
-            await supabase
-                .from('user_profiles')
-                .update({ role: 'seller' })
-                .eq('id', newStore.user_id);
-
-            const { error } = await supabase
-                .from('stores')
-                .insert([{
-                    user_id: newStore.user_id,
-                    name: newStore.name,
-                    slug: newStore.slug || newStore.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
-                    status: 'active'
-                }]);
-
-            if (error) throw error;
+            await AdminStoreService.createVendorStore({
+                userId: newStore.user_id,
+                name: newStore.name,
+                slug: newStore.slug,
+            });
             
             addToast('Store created successfully!', 'success');
             setShowNewStoreForm(false);
@@ -240,9 +222,9 @@ export default function AdminVendors() {
                                                     <button 
                                                         className="btn btn-ghost" 
                                                         style={{ padding: '6px 12px', fontSize: '12px', color: '#f87171' }}
-                                                        onClick={() => handleDeleteStore(store.id)}
+                                                        onClick={() => handleArchiveStore(store.id)}
                                                     >
-                                                        Delete
+                                                        Archive
                                                     </button>
                                                 </div>
                                             </td>

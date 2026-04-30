@@ -29,6 +29,7 @@ export const StoreService = {
             .from('stores')
             .select('*')
             .eq('id', id)
+            .is('deleted_at', null)
             .single();
 
         if (error) throw error;
@@ -46,6 +47,7 @@ export const StoreService = {
             .from('stores')
             .select('*')
             .eq('user_id', userId)
+            .is('deleted_at', null)
             .maybeSingle();
 
         if (error) {
@@ -69,6 +71,7 @@ export const StoreService = {
             .from('stores')
             .select('*')
             .eq('user_id', user.id)
+            .is('deleted_at', null)
             .maybeSingle();
 
         if (error) {

@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
 import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 
 const log = logger('stripe-onboarding-link')
 
@@ -123,7 +123,7 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Onboarding link creation failed', { error: error.message, stack: error.stack })
-    const status = error.message.includes('token') ? 401 : 500
+    const status = getAuthErrorStatus(err) || 500
     return jsonResponse({ error: error.message || 'Internal Server Error' }, status, origin)
   }
 })

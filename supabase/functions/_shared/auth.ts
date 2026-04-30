@@ -5,10 +5,26 @@ export interface RequestUser {
   role: string
 }
 
+export class EdgeAuthError extends Error {
+  status: number
+  code: string
+
+  constructor(message: string, status: number, code: string) {
+    super(message)
+    this.name = 'EdgeAuthError'
+    this.status = status
+    this.code = code
+  }
+}
+
+export function getAuthErrorStatus(error: unknown) {
+  return error instanceof EdgeAuthError ? error.status : null
+}
+
 export async function requireUser(req: Request): Promise<RequestUser> {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    throw new Error('Missing bearer token')
+    throw new EdgeAuthError('Missing bearer token', 401, 'missing_bearer_token')
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -18,6 +34,10 @@ export async function requireUser(req: Request): Promise<RequestUser> {
   }
 
   const token = authHeader.replace('Bearer ', '').trim()
+  if (!token) {
+    throw new EdgeAuthError('Missing bearer token', 401, 'missing_bearer_token')
+  }
+
   const authedClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
@@ -28,7 +48,7 @@ export async function requireUser(req: Request): Promise<RequestUser> {
 
   const { data: userData, error: userError } = await authedClient.auth.getUser()
   if (userError || !userData?.user) {
-    throw new Error('Invalid user token')
+    throw new EdgeAuthError('Invalid or expired user token', 401, 'invalid_user_token')
   }
 
   const { data: profile, error: profileError } = await authedClient
@@ -37,8 +57,8 @@ export async function requireUser(req: Request): Promise<RequestUser> {
     .eq('id', userData.user.id)
     .single()
 
-  if (profileError) {
-    throw new Error('Unable to read user profile')
+  if (profileError || !profile) {
+    throw new EdgeAuthError('Unable to read user profile', 403, 'profile_unavailable')
   }
 
   return { id: userData.user.id, role: profile?.role ?? 'buyer' }
