@@ -2,7 +2,7 @@ import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 
@@ -114,6 +114,16 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
     }
 
+    const hasInvalidItemQuantity = orderItems.some((item) => {
+      const quantity = Number(item.quantity)
+      return !Number.isSafeInteger(quantity) || quantity <= 0
+    })
+
+    if (hasInvalidItemQuantity) {
+      log.warn('Order has invalid item quantities', { orderId })
+      return jsonResponse({ error: 'Order item quantity is invalid' }, 409, origin)
+    }
+
     const lineItems = orderItems.map((item) => ({
       price_data: {
         currency: 'gbp',
@@ -122,7 +132,7 @@ serve(async (req: Request) => {
         },
         unit_amount: Math.max(1, Math.round(Number(item.price) * 100)),
       },
-      quantity: Math.max(1, Number(item.quantity) || 1),
+      quantity: Number(item.quantity),
     }))
 
     if (tipAmount > 0) {
@@ -180,7 +190,7 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Checkout session creation failed', { error: error.message, stack: error.stack })
-    const status = error.message.includes('token') ? 401 : 400
+    const status = getAuthErrorStatus(err) || 400
     return jsonResponse({ error: error.message || 'Payment initialization failed' }, status, origin)
   }
 })

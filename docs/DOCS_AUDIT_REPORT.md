@@ -2,6 +2,8 @@
 
 Audit date: 2026-04-22
 
+Note: this is a historical audit snapshot. Current implementation status should be read from `ARCHITECTURE.md`, `CURRENT_STATE.md`, `OPERATIONS.md`, and the ordered migrations.
+
 Scope reviewed:
 
 - [ARCHITECTURE.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ARCHITECTURE.md)

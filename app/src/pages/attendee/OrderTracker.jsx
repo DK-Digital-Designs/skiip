@@ -5,6 +5,7 @@ import { OrderService } from '../../lib/services/order.service';
 import { useCart } from '../../lib/hooks/useCart';
 import { useToast } from '../../components/ui/Toast';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
+import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 
 const STATUS_CONFIG = {
     pending: { label: 'Order Placed', color: '#9b9ba5', icon: '📝' },
@@ -141,6 +142,7 @@ export default function OrderTracker() {
 
     const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
     const orderItems = order.order_items || [];
+    const scheduledCollectionLabel = getScheduledCollectionLabel(order);
 
     return (
         <>
@@ -220,6 +222,12 @@ export default function OrderTracker() {
                         <p style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>{vendor.name}</p>
                         {vendor.pickup_location && (
                             <p className="text-accent">📍 Pickup at: {vendor.pickup_location}</p>
+                        )}
+
+                        {scheduledCollectionLabel && (
+                            <p className="text-accent" style={{ marginTop: '8px' }}>
+                                Scheduled collection: {scheduledCollectionLabel}
+                            </p>
                         )}
 
                         <div style={{ marginTop: '12px' }}>

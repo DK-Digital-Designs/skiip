@@ -151,15 +151,22 @@ To enable customer notifications end to end:
 
 ### 7. Product Images (Supabase Storage)
 
-To enable product image uploads:
+Product image uploads use the `product-images` Supabase Storage bucket.
 
-1. Go to **Storage** in your Supabase Dashboard.
-2. Create a new bucket named `product-images`.
-3. Set the bucket to **Public**.
-4. Add a bucket policy to allow authenticated users to upload files:
-   - **Policy Name**: `Allow authenticated uploads`
-   - **Allowed Operations**: `INSERT`, `UPDATE`
-   - **Target Role**: `authenticated`
+Repo-backed setup:
+
+1. Apply migrations, including `20260428000002_product_images_storage.sql`.
+2. Confirm `supabase/config.toml` includes `[storage.buckets.product-images]`.
+3. For manual verification, run `node scripts/create-bucket.js` with:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+Expected bucket posture:
+
+- public reads
+- seller/admin uploads to `products/<store_id>/*`
+- PNG, JPG, and WebP only
+- 5MB maximum file size
 
 ## 7. Next Steps (Post-MVP)
 

@@ -32,16 +32,17 @@ Required:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-Conditionally required:
+Launch note:
 
-- `VITE_VENDOR_INVITE_CODE`
-  Only required if the public `/vendor/signup` path is expected to work in that environment.
+- `VITE_VENDOR_INVITE_CODE` is not required for the May 2026 launch app because vendor onboarding is admin-created and `/vendor/signup` is not exposed.
 
 Recommended:
 
 - `VITE_SENTRY_DSN`
 
 Important current clarification:
+
+- use [`docs/ENVIRONMENT_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ENVIRONMENT_MATRIX.md) as the parity checklist before staging and production deploys
 
 - `VITE_STRIPE_PUBLIC_KEY` is still present in [`app/.env.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/.env.example)
 - the current app does not load Stripe.js or read `VITE_STRIPE_PUBLIC_KEY`
@@ -131,7 +132,8 @@ That is the configuration source of truth for the pilot.
 
 Important caveat:
 
-- the buyer and vendor signup UIs still show a "check your inbox" verification screen
+- buyer signup assumes immediate account availability because email confirmations are disabled in repo auth config
+- vendor self-signup is not exposed for launch
 
 Before any broader launch:
 
@@ -179,6 +181,7 @@ Current critical functions:
 - `stripe-checkout`
 - `stripe-webhook`
 - `order-transition`
+- `admin-store`
 - `stripe-refund`
 - `stripe-onboarding-link`
 - `notification-dispatch`
@@ -318,7 +321,7 @@ Current behavior:
 
 Current caution:
 
-- site waitlist/contact capture is still localStorage-only and should not be treated as backend-integrated deployment behavior
+- site waitlist/contact forms open email drafts for launch and should not be treated as backend-integrated deployment behavior
 
 ## Post-Deploy Verification
 

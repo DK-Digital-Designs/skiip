@@ -1,24 +1,27 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
+import { normalizeScheduledCollection } from "../_shared/scheduled-collection.ts"
+import {
+  type AggregatedOrderItem,
+  OrderItemValidationError,
+  parseAndAggregateOrderItems,
+} from "./order-items.ts"
 
 const log = logger('order-create')
 
-interface CreateOrderItem {
-  product_id: string
-  quantity: number
-}
-
 interface CreateOrderRequest {
-  items: CreateOrderItem[]
+  items?: unknown
   customer_email?: string
   customer_phone?: string
   notes?: string
   whatsapp_opt_in?: boolean
   tip_amount?: number
+  scheduled_collection_at?: string | null
+  scheduled_collection_timezone?: string | null
 }
 
 function roundMoney(value: number) {
@@ -47,13 +50,19 @@ serve(async (req: Request) => {
     const supabase = createServiceClient()
 
     const body = (await req.json()) as CreateOrderRequest
-    const items = Array.isArray(body.items) ? body.items : []
     const tipAmount = roundMoney(Math.max(Number(body.tip_amount || 0), 0))
     const customerEmail = (body.customer_email || '').trim()
     const customerPhone = (body.customer_phone || '').trim()
+    const scheduledCollection = normalizeScheduledCollection(body)
 
-    if (items.length === 0) {
-      return jsonResponse({ error: 'At least one item is required' }, 400, origin)
+    let normalizedItems: AggregatedOrderItem[]
+    try {
+      normalizedItems = parseAndAggregateOrderItems(body.items)
+    } catch (err: unknown) {
+      if (err instanceof OrderItemValidationError) {
+        return jsonResponse({ error: err.message }, 400, origin)
+      }
+      throw err
     }
 
     if (!customerEmail) {
@@ -68,16 +77,7 @@ serve(async (req: Request) => {
       )
     }
 
-    const normalizedItems = items.map((item) => ({
-      product_id: item.product_id,
-      quantity: Math.max(1, Number(item.quantity) || 0),
-    }))
-
-    if (normalizedItems.some((item) => !item.product_id || item.quantity <= 0)) {
-      return jsonResponse({ error: 'Each item requires a product_id and quantity' }, 400, origin)
-    }
-
-    const productIds = [...new Set(normalizedItems.map((item) => item.product_id))]
+    const productIds = normalizedItems.map((item) => item.product_id)
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('id, store_id, name, price, images, status, deleted_at, inventory_quantity')
@@ -124,43 +124,31 @@ serve(async (req: Request) => {
     const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
     const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        user_id: user.id,
-        store_id: storeIds[0],
-        status: 'pending',
-        subtotal,
-        total,
-        tip_amount: tipAmount,
-        customer_email: customerEmail,
-        customer_phone: customerPhone || null,
-        notes: body.notes?.trim() || null,
-        whatsapp_opt_in: body.whatsapp_opt_in === true,
-        payment_status: 'pending',
-      })
-      .select('id, order_number, subtotal, total, tip_amount, store_id, status')
-      .single()
-
-    if (orderError || !order) {
-      throw orderError || new Error('Failed to create order')
-    }
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(
-        orderItems.map((item) => ({
-          order_id: order.id,
+      .rpc('create_order_with_items_v1', {
+        p_order_number: orderNumber,
+        p_user_id: user.id,
+        p_store_id: storeIds[0],
+        p_subtotal: subtotal,
+        p_total: total,
+        p_tip_amount: tipAmount,
+        p_customer_email: customerEmail,
+        p_customer_phone: customerPhone || null,
+        p_notes: body.notes?.trim() || null,
+        p_whatsapp_opt_in: body.whatsapp_opt_in === true,
+        p_scheduled_collection_at: scheduledCollection.scheduled_collection_at,
+        p_scheduled_collection_timezone: scheduledCollection.scheduled_collection_timezone,
+        p_items: orderItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
           price: item.price,
           total: item.total,
           product_snapshot: item.product_snapshot,
         })),
-      )
+      })
+      .single()
 
-    if (itemsError) {
-      throw itemsError
+    if (orderError || !order) {
+      throw orderError || new Error('Failed to create order')
     }
 
     await supabase.from('audit_logs').insert({
@@ -182,6 +170,6 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Order creation failed', { error: error.message, stack: error.stack })
-    return jsonResponse({ error: error.message || 'Order creation failed' }, 400, origin)
+    return jsonResponse({ error: error.message || 'Order creation failed' }, getAuthErrorStatus(err) || 400, origin)
   }
 })

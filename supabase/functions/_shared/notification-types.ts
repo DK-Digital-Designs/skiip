@@ -29,6 +29,8 @@ export interface OrderNotificationRecord {
   customer_phone: string | null;
   total: number | string | null;
   refund_amount?: number | string | null;
+  scheduled_collection_at?: string | null;
+  scheduled_collection_timezone?: string | null;
   status: string;
   whatsapp_opt_in: boolean;
   stores?: {
@@ -45,6 +47,9 @@ export interface NotificationPayloadSnapshot {
   customerPhone: string | null;
   total: string;
   refundAmount: string | null;
+  scheduledCollectionAt: string | null;
+  scheduledCollectionTimezone: string | null;
+  scheduledCollectionLabel: string | null;
   status: string;
   whatsappOptIn: boolean;
   storeName: string | null;

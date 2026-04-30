@@ -44,5 +44,5 @@ SKIIP currently consists of:
 Important current reality:
 
 - the product app is the operational source of truth for ordering
-- the marketing site is separate and still contains demo-style localStorage form capture
+- the marketing site is separate and uses email-draft contact flows for launch rather than backend-integrated lead capture
 - `supabase/migrations/` is the authoritative schema source; older schema snapshot files are not

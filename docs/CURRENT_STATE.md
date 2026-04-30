@@ -28,7 +28,7 @@ The production-critical path that exists in code today is:
 ### Vendor
 
 - seller login
-- invite-code-gated vendor signup route
+- admin-created vendor onboarding for launch
 - store lookup from authenticated seller
 - product management
 - order list with active/all filtering
@@ -43,7 +43,7 @@ The production-critical path that exists in code today is:
 - vendor performance summary
 - notification health summary
 - refund actions
-- vendor store management
+- edge-function mediated vendor store management
 
 ### Backend
 
@@ -52,10 +52,12 @@ The production-critical path that exists in code today is:
 - inventory finalization on successful payment
 - automatic refund on paid-order inventory failure
 - payment failure recording
+- payment reconciliation fields exposed in the admin recent-orders view
 - refund recording
 - audit logging for key order and payment events
 - user profile reconciliation trigger/backfill support
 - queue-backed notification dispatch with delivery webhooks
+- launch RLS access matrix in [`docs/RLS_ACCESS_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/RLS_ACCESS_MATRIX.md)
 
 ## Current Runtime Truth
 
@@ -65,41 +67,41 @@ These statements reflect the actual current implementation.
 - order totals are computed on the server
 - payment finalization is webhook-driven
 - vendor/admin order status changes go through edge functions
-- protected edge functions currently use manual bearer validation rather than Supabase gateway JWT enforcement
+- admin vendor/store mutations go through `admin-store`
+- protected edge functions intentionally use manual bearer validation for the May 2026 launch posture rather than Supabase gateway JWT enforcement
 - checkout currency is GBP
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - the repo still deploys a separate static marketing site, but it is not part of the order/payment source of truth
 
 ## Important Clarifications
 
-### Signup behavior is mixed
+### Signup behavior is launch-aligned
 
 Current code exposes:
 
 - buyer signup at `/signup`
-- vendor signup at `/vendor/signup`
 
-Vendor signup is guarded by `VITE_VENDOR_INVITE_CODE` and creates a pending seller store.
+Vendor signup is not exposed in the app router for launch. Admins create seller/store records from the admin vendor management path.
 
 Also note:
 
 - repo auth config keeps email confirmations disabled
-- signup UIs still tell users to check their inbox for verification
+- buyer signup copy assumes immediate account availability
 
-That means signup copy and auth configuration are not currently aligned.
+That means buyer signup copy and auth configuration are aligned for the launch path.
 
-### Admin operations are not uniformly server-authoritative
+### Admin vendor operations are edge-function mediated
 
-The admin dashboard refund flow is edge-function mediated, but vendor management is not.
+The admin dashboard refund flow and vendor management flow are edge-function mediated for launch.
 
-[`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx) currently performs direct browser-side writes for:
+[`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx) calls [`admin-store`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/admin-store/index.ts) for:
 
 - creating stores
 - upgrading users to `seller`
 - activating/suspending stores
-- deleting stores
+- archiving stores
 
-Store status changes are audit logged by database trigger. Store creation and deletion are not handled through a dedicated edge-function boundary.
+Store creation, status changes, and archival are audited. Direct seller store insert/update is disabled for launch, and archived stores use `deleted_at` rather than hard delete.
 
 ### Notifications are durable, but retries are not scheduled in-repo
 
@@ -120,7 +122,7 @@ The `site/` directory is a separate marketing surface.
 
 Current reality:
 
-- waitlist and contact forms write only to browser `localStorage`
+- waitlist and contact forms open email drafts for launch
 - analytics is a stub
 - some links and copy are still demo-oriented or stale
 
@@ -130,13 +132,13 @@ Do not treat the marketing site as a backend-integrated operational surface.
 
 These are the main remaining risks in the current baseline.
 
-### 1. Auth posture is pragmatic, not final
+### 1. Auth posture is launch-explicit but should be revisited after launch
 
-`verify_jwt = false` is still used for protected edge functions, with manual auth enforcement in code.
+`verify_jwt = false` is still used for protected browser-facing edge functions, with manual auth enforcement in code through `requireUser()`. For the May 2026 launch this is explicit: missing, invalid, and expired bearer tokens should return `401`; authenticated users without a readable profile or required authorization should return `403`.
 
 ### 2. Environment drift remains easy to introduce
 
-- `VITE_VENDOR_INVITE_CODE` is used by the app but not documented in `app/.env.example`
+- `VITE_VENDOR_INVITE_CODE` is no longer part of the launch app route, but stale references may remain in legacy docs or unmounted code
 - `ALLOWED_ORIGINS` has a hardcoded fallback list in code if the env var is missing
 - `VITE_STRIPE_PUBLIC_KEY` is still documented in places even though the current redirect-based checkout flow does not read it
 
@@ -149,16 +151,16 @@ These are the main remaining risks in the current baseline.
 
 - legacy order statuses such as `processing`, `shipped`, and `delivered` still exist in the schema
 - the current UI and edge-function lifecycle do not use them
-- `/admin/events` is still a placeholder route, not implemented event management
+- event management remains deferred and `/admin/events` is not exposed in normal admin navigation/routing
 
 ## Intentional Scope Limits
 
 These areas are still intentionally incomplete:
 
 - full multi-event tenancy
-- fully finalized edge-function auth posture
+- post-launch reassessment of gateway JWT enforcement versus manual edge-function auth
 - automated retry scheduling for notification backlog recovery
-- event-management tooling beyond the placeholder admin route
+- event-management tooling
 - production-grade marketing-site lead capture
 
 ## What Changed Recently

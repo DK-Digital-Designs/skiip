@@ -14,12 +14,6 @@ These items most directly affect launch safety, payment correctness, security, a
   - keep manual `requireUser()` validation with `verify_jwt = false`
   - or re-enable Supabase gateway JWT verification after staged testing
 - Run a full RLS audit for buyer, seller, admin, and service-role paths against the current migrations and active client queries.
-- Align signup UX with actual auth policy:
-  - repo config currently disables email confirmations
-  - buyer and vendor signup screens still show inbox-verification copy
-- Decide whether public vendor signup remains part of the product:
-  - keep the invite-code route and document/support it properly
-  - or retire it in favor of admin-only seller provisioning
 
 ### Payments and Financial Operations
 
@@ -34,7 +28,6 @@ These items most directly affect launch safety, payment correctness, security, a
   - platform fee
   - vendor net
   - refund amount
-- Decide how much fee and payout detail should be visible in the admin UI before launch.
 
 ### Notifications and Recovery
 
@@ -69,12 +62,9 @@ These items most directly affect launch safety, payment correctness, security, a
 
 ### Product and Operations Gaps
 
-- Replace or clearly retire the placeholder `/admin/events` route.
-- Decide whether admin vendor management should stay as direct browser-side table writes or move behind dedicated server-authoritative admin endpoints.
 - Fix the static marketing site's operational drift:
   - broken or stale links
   - placeholder contact details
-  - localStorage-only waitlist/contact capture
 
 ## Priority 2: Next
 

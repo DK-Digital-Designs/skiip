@@ -1,6 +1,7 @@
 # Secrets and Environment Inventory
 
 This document is the launch-facing inventory for SKIIP secrets, environment variables, and auth-sensitive settings.
+For staging/production parity checks, use [`docs/ENVIRONMENT_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ENVIRONMENT_MATRIX.md).
 
 Do not commit real secrets. Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the local template for edge-function secrets.
 
@@ -10,7 +11,7 @@ Do not commit real secrets. Use [`supabase/.env.functions.example`](C:/Users/dea
 | :--- | :--- | :--- | :--- |
 | Vercel app | `VITE_SUPABASE_URL` | Yes | Must match the same Supabase project as the anon key. |
 | Vercel app | `VITE_SUPABASE_ANON_KEY` | Yes | Public key, but still environment-specific. |
-| Vercel app | `VITE_VENDOR_INVITE_CODE` | Conditional | Required only if `/vendor/signup` should work in that environment. |
+| Vercel app | `VITE_VENDOR_INVITE_CODE` | No for launch | Legacy invite-code vendor signup is not exposed in the May 2026 launch app. |
 | Vercel app | `VITE_SENTRY_DSN` | Recommended | Used by the browser app for Sentry error/reporting setup when present. |
 | Vercel app | `VITE_STRIPE_PUBLIC_KEY` | No | Present in `app/.env.example`, but the current app does not read it. Checkout is redirect-based through edge functions. |
 | Local operator scripts | `SUPABASE_SERVICE_ROLE_KEY` | Conditional | Used by `app/scripts/*.js` for seeding/admin scripting. Never expose this in browser runtime config. |
@@ -61,9 +62,10 @@ This is acceptable only while:
 - support staff can resolve account issues manually
 - the product is not yet relying on self-serve public signup as a trust boundary
 
-Important current mismatch:
+Important launch behavior:
 
-- the frontend buyer and vendor signup UIs still show a "check your inbox" message even though confirmations are disabled in repo config
+- buyer signup assumes immediate account availability because confirmations are disabled in repo config
+- vendor onboarding is admin-created; vendor self-signup is not exposed
 
 Before any broader launch:
 

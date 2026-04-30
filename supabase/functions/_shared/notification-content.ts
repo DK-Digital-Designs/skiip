@@ -40,6 +40,26 @@ function formatMoney(value: number | string | null | undefined) {
   return Number(value || 0).toFixed(2);
 }
 
+function formatScheduledCollection(
+  scheduledAt: string | null | undefined,
+  timeZone = "Europe/London",
+) {
+  if (!scheduledAt) {
+    return null;
+  }
+
+  const date = new Date(scheduledAt);
+  if (!Number.isFinite(date.getTime())) {
+    return null;
+  }
+
+  return `${new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)} UK time`;
+}
+
 export function createNotificationPayloadSnapshot(
   order: OrderNotificationRecord,
 ): NotificationPayloadSnapshot {
@@ -54,6 +74,12 @@ export function createNotificationPayloadSnapshot(
       order.refund_amount === null || order.refund_amount === undefined
         ? null
         : formatMoney(order.refund_amount),
+    scheduledCollectionAt: order.scheduled_collection_at || null,
+    scheduledCollectionTimezone: order.scheduled_collection_timezone || null,
+    scheduledCollectionLabel: formatScheduledCollection(
+      order.scheduled_collection_at,
+      order.scheduled_collection_timezone || "Europe/London",
+    ),
     status: order.status,
     whatsappOptIn: order.whatsapp_opt_in === true,
     storeName: order.stores?.name || null,
@@ -74,6 +100,9 @@ export function buildEmailContent(
     eventType === "order_ready" && payload.pickupLocation
       ? `<p><strong>Pickup location:</strong> ${payload.pickupLocation}</p>`
       : "";
+  const scheduledLine = payload.scheduledCollectionLabel
+    ? `<p><strong>Scheduled collection:</strong> ${payload.scheduledCollectionLabel}</p>`
+    : "";
 
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
@@ -82,6 +111,7 @@ export function buildEmailContent(
       <p><strong>Vendor:</strong> ${payload.storeName || "your vendor"}</p>
       <p><strong>Status:</strong> ${copy.statusLabel}</p>
       <p><strong>Total:</strong> GBP ${payload.total}</p>
+      ${scheduledLine}
       ${refundLine}
       ${pickupLine}
       <p>You can track the latest order state in the SKIIP app.</p>
@@ -95,6 +125,10 @@ export function buildEmailContent(
     `Status: ${copy.statusLabel}`,
     `Total: GBP ${payload.total}`,
   ];
+
+  if (payload.scheduledCollectionLabel) {
+    lines.push(`Scheduled collection: ${payload.scheduledCollectionLabel}`);
+  }
 
   if (eventType === "order_refunded" && payload.refundAmount) {
     lines.push(`Refund amount: GBP ${payload.refundAmount}`);
