@@ -123,7 +123,7 @@ Sequence:
 1. Buyer signs in.
 2. Buyer builds a cart in the browser. Cart state is stored locally via Zustand in `localStorage`.
 3. [`Checkout.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/Checkout.jsx) submits only product IDs, quantities, contact details, optional WhatsApp opt-in, notes, and tip.
-4. [`order-create`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-create/index.ts) validates the user, loads products, checks inventory, computes subtotal/tip/total on the server, creates the `orders` row, inserts `order_items`, and writes an `order_created` audit event.
+4. [`order-create`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-create/index.ts) validates the user, rejects malformed quantities, aggregates duplicate product IDs, loads products, checks inventory, computes subtotal/tip/total on the server, persists `orders` and `order_items` atomically through `create_order_with_items_v1()`, and writes an `order_created` audit event.
 5. [`stripe-checkout`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-checkout/index.ts) reloads the order, confirms ownership and payable state, verifies the store has completed Stripe onboarding, and creates a Stripe Checkout session.
 6. Checkout is currently GBP-only, and vendor onboarding creates Stripe Express accounts with `country = GB`.
 7. The platform fee is currently computed as `10%` of the order subtotal and passed as `application_fee_amount`.
@@ -206,6 +206,7 @@ Important SQL functions:
 - `finalize_paid_order_inventory()`
 - `restock_order_inventory()`
 - `decrement_inventory()`
+- `create_order_with_items_v1()`
 - `claim_notification_logs()`
 - `get_admin_dashboard_metrics_v1()`
 
