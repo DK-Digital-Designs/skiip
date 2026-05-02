@@ -12,7 +12,7 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Source Of Truth
 
-- [`VERSION`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/VERSION) is the canonical version file.
+- [`VERSION`](../../VERSION) is the canonical version file.
 - Run `node scripts/sync-version.mjs` after changing `VERSION`.
 - The sync script updates the app package metadata, app version export, and static site version script.
 

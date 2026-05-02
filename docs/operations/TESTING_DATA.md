@@ -11,7 +11,7 @@ Keep this file current when:
 
 ## Preferred Shared Accounts
 
-These are the current preferred repo-supported shared accounts because they match the active seeding script in [`app/scripts/seed-test-users.js`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/scripts/seed-test-users.js).
+These are the current preferred repo-supported shared accounts because they match the active seeding script in [`app/scripts/seed-test-users.js`](../../app/scripts/seed-test-users.js).
 
 | Role | Email | Password | Setup Status |
 | :--- | :--- | :--- | :--- |
@@ -47,7 +47,7 @@ Use these only when you know the target environment still contains them.
 
 ## Playwright Smoke Inputs
 
-The smoke suite in [`app/tests/e2e/smoke.spec.js`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/tests/e2e/smoke.spec.js) supports two layers:
+The smoke suite in [`app/tests/e2e/smoke.spec.js`](../../app/tests/e2e/smoke.spec.js) supports two layers:
 
 - public smoke checks that always run
 - authenticated smoke checks that activate only when role credentials are present
@@ -62,7 +62,7 @@ Environment variables used by the suite:
 - `PLAYWRIGHT_ADMIN_EMAIL`
 - `PLAYWRIGHT_ADMIN_PASSWORD`
 
-Current local behavior from [`app/playwright.config.js`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/playwright.config.js):
+Current local behavior from [`app/playwright.config.js`](../../app/playwright.config.js):
 
 - if `PLAYWRIGHT_BASE_URL` is unset, Playwright starts `npm run preview -- --host 127.0.0.1 --port 4173`
 - local smoke then runs against `http://127.0.0.1:4173`
@@ -92,7 +92,7 @@ Treat the current Playwright lane as auth and reachability smoke, not payment-pa
 
 ## Staging Smoke Automation
 
-The deployed staging smoke workflow lives in [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml).
+The deployed staging smoke workflow lives in [staging-smoke.yml](../../.github/workflows/staging-smoke.yml).
 
 Trigger modes:
 
@@ -118,7 +118,7 @@ Required GitHub `staging` environment secrets:
 
 To get the staging smoke workflow fully operational in GitHub:
 
-1. push a branch that contains [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml) to GitHub
+1. push a branch that contains [staging-smoke.yml](../../.github/workflows/staging-smoke.yml) to GitHub
 2. in the GitHub repository, open `Settings -> Environments` and create the `staging` environment if it does not already exist
 3. add the seven required staging environment secrets listed above
 4. if the `staging` environment uses protection rules or required reviewers, allow the workflow to run in that environment
@@ -152,7 +152,7 @@ Failure artifacts:
 
 Current shared-account seeding path:
 
-- run `npm run seed:test-users` from [`app`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app)
+- run `npm run seed:test-users` from [`app`](../../app)
 
 Current environment expectations for the seeding script:
 

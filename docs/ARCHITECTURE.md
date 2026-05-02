@@ -4,9 +4,9 @@
 
 SKIIP is a monorepo with three distinct surfaces:
 
-- [`app`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app): the product application for buyers, sellers, and admins
-- [`supabase`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase): Postgres schema and migrations, RLS, auth integration, and edge functions
-- [`site`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/site): a separate static marketing site
+- [`app`](../app): the product application for buyers, sellers, and admins
+- [`supabase`](../supabase): Postgres schema and migrations, RLS, auth integration, and edge functions
+- [`site`](../site): a separate static marketing site
 
 Current deployment split:
 
@@ -29,7 +29,7 @@ Important consequence:
 
 - app URLs use `/#/...` routes, for example `/#/order` and `/#/vendor/dashboard`
 
-Current routed surfaces in [App.jsx](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/App.jsx):
+Current routed surfaces in [App.jsx](../app/src/App.jsx):
 
 - landing page
 - shared buyer/admin/seller login and buyer signup
@@ -41,9 +41,9 @@ Current routed surfaces in [App.jsx](C:/Users/deang/OneDrive/Documents/GitHub/sk
 
 Legacy files still exist in the repo but are not part of the routed app today, including:
 
-- [`app/src/pages/attendee/BuyerLogin.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/BuyerLogin.jsx)
-- [`app/src/pages/attendee/BuyerSignup.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/BuyerSignup.jsx)
-- [`app/src/pages/admin/Dashboard.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Dashboard.jsx)
+- [`app/src/pages/attendee/BuyerLogin.jsx`](../app/src/pages/attendee/BuyerLogin.jsx)
+- [`app/src/pages/attendee/BuyerSignup.jsx`](../app/src/pages/attendee/BuyerSignup.jsx)
+- [`app/src/pages/admin/Dashboard.jsx`](../app/src/pages/admin/Dashboard.jsx)
 
 ## Auth Model
 
@@ -63,12 +63,12 @@ Current account-entry paths:
 
 Current backend profile lifecycle:
 
-- [`handle_new_user()`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations/20260415000001_user_profile_reconciliation.sql) creates or reconciles `user_profiles` rows from `auth.users`
+- [`handle_new_user()`](../supabase/migrations/20260415000001_user_profile_reconciliation.sql) creates or reconciles `user_profiles` rows from `auth.users`
 - the reconciliation migration also backfills missing historical profiles
 
 Important current mismatch:
 
-- [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml) keeps `auth.email.enable_confirmations = false`
+- [`supabase/config.toml`](../supabase/config.toml) keeps `auth.email.enable_confirmations = false`
 - buyer signup messaging assumes immediate account availability
 - vendor onboarding is admin-created for launch
 
@@ -80,9 +80,9 @@ This is intentional for launch because the project also has webhook and secret-p
 
 Protected edge functions use this pattern:
 
-- `verify_jwt = false` in [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml)
+- `verify_jwt = false` in [`supabase/config.toml`](../supabase/config.toml)
 - the browser forwards the Supabase access token explicitly
-- the function calls `requireUser()` from [`supabase/functions/_shared/auth.ts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/_shared/auth.ts)
+- the function calls `requireUser()` from [`supabase/functions/_shared/auth.ts`](../supabase/functions/_shared/auth.ts)
 
 Protected functions using this model:
 
@@ -111,7 +111,7 @@ Auth response contract for protected functions:
 
 Important current behavior:
 
-- if `ALLOWED_ORIGINS` is not set, [`_shared/http.ts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/_shared/http.ts) falls back to a hardcoded list containing `https://skiip.co.uk`, `https://www.skiip.co.uk`, `https://skiip-4nzf8krt6-dkdigital.vercel.app`, `http://localhost:5173`, and `http://127.0.0.1:5173`
+- if `ALLOWED_ORIGINS` is not set, [`_shared/http.ts`](../supabase/functions/_shared/http.ts) falls back to a hardcoded list containing `https://skiip.co.uk`, `https://www.skiip.co.uk`, `https://skiip-4nzf8krt6-dkdigital.vercel.app`, `http://localhost:5173`, and `http://127.0.0.1:5173`
 - hosted environments should set `ALLOWED_ORIGINS` explicitly rather than relying on that fallback
 
 ## Order and Payment Flow
@@ -122,18 +122,18 @@ Sequence:
 
 1. Buyer signs in.
 2. Buyer builds a cart in the browser. Cart state is stored locally via Zustand in `localStorage`.
-3. [`Checkout.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/Checkout.jsx) submits only product IDs, quantities, contact details, optional WhatsApp opt-in, notes, and tip.
-4. [`order-create`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-create/index.ts) validates the user, rejects malformed quantities, aggregates duplicate product IDs, loads products, checks inventory, computes subtotal/tip/total on the server, persists `orders` and `order_items` atomically through `create_order_with_items_v1()`, and writes an `order_created` audit event.
-5. [`stripe-checkout`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-checkout/index.ts) reloads the order, confirms ownership and payable state, verifies the store has completed Stripe onboarding, and creates a Stripe Checkout session.
+3. [`Checkout.jsx`](../app/src/pages/attendee/Checkout.jsx) submits only product IDs, quantities, contact details, optional WhatsApp opt-in, notes, and tip.
+4. [`order-create`](../supabase/functions/order-create/index.ts) validates the user, rejects malformed quantities, aggregates duplicate product IDs, loads products, checks inventory, computes subtotal/tip/total on the server, persists `orders` and `order_items` atomically through `create_order_with_items_v1()`, and writes an `order_created` audit event.
+5. [`stripe-checkout`](../supabase/functions/stripe-checkout/index.ts) reloads the order, confirms ownership and payable state, verifies the store has completed Stripe onboarding, and creates a Stripe Checkout session.
 6. Checkout is currently GBP-only, and vendor onboarding creates Stripe Express accounts with `country = GB`.
 7. The platform fee is currently computed as `10%` of the order subtotal and passed as `application_fee_amount`.
 8. Stripe redirects the buyer back to the hash-routed order tracker.
-9. [`stripe-webhook`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) verifies the signature, claims the event through retryable idempotency tracking, marks the order paid, records payment IDs and fee ledger fields, finalizes inventory atomically, and queues audit/notification side effects.
+9. [`stripe-webhook`](../supabase/functions/stripe-webhook/index.ts) verifies the signature, claims the event through retryable idempotency tracking, marks the order paid, records payment IDs and fee ledger fields, finalizes inventory atomically, and queues audit/notification side effects.
 10. If inventory finalization fails after capture, the webhook auto-refunds and records a refund event.
-11. [`payment_intent.payment_failed`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) updates the order with failure timestamps and failure details.
-12. Vendor or admin status changes go through [`order-transition`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-transition/index.ts).
-13. Admin refunds go through [`stripe-refund`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-refund/index.ts).
-14. Admin payment repair for exceptional stuck orders goes through [`stripe-reconcile-order`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-reconcile-order/index.ts).
+11. [`payment_intent.payment_failed`](../supabase/functions/stripe-webhook/index.ts) updates the order with failure timestamps and failure details.
+12. Vendor or admin status changes go through [`order-transition`](../supabase/functions/order-transition/index.ts).
+13. Admin refunds go through [`stripe-refund`](../supabase/functions/stripe-refund/index.ts).
+14. Admin payment repair for exceptional stuck orders goes through [`stripe-reconcile-order`](../supabase/functions/stripe-reconcile-order/index.ts).
 
 Current operational lifecycle:
 
@@ -168,8 +168,8 @@ Current runtime flow:
 Important current limitations:
 
 - there is no scheduler defined in this repo for delayed retry sweeps
-- [`notification-dispatch`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/notification-dispatch/index.ts) exists for manual or external scheduled backlog draining
-- [`whatsapp-notify`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/whatsapp-notify/index.ts) is still deployed, but the ordered migration chain removes the database trigger that originally called it; treat it as legacy compatibility code, not the intended primary path
+- [`notification-dispatch`](../supabase/functions/notification-dispatch/index.ts) exists for manual or external scheduled backlog draining
+- [`whatsapp-notify`](../supabase/functions/whatsapp-notify/index.ts) is still deployed, but the ordered migration chain removes the database trigger that originally called it; treat it as legacy compatibility code, not the intended primary path
 - `sms` exists in shared notification types and database constraints, but there is no live sender path or business flow using SMS today
 
 ## Realtime
@@ -181,8 +181,8 @@ Realtime is used for:
 
 Relevant frontend surfaces:
 
-- [OrderTracker.jsx](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/attendee/OrderTracker.jsx)
-- [Dashboard.jsx](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/vendor/Dashboard.jsx)
+- [OrderTracker.jsx](../app/src/pages/attendee/OrderTracker.jsx)
+- [Dashboard.jsx](../app/src/pages/vendor/Dashboard.jsx)
 
 Realtime is a UX enhancement, not the source of truth. The database remains authoritative.
 
@@ -213,19 +213,19 @@ Important SQL functions:
 
 Authoritative schema source:
 
-- [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
+- [`supabase/migrations`](../supabase/migrations)
 
 Non-authoritative legacy schema files still present in the repo:
 
-- [`supabase/schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/schema.sql)
-- [`supabase/skiip-schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema.sql)
-- [`supabase/skiip-schema-full-reset.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema-full-reset.sql)
+- [`supabase/schema.sql`](../supabase/schema.sql)
+- [`supabase/skiip-schema.sql`](../supabase/skiip-schema.sql)
+- [`supabase/skiip-schema-full-reset.sql`](../supabase/skiip-schema-full-reset.sql)
 
 Do not use those files as the live-working schema source of truth.
 
 ## Admin Vendor Operations
 
-Admin vendor/store mutations go through [`admin-store`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/admin-store/index.ts) for launch.
+Admin vendor/store mutations go through [`admin-store`](../supabase/functions/admin-store/index.ts) for launch.
 
 Current admin vendor operations:
 
@@ -251,7 +251,7 @@ Current reality for the marketing site:
 
 - it is deployed independently from the product app
 - waitlist and contact forms open email drafts for launch rather than writing browser-only leads
-- [`analytics.js`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/site/assets/js/analytics.js) is a stub, not a live analytics integration
+- [`analytics.js`](../site/assets/js/analytics.js) is a stub, not a live analytics integration
 - several links and claims remain marketing/demo oriented and should not be treated as operational product behavior
 
 That means the marketing site is currently presentation-only, not an operational source of leads, support tickets, or runtime product truth.

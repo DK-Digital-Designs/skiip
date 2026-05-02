@@ -11,12 +11,29 @@
 | Dean Gibson | ~0.5 hours | 2026/04/24 | Documentation maintenance. Minor updates to project records and implementation details. |
 | Dean Gibson | ~2.0 hours | 2026/04/28 | Planning and order creation hardening. Drafted upcoming feature plans and implemented atomic safety checks for order creation flows. |
 | Dean Gibson | ~4.0 hours | 2026/04/30 | Pre-launch operations and vendor features. Established version tracking, implemented scheduled collection flows, and hardened vendor-side launch access controls. |
-| Dean Gibson | ~1.5 hours | 2026/05/02 | Maintenance and Automation. Implemented Stripe payment state recovery fixes and established agent automation commit standards. |
-| **TOTAL** | **~23.0 hours** | | |
+| Dean Gibson | ~3.5 hours | 2026/05/02 | Payment recovery, delivery triage, and documentation cleanup. Implemented Stripe payment state recovery, added multi-secret webhook support, verified the app locally, closed the resolved payment-pending issue, cleaned up the GitHub delivery board, and moved archive notes into `docs/archive`. |
+| **TOTAL** | **~25.0 hours** | | |
+
+## May 2 End-of-Day Recap
+
+May 2 focused on turning the staging payment-pending investigation into a safer launch baseline. The key payment fix added retry-aware Stripe webhook processing, an admin reconciliation path for paid orders that did not finalize cleanly, shared order/payment status labels, and webhook support for multiple Stripe webhook secrets in staging.
+
+The resolved vendor-dashboard payment bug was closed as GitHub issue `#32` after local verification. The delivery board was also cleaned up so `#32` is done, scheduled orders `#29` is back in progress, and environment parity `#17` is visibly in progress.
+
+Local verification completed successfully:
+
+- `npm run test`: 22 tests passed
+- `npm run build`: passed
+- `npm run lint`: passed
+- `npm run test:e2e`: 3 public smoke tests passed, 3 authenticated smoke tests remained credential-gated/skipped
+
+Remaining launch blockers are environment and secret parity, end-to-end Stripe payout/refund/reconciliation rehearsal, the final scheduled-order paid lifecycle pass, RLS/auth boundary sign-off, and the legacy admin-store archive failure.
 
 ## Full Commit Log (Phase 5+)
 
 ```text
+cee462f - 2026-05-02 : chore: move archive docs to docs/archive and clean up root
+db5ca74 - 2026-05-02 : fix(payments): support multiple Stripe webhook secrets
 431152b - 2026-05-02 : docs: add agent automation and commit standards
 2ae1919 - 2026-05-02 : Fix Stripe payment state recovery
 6610051 - 2026-04-30 : chore: establish pre-launch version tracking

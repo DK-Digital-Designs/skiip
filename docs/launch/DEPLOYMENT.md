@@ -14,7 +14,7 @@ Current deployment split in the repo:
 
 - the product app and marketing site are separate deployables
 - only the marketing site has an in-repo deployment workflow
-- the product app's Vercel deployment is configured outside the repo, with repo-side behavior defined mainly by [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json)
+- the product app's Vercel deployment is configured outside the repo, with repo-side behavior defined mainly by [`app/vercel.json`](../../app/vercel.json)
 
 Current recommendation:
 
@@ -42,13 +42,13 @@ Recommended:
 
 Important current clarification:
 
-- use [`docs/ENVIRONMENT_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ENVIRONMENT_MATRIX.md) as the parity checklist before staging and production deploys
+- use [Environment Matrix](ENVIRONMENT_MATRIX.md) as the parity checklist before staging and production deploys
 
-- `VITE_STRIPE_PUBLIC_KEY` is still present in [`app/.env.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/.env.example)
+- `VITE_STRIPE_PUBLIC_KEY` is still present in [`app/.env.example`](../../app/.env.example)
 - the current app does not load Stripe.js or read `VITE_STRIPE_PUBLIC_KEY`
 - checkout is redirect-based through the `stripe-checkout` edge function, so this variable is not currently required for runtime
 
-For the full inventory and rotation discipline, see [Secrets and Environment Inventory](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md).
+For the full inventory and rotation discipline, see [Secrets and Environment Inventory](SECRETS.md).
 
 ## Supabase Function Secrets
 
@@ -97,14 +97,14 @@ Notification outbox / retry tuning:
 - `NOTIFICATION_PROCESSING_TIMEOUT_SECONDS`
 - `NOTIFICATION_RETRY_BASE_DELAY_SECONDS`
 
-Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the template.
+Use [`supabase/.env.functions.example`](../../supabase/.env.functions.example) as the template.
 
 Keep `supabase/.env.functions` local and untracked.
 
 Notes:
 
 - Supabase edge functions also read `SUPABASE_URL` and `SUPABASE_ANON_KEY`, which are typically injected by the Supabase runtime rather than managed as custom secrets
-- local Node scripts under [`app/scripts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/scripts) may additionally use `SUPABASE_SERVICE_ROLE_KEY` or legacy `VITE_SUPABASE_SERVICE_ROLE_KEY`
+- local Node scripts under [`app/scripts`](../../app/scripts) may additionally use `SUPABASE_SERVICE_ROLE_KEY` or legacy `VITE_SUPABASE_SERVICE_ROLE_KEY`
 
 ## Allowed Origins
 
@@ -113,7 +113,7 @@ Protected browser-facing functions reject disallowed origins after preflight.
 Important current behavior:
 
 - if `ALLOWED_ORIGINS` is set, it becomes the effective allow-list
-- if `ALLOWED_ORIGINS` is missing, [`_shared/http.ts`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/_shared/http.ts) falls back to this hardcoded list:
+- if `ALLOWED_ORIGINS` is missing, [`_shared/http.ts`](../../supabase/functions/_shared/http.ts) falls back to this hardcoded list:
   - `https://skiip.co.uk`
   - `https://www.skiip.co.uk`
   - `https://skiip-4nzf8krt6-dkdigital.vercel.app`
@@ -145,17 +145,17 @@ Before any broader launch:
 
 Authoritative schema source:
 
-- [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
+- [`supabase/migrations`](../../supabase/migrations)
 
 Do not treat these files as the current live-working schema source of truth:
 
-- [`supabase/schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/schema.sql)
-- [`supabase/skiip-schema.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema.sql)
-- [`supabase/skiip-schema-full-reset.sql`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/skiip-schema-full-reset.sql)
+- [`supabase/schema.sql`](../../supabase/schema.sql)
+- [`supabase/skiip-schema.sql`](../../supabase/skiip-schema.sql)
+- [`supabase/skiip-schema-full-reset.sql`](../../supabase/skiip-schema-full-reset.sql)
 
 Important current caveat:
 
-- [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml) enables `db reset` seeding from `./seed.sql`
+- [`supabase/config.toml`](../../supabase/config.toml) enables `db reset` seeding from `./seed.sql`
 - `supabase/seed.sql` is not committed in this repo
 
 That means:
@@ -173,7 +173,7 @@ supabase db push
 
 ## Edge Functions
 
-Functions live in [`supabase/functions`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions).
+Functions live in [`supabase/functions`](../../supabase/functions).
 
 Current critical functions:
 
@@ -303,7 +303,7 @@ Important:
 
 ## Frontend Security Headers
 
-The product app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/vercel.json) to set baseline browser hardening headers:
+The product app deploy uses [`app/vercel.json`](../../app/vercel.json) to set baseline browser hardening headers:
 
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
@@ -313,7 +313,7 @@ The product app deploy uses [`app/vercel.json`](C:/Users/deang/OneDrive/Document
 
 ## Static Marketing Site Deployment
 
-The static site deploy is defined in [deploy-site.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/deploy-site.yml).
+The static site deploy is defined in [deploy-site.yml](../../.github/workflows/deploy-site.yml).
 
 Current behavior:
 
@@ -344,7 +344,7 @@ After any meaningful backend or frontend deploy:
 
 ## Staging Smoke Workflow
 
-The deployed auth smoke lane lives in [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml).
+The deployed auth smoke lane lives in [staging-smoke.yml](../../.github/workflows/staging-smoke.yml).
 
 Current purpose:
 
@@ -363,7 +363,7 @@ Use it as an early warning for deployment drift and auth/config regressions, not
 
 Before any staging or production release:
 
-1. confirm all live schema changes exist in [`supabase/migrations`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/migrations)
+1. confirm all live schema changes exist in [`supabase/migrations`](../../supabase/migrations)
 2. confirm no deployable behavior still depends on legacy schema snapshot files
 3. confirm no production-only manual SQL is being relied on
 4. sync frontend env vars and Supabase secrets for the same environment pair

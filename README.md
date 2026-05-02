@@ -10,26 +10,26 @@ The current product supports:
 - vendor/admin operational dashboards
 - a separate static marketing site in `site/`
 
-The source of truth for project documentation is the [`docs`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs) directory.
+The source of truth for project documentation is the [`docs`](docs) directory.
 
 Start here:
-- [Documentation Index](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/README.md)
-- [Architecture](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ARCHITECTURE.md)
-- [Current State](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/CURRENT_STATE.md)
-- [Deployment](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md)
-- [Operations](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
-- [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
-- [GitHub Setup](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
-- [PR Review](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)
-- [Testing Data](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md)
-- [Roadmap](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ROADMAP.md)
+- [Documentation Index](docs/README.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Current State](docs/CURRENT_STATE.md)
+- [Deployment](docs/launch/DEPLOYMENT.md)
+- [Operations](docs/operations/OPERATIONS.md)
+- [Branching Workflow](docs/delivery/BRANCHING_WORKFLOW.md)
+- [GitHub Setup](docs/delivery/GITHUB_SETUP.md)
+- [PR Review](docs/delivery/PR_REVIEW.md)
+- [Testing Data](docs/operations/TESTING_DATA.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Repo Layout
 
-- [`app`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app): React/Vite product app
-- [`supabase`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase): schema, migrations, edge functions
-- [`site`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/site): static marketing site
-- [`docs`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs): project documentation
+- [`app`](app): React/Vite product app
+- [`supabase`](supabase): schema, migrations, edge functions
+- [`site`](site): static marketing site
+- [`docs`](docs): project documentation
 
 ## Local Development
 
@@ -59,4 +59,4 @@ supabase db push
 supabase functions deploy
 ```
 
-See [Deployment](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md) for the actual environment and deployment model.
+See [Deployment](docs/launch/DEPLOYMENT.md) for the actual environment and deployment model.

@@ -6,19 +6,19 @@ Note: this is a historical audit snapshot. Current implementation status should 
 
 Scope reviewed:
 
-- [ARCHITECTURE.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ARCHITECTURE.md)
-- [BRANCHING_WORKFLOW.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
-- [CURRENT_STATE.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/CURRENT_STATE.md)
-- [DEPLOYMENT.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DEPLOYMENT.md)
-- [GITHUB_SETUP.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
-- [LAUNCH_CHECKLIST.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md)
-- [NOTIFICATIONS.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md)
-- [OPERATIONS.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/OPERATIONS.md)
-- [PR_REVIEW.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)
-- [README.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/README.md)
-- [ROADMAP.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ROADMAP.md)
-- [SECRETS.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/SECRETS.md)
-- [TESTING_DATA.md](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/TESTING_DATA.md)
+- [ARCHITECTURE.md](../ARCHITECTURE.md)
+- [BRANCHING_WORKFLOW.md](BRANCHING_WORKFLOW.md)
+- [CURRENT_STATE.md](../CURRENT_STATE.md)
+- [DEPLOYMENT.md](../launch/DEPLOYMENT.md)
+- [GITHUB_SETUP.md](GITHUB_SETUP.md)
+- [LAUNCH_CHECKLIST.md](../launch/LAUNCH_CHECKLIST.md)
+- [NOTIFICATIONS.md](../operations/NOTIFICATIONS.md)
+- [OPERATIONS.md](../operations/OPERATIONS.md)
+- [PR_REVIEW.md](PR_REVIEW.md)
+- [README.md](../README.md)
+- [ROADMAP.md](../ROADMAP.md)
+- [SECRETS.md](../launch/SECRETS.md)
+- [TESTING_DATA.md](../operations/TESTING_DATA.md)
 
 ## Highest-Risk Mismatches Fixed
 
@@ -41,7 +41,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing vendor invite-code path, missing note that `whatsapp-notify` is legacy compatibility code, missing note that marketing-site forms are not operational backend capture.
 - Assumptions: none beyond repository code.
 
-## `docs/BRANCHING_WORKFLOW.md`
+## `docs/delivery/BRANCHING_WORKFLOW.md`
 
 - Status: accurate
 - Summary of changes: no substantive content changes were required.
@@ -57,7 +57,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing note that signup UX and auth config disagree; missing note that notification recovery is not scheduled; missing note that marketing-site forms are not operational.
 - Assumptions: treated repo config as the source of truth for auth confirmation behavior because hosted Supabase settings are not directly visible from the repo.
 
-## `docs/DEPLOYMENT.md`
+## `docs/launch/DEPLOYMENT.md`
 
 - Status: partially outdated
 - Summary of changes: corrected frontend env requirements, added `VITE_VENDOR_INVITE_CODE`, downgraded `VITE_STRIPE_PUBLIC_KEY` from required to unused/legacy, documented explicit origin fallback behavior, added missing seed/reset caveat, clarified current Stripe event handling and GB-only payment assumptions, and documented the lack of an in-repo scheduler for notification retries.
@@ -65,7 +65,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing `VITE_VENDOR_INVITE_CODE`; missing warning about hardcoded preview-domain fallback; missing warning that `db reset` references a non-committed seed file.
 - Assumptions: Vercel project wiring outside the repo was treated as external configuration; only `app/vercel.json` and repository workflows were used as repo-local deployment truth.
 
-## `docs/GITHUB_SETUP.md`
+## `docs/delivery/GITHUB_SETUP.md`
 
 - Status: partially outdated
 - Summary of changes: re-verified workflows, labels, milestones, open issues, project existence, and PR state; updated the PR snapshot so it reflects 2026-04-22 rather than older open/merged assumptions; added a caution that historical PR descriptions are not runtime truth.
@@ -73,7 +73,7 @@ Scope reviewed:
 - High-risk documentation gaps: using historical PR bodies as architecture truth would be misleading, especially around notifications.
 - Assumptions: project-board field conventions were retained as documented conventions because repo-local tools verified project existence but did not provide the full field schema directly.
 
-## `docs/LAUNCH_CHECKLIST.md`
+## `docs/launch/LAUNCH_CHECKLIST.md`
 
 - Status: partially outdated
 - Summary of changes: added explicit gates for `ALLOWED_ORIGINS`, notification retry recovery, signup-policy alignment, vendor onboarding path choice, and marketing-site non-operational form capture.
@@ -81,7 +81,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing gate for Stripe-onboarded seller rehearsal; missing gate for explicit notification-retry ownership.
 - Assumptions: none beyond repository code and current docs.
 
-## `docs/NOTIFICATIONS.md`
+## `docs/operations/NOTIFICATIONS.md`
 
 - Status: partially outdated
 - Summary of changes: documented the current queue/outbox states, clarified that SMS is not a live channel, explicitly called out the missing in-repo scheduler for retry sweeps, and repositioned `whatsapp-notify` as legacy compatibility code rather than the intended main path.
@@ -89,7 +89,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing retry-scheduler ownership; missing note that `sms` exists only as a schema/type placeholder; missing legacy env aliases still accepted by code.
 - Assumptions: none beyond repository code.
 
-## `docs/OPERATIONS.md`
+## `docs/operations/OPERATIONS.md`
 
 - Status: partially outdated
 - Summary of changes: added direct admin store-write caveats, clarified legacy order statuses versus active statuses, documented notification-retry operational ownership, and added seeded-seller Stripe-onboarding limitations.
@@ -97,7 +97,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing hard-delete warning for stores; missing note that seeded vendor fixtures are not payment-ready by default.
 - Assumptions: none beyond repository code.
 
-## `docs/PR_REVIEW.md`
+## `docs/delivery/PR_REVIEW.md`
 
 - Status: accurate
 - Summary of changes: no substantive content changes were required.
@@ -121,7 +121,7 @@ Scope reviewed:
 - High-risk documentation gaps: without rewrite, the roadmap would encourage duplicate work and mask the real unresolved issues.
 - Assumptions: roadmap priority ordering is inferred from current repo risk profile and open GitHub launch-readiness issues.
 
-## `docs/SECRETS.md`
+## `docs/launch/SECRETS.md`
 
 - Status: partially outdated
 - Summary of changes: added missing env vars and secret caveats, documented that `VITE_STRIPE_PUBLIC_KEY` is currently unused, added local-script-only service-role env usage, documented function-side `SENTRY_DSN`, and called out the `ALLOWED_ORIGINS` fallback behavior and incomplete example files.
@@ -129,7 +129,7 @@ Scope reviewed:
 - High-risk documentation gaps: missing vendor invite code; missing explicit note that example files are incomplete; missing note that the seed file referenced by config is absent.
 - Assumptions: repo config was treated as the best visible source of truth for auth confirmation settings and function env usage.
 
-## `docs/TESTING_DATA.md`
+## `docs/operations/TESTING_DATA.md`
 
 - Status: partially outdated
 - Summary of changes: marked the 2026 accounts as preferred fixtures, added the Stripe-onboarding limitation on seeded sellers, clarified Playwright local behavior, and documented the missing `seed.sql` caveat affecting reset assumptions.

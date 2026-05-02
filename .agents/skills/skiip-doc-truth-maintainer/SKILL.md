@@ -21,18 +21,18 @@ Read these first for most documentation truth checks:
 - `docs/CURRENT_STATE.md`
 - `docs/ROADMAP.md`
 - `docs/ARCHITECTURE.md`
-- `docs/DEPLOYMENT.md`
-- `docs/OPERATIONS.md`
+- `docs/launch/DEPLOYMENT.md`
+- `docs/operations/OPERATIONS.md`
 
 Read these when the topic touches their area:
 
-- Launch gates: `docs/LAUNCH_CHECKLIST.md`
-- Secrets and env vars: `docs/SECRETS.md`, `docs/ENVIRONMENT_MATRIX.md`, `app/.env.example`
-- RLS and auth: `docs/RLS_ACCESS_MATRIX.md`, `supabase/config.toml`, `supabase/migrations/`, `supabase/functions/`
-- GitHub workflow: `docs/BRANCHING_WORKFLOW.md`, `docs/GITHUB_SETUP.md`, `.github/workflows/`
-- Test fixtures: `docs/TESTING_DATA.md`, `app/tests/e2e/`, `app/src/**/*.test.*`
-- Notifications: `docs/NOTIFICATIONS.md`, `supabase/functions/notification-dispatch/`, webhook functions
-- Releases: `docs/RELEASES.md`, `VERSION`, `app/package.json`, `scripts/sync-version.mjs`
+- Launch gates: `docs/launch/LAUNCH_CHECKLIST.md`
+- Secrets and env vars: `docs/launch/SECRETS.md`, `docs/launch/ENVIRONMENT_MATRIX.md`, `app/.env.example`
+- RLS and auth: `docs/reference/RLS_ACCESS_MATRIX.md`, `supabase/config.toml`, `supabase/migrations/`, `supabase/functions/`
+- GitHub workflow: `docs/delivery/BRANCHING_WORKFLOW.md`, `docs/delivery/GITHUB_SETUP.md`, `.github/workflows/`
+- Test fixtures: `docs/operations/TESTING_DATA.md`, `app/tests/e2e/`, `app/src/**/*.test.*`
+- Notifications: `docs/operations/NOTIFICATIONS.md`, `supabase/functions/notification-dispatch/`, webhook functions
+- Releases: `docs/launch/RELEASES.md`, `VERSION`, `app/package.json`, `scripts/sync-version.mjs`
 
 For known drift-prone checks, read `references/drift-checks.md`.
 

@@ -27,7 +27,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 
 1. Freeze unrelated changes and identify the exact commit being deployed.
 2. Confirm the target environment's frontend vars, Supabase secrets, Stripe account, and webhook config.
-3. Confirm the notification provider setup in [Notifications](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/NOTIFICATIONS.md) is complete for the target environment.
+3. Confirm the notification provider setup in [Notifications](../operations/NOTIFICATIONS.md) is complete for the target environment.
 4. Confirm `ALLOWED_ORIGINS` is set explicitly for the target environment.
 5. Confirm migrations are complete and no manual production-only SQL is pending.
 6. Deploy database migrations.

@@ -1,9 +1,9 @@
 # Secrets and Environment Inventory
 
 This document is the launch-facing inventory for SKIIP secrets, environment variables, and auth-sensitive settings.
-For staging/production parity checks, use [`docs/ENVIRONMENT_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/ENVIRONMENT_MATRIX.md).
+For staging/production parity checks, use [Environment Matrix](ENVIRONMENT_MATRIX.md).
 
-Do not commit real secrets. Use [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) as the local template for edge-function secrets.
+Do not commit real secrets. Use [`supabase/.env.functions.example`](../../supabase/.env.functions.example) as the local template for edge-function secrets.
 
 ## Environment Surfaces
 
@@ -113,9 +113,9 @@ Immediate rotation triggers:
 
 ## Local Files and Current Drift
 
-- [`app/.env.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/.env.example) documents only part of the current frontend env shape and does not include `VITE_VENDOR_INVITE_CODE`.
-- [`supabase/.env.functions.example`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/.env.functions.example) is the best repo-local template for function secrets.
+- [`app/.env.example`](../../app/.env.example) documents only part of the current frontend env shape and does not include `VITE_VENDOR_INVITE_CODE`.
+- [`supabase/.env.functions.example`](../../supabase/.env.functions.example) is the best repo-local template for function secrets.
 - `supabase/.env.functions` should remain local and untracked.
-- [`supabase/config.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/config.toml) references `supabase/seed.sql` for `db reset`, but that file is not committed.
+- [`supabase/config.toml`](../../supabase/config.toml) references `supabase/seed.sql` for `db reset`, but that file is not committed.
 
 Treat this document, not the example files alone, as the complete current inventory.

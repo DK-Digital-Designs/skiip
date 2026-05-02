@@ -23,7 +23,7 @@ Note:
 
 ## Repository Defaults
 
-The repository-level configuration lives in [`.pr_agent.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.pr_agent.toml).
+The repository-level configuration lives in [`.pr_agent.toml`](../../.pr_agent.toml).
 
 Current behavior:
 - On PR open / reopen / ready-for-review: run `agentic_describe` and `agentic_review`

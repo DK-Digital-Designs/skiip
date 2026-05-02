@@ -66,7 +66,7 @@ Current behavior:
 
 - immediate sends are attempted in edge-runtime background work
 - stale or failed rows can be reclaimed and retried through `claim_notification_logs()`
-- [`notification-dispatch`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/notification-dispatch/index.ts) exists to drain backlog
+- [`notification-dispatch`](../../supabase/functions/notification-dispatch/index.ts) exists to drain backlog
 
 Important:
 
@@ -75,7 +75,7 @@ Important:
 
 ## Legacy Compatibility Code
 
-[`whatsapp-notify`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/whatsapp-notify/index.ts) still exists in the repo and is still deployable.
+[`whatsapp-notify`](../../supabase/functions/whatsapp-notify/index.ts) still exists in the repo and is still deployable.
 
 Current intended reality:
 

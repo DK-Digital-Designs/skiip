@@ -42,9 +42,9 @@ Core references:
 
 - `docs/CURRENT_STATE.md`
 - `docs/ROADMAP.md`
-- `docs/LAUNCH_CHECKLIST.md`
-- `docs/OPERATIONS.md`
-- `docs/GITHUB_SETUP.md`
+- `docs/launch/LAUNCH_CHECKLIST.md`
+- `docs/operations/OPERATIONS.md`
+- `docs/delivery/GITHUB_SETUP.md`
 - current GitHub P0/P1 launch issues
 
 Expected behavior:
@@ -59,9 +59,9 @@ Use for Stripe Checkout, Connect, refunds, webhook finalization, payment failure
 
 Core references:
 
-- `docs/OPERATIONS.md`
-- `docs/DEPLOYMENT.md`
-- `docs/SECRETS.md`
+- `docs/operations/OPERATIONS.md`
+- `docs/launch/DEPLOYMENT.md`
+- `docs/launch/SECRETS.md`
 - `supabase/functions/stripe-webhook/`
 - `supabase/functions/stripe-refund/`
 - `supabase/functions/stripe-reconcile-order/`
@@ -80,9 +80,9 @@ Use for protected edge-function auth posture, RLS review, buyer/seller/admin/ser
 
 Core references:
 
-- `docs/RLS_ACCESS_MATRIX.md`
+- `docs/reference/RLS_ACCESS_MATRIX.md`
 - `docs/CURRENT_STATE.md`
-- `docs/SECRETS.md`
+- `docs/launch/SECRETS.md`
 - `supabase/config.toml`
 - `supabase/functions/**`
 - `supabase/migrations/**`
@@ -103,8 +103,8 @@ Core references:
 - `.github/workflows/staging-smoke.yml`
 - `app/playwright.config.js`
 - `app/tests/e2e/`
-- `docs/TESTING_DATA.md`
-- `docs/OPERATIONS.md`
+- `docs/operations/TESTING_DATA.md`
+- `docs/operations/OPERATIONS.md`
 
 Expected behavior:
 
@@ -122,8 +122,8 @@ Core references:
 - `docs/README.md`
 - `docs/CURRENT_STATE.md`
 - `docs/ROADMAP.md`
-- `docs/DEPLOYMENT.md`
-- `docs/SECRETS.md`
+- `docs/launch/DEPLOYMENT.md`
+- `docs/launch/SECRETS.md`
 - `README.md`
 - root legacy notes such as `PLAN.md`, `PROGRESS.md`, `client.md`, and `meeting.md`
 
@@ -144,9 +144,9 @@ Compare documented environment variables against local examples and known deploy
 Inputs:
 
 - `app/.env.example`
-- `docs/SECRETS.md`
-- `docs/DEPLOYMENT.md`
-- `docs/ENVIRONMENT_MATRIX.md`
+- `docs/launch/SECRETS.md`
+- `docs/launch/DEPLOYMENT.md`
+- `docs/launch/ENVIRONMENT_MATRIX.md`
 - `supabase/config.toml`
 
 Output:
@@ -239,7 +239,7 @@ Schedule:
 Task:
 
 - Review open P0/P1 GitHub issues.
-- Compare `docs/ROADMAP.md`, `docs/LAUNCH_CHECKLIST.md`, and `docs/CURRENT_STATE.md`.
+- Compare `docs/ROADMAP.md`, `docs/launch/LAUNCH_CHECKLIST.md`, and `docs/CURRENT_STATE.md`.
 - Highlight launch blockers, stale docs, and unresolved external dependencies.
 
 Output:

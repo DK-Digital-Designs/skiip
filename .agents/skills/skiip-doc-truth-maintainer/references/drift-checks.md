@@ -46,27 +46,27 @@ Prefer `rg` when it works in the environment. Use PowerShell `Select-String` as 
 
 Auth and roles:
 
-- Docs: `docs/CURRENT_STATE.md`, `docs/RLS_ACCESS_MATRIX.md`, `docs/SECRETS.md`
+- Docs: `docs/CURRENT_STATE.md`, `docs/reference/RLS_ACCESS_MATRIX.md`, `docs/launch/SECRETS.md`
 - Code: `supabase/config.toml`, `supabase/functions/**`, `supabase/migrations/**`
 
 Payments:
 
-- Docs: `docs/OPERATIONS.md`, `docs/DEPLOYMENT.md`, `docs/ROADMAP.md`
+- Docs: `docs/operations/OPERATIONS.md`, `docs/launch/DEPLOYMENT.md`, `docs/ROADMAP.md`
 - Code: `supabase/functions/stripe-*`, payment migrations, app admin order views
 
 Notifications:
 
-- Docs: `docs/NOTIFICATIONS.md`, `docs/OPERATIONS.md`
+- Docs: `docs/operations/NOTIFICATIONS.md`, `docs/operations/OPERATIONS.md`
 - Code: `supabase/functions/notification-dispatch`, Resend/Twilio webhook functions, notification migrations
 
 Release and CI:
 
-- Docs: `docs/RELEASES.md`, `docs/BRANCHING_WORKFLOW.md`, `docs/GITHUB_SETUP.md`
+- Docs: `docs/launch/RELEASES.md`, `docs/delivery/BRANCHING_WORKFLOW.md`, `docs/delivery/GITHUB_SETUP.md`
 - Code: `.github/workflows/`, `VERSION`, `app/package.json`, `scripts/sync-version.mjs`
 
 Marketing site:
 
-- Docs: `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/OPERATIONS.md`
+- Docs: `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/operations/OPERATIONS.md`
 - Code: `site/`
 
 ## Findings Guidance

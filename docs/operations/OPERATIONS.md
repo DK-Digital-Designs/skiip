@@ -1,6 +1,6 @@
 # Operations
 
-Detailed cutover, rollback, and launch-gate steps live in [Launch Checklist](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/LAUNCH_CHECKLIST.md). This file stays focused on day-to-day operational flow and troubleshooting.
+Detailed cutover, rollback, and launch-gate steps live in [Launch Checklist](../launch/LAUNCH_CHECKLIST.md). This file stays focused on day-to-day operational flow and troubleshooting.
 
 ## Order Lifecycle
 

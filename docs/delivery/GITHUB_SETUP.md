@@ -15,16 +15,16 @@ It covers:
 - Repository: [DK-Digital-Designs/skiip](https://github.com/DK-Digital-Designs/skiip)
 - Default branch: `main`
 - Long-lived branches currently present in GitHub: `main`, `staging`, `gh-pages`
-- The intended branching model lives in [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
+- The intended branching model lives in [Branching Workflow](BRANCHING_WORKFLOW.md)
 - No issue templates, pull request templates, or `CODEOWNERS` file are currently present in the repository
 
 ## GitHub Actions
 
-Current workflows in [`.github/workflows`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows):
+Current workflows in [`.github/workflows`](../../.github/workflows):
 
 ### 1. App Quality Checks
 
-File: [app-quality.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/app-quality.yml)
+File: [app-quality.yml](../../.github/workflows/app-quality.yml)
 
 Purpose:
 
@@ -44,7 +44,7 @@ Checks:
 
 ### 2. Deploy Marketing Site to GitHub Pages
 
-File: [deploy-site.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/deploy-site.yml)
+File: [deploy-site.yml](../../.github/workflows/deploy-site.yml)
 
 Purpose:
 
@@ -62,7 +62,7 @@ Notes:
 
 ### 3. Staging Smoke Checks
 
-File: [staging-smoke.yml](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.github/workflows/staging-smoke.yml)
+File: [staging-smoke.yml](../../.github/workflows/staging-smoke.yml)
 
 Purpose:
 
@@ -81,7 +81,7 @@ Behavior:
 
 ## Pull Request Review Tooling
 
-SKIIP uses Qodo as the default AI PR reviewer, configured through [`.pr_agent.toml`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/.pr_agent.toml).
+SKIIP uses Qodo as the default AI PR reviewer, configured through [`.pr_agent.toml`](../../.pr_agent.toml).
 
 Current repository behavior:
 

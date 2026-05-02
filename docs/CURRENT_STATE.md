@@ -57,7 +57,7 @@ The production-critical path that exists in code today is:
 - audit logging for key order and payment events
 - user profile reconciliation trigger/backfill support
 - queue-backed notification dispatch with delivery webhooks
-- launch RLS access matrix in [`docs/RLS_ACCESS_MATRIX.md`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/RLS_ACCESS_MATRIX.md)
+- launch RLS access matrix in [RLS Access Matrix](reference/RLS_ACCESS_MATRIX.md)
 
 ## Current Runtime Truth
 
@@ -94,7 +94,7 @@ That means buyer signup copy and auth configuration are aligned for the launch p
 
 The admin dashboard refund flow and vendor management flow are edge-function mediated for launch.
 
-[`AdminVendors.jsx`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/app/src/pages/admin/Vendors.jsx) calls [`admin-store`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/admin-store/index.ts) for:
+[`AdminVendors.jsx`](../app/src/pages/admin/Vendors.jsx) calls [`admin-store`](../supabase/functions/admin-store/index.ts) for:
 
 - creating stores
 - upgrading users to `seller`
@@ -114,7 +114,7 @@ Current notification behavior:
 Important operational limit:
 
 - there is no scheduler defined in this repository for delayed retry sweeps
-- [`notification-dispatch`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/notification-dispatch/index.ts) must be triggered manually or by an external scheduler if backlog recovery matters
+- [`notification-dispatch`](../supabase/functions/notification-dispatch/index.ts) must be triggered manually or by an external scheduler if backlog recovery matters
 
 ### The static marketing site is not operational lead capture
 

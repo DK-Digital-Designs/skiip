@@ -9,7 +9,7 @@ Use this skill before creating, drafting, reviewing, or recommending any SKIIP c
 
 ## Source Of Truth
 
-Read `docs/COMMIT_CONVENTIONS.md` before making a commit if the convention is not already fresh in context.
+Read `docs/delivery/COMMIT_CONVENTIONS.md` before making a commit if the convention is not already fresh in context.
 
 All human-authored commits must follow:
 
@@ -24,7 +24,7 @@ Before committing:
 1. Inspect `git status --short`.
 2. Inspect the staged diff or the files about to be staged.
 3. Confirm the staged changes form one logical commit.
-4. Choose one allowed type from `docs/COMMIT_CONVENTIONS.md`.
+4. Choose one allowed type from `docs/delivery/COMMIT_CONVENTIONS.md`.
 5. Add a scope when it makes the affected area clearer.
 6. Write a specific summary with a colon after the type or scope.
 
