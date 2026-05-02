@@ -6,19 +6,12 @@ import { AdminService } from '../../lib/services/admin.service';
 import { RefundService } from '../../lib/services/refund.service';
 import { useToast } from '../../components/ui/Toast';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
-
-function getPaymentStatusColor(paymentStatus) {
-    switch (paymentStatus) {
-        case 'failed':
-            return '#ef4444';
-        case 'refunded':
-            return '#f59e0b';
-        case 'succeeded':
-            return '#10b981';
-        default:
-            return 'var(--accent)';
-    }
-}
+import {
+    getOrderStateSummary,
+    getOrderStatusColor,
+    getOrderStatusLabel,
+    isPaymentReconciliationCandidate,
+} from '../../lib/orders';
 
 function hasValue(value) {
     return value !== null && value !== undefined;
@@ -45,6 +38,7 @@ export default function AdminDashboard() {
     const { addToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [refundingOrderId, setRefundingOrderId] = useState(null);
+    const [reconcilingOrderId, setReconcilingOrderId] = useState(null);
     const [stats, setStats] = useState({
         totalOrders: 0,
         activeOrders: 0,
@@ -123,6 +117,20 @@ export default function AdminDashboard() {
             addToast(error.message || 'Refund failed.', 'error');
         } finally {
             setRefundingOrderId(null);
+        }
+    }
+
+    async function handleReconcile(orderId) {
+        try {
+            setReconcilingOrderId(orderId);
+            await AdminService.reconcileOrderPayment(orderId);
+            addToast('Payment reconciliation completed.', 'success');
+            await refreshDashboard();
+        } catch (error) {
+            console.error('Payment reconciliation failed:', error);
+            addToast(error.message || 'Payment reconciliation failed.', 'error');
+        } finally {
+            setReconcilingOrderId(null);
         }
     }
 
@@ -262,7 +270,9 @@ export default function AdminDashboard() {
                                 <div style={{ textAlign: 'right', display: 'grid', gap: '8px', justifyItems: 'end' }}>
                                     <div>
                                         <p style={{ fontSize: '20px', fontWeight: '700' }}>{formatMoney(order.total)}</p>
-                                        <p style={{ fontSize: '13px', color: getPaymentStatusColor(order.payment_status) }}>{order.status} | {order.payment_status}</p>
+                                        <p style={{ fontSize: '13px', color: getOrderStatusColor(order) }}>
+                                            {getOrderStatusLabel(order)} | {getOrderStateSummary(order)}
+                                        </p>
                                         {order.payment_status === 'failed' && order.payment_failure_message && (
                                             <p style={{ fontSize: '12px', color: '#ef4444', maxWidth: '280px' }}>
                                                 {order.payment_failure_message}
@@ -277,6 +287,16 @@ export default function AdminDashboard() {
                                             style={{ color: '#ef4444', padding: '8px 12px', fontSize: '13px' }}
                                         >
                                             {refundingOrderId === order.id ? 'Refunding...' : 'Refund Order'}
+                                        </button>
+                                    )}
+                                    {isPaymentReconciliationCandidate(order) && (
+                                        <button
+                                            onClick={() => handleReconcile(order.id)}
+                                            className="btn btn-primary"
+                                            disabled={reconcilingOrderId === order.id}
+                                            style={{ padding: '8px 12px', fontSize: '13px' }}
+                                        >
+                                            {reconcilingOrderId === order.id ? 'Reconciling...' : 'Reconcile Payment'}
                                         </button>
                                     )}
                                 </div>

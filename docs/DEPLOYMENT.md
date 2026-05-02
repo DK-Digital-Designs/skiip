@@ -183,6 +183,7 @@ Current critical functions:
 - `order-transition`
 - `admin-store`
 - `stripe-refund`
+- `stripe-reconcile-order`
 - `stripe-onboarding-link`
 - `notification-dispatch`
 - `resend-email-webhook`

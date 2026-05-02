@@ -90,8 +90,9 @@ Likely causes:
 - bad webhook secret
 - webhook endpoint targeting the wrong environment
 - schema drift in the target Supabase project
+- Stripe event processing failed and is retryable (`processing_status = failed`)
 
-If this affects more than one order, pause new order intake before retrying payment-side operations.
+If Stripe confirms payment but the order remains pending after webhook retries, use the admin `Reconcile Payment` action for that order. If this affects more than one order, pause new order intake before retrying payment-side operations.
 
 ### Buyer gets `401` or `403` on a protected edge function
 

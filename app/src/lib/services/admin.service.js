@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getFunctionAuthHeaders } from './function-auth';
 
 export const AdminService = {
     async getDashboardMetrics() {
@@ -20,5 +21,18 @@ export const AdminService = {
 
         if (error) throw error;
         return data || [];
+    },
+
+    async reconcileOrderPayment(orderId) {
+        if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
+
+        const { data, error } = await supabase.functions.invoke('stripe-reconcile-order', {
+            headers,
+            body: { orderId },
+        });
+
+        if (error) throw error;
+        return data;
     },
 };

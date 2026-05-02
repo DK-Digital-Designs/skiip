@@ -63,6 +63,8 @@ Actions:
 
 - verify webhook secret and target endpoint
 - confirm the webhook function is deployed to the right project
+- inspect `stripe_processed_events.processing_status`, `attempt_count`, and `last_error`
+- use the admin `Reconcile Payment` action only after Stripe confirms the payment succeeded
 - confirm the environment still has the required inventory/audit SQL objects from current migrations
 - if multiple orders are affected, pause new order intake before retrying
 

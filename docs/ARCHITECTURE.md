@@ -128,11 +128,12 @@ Sequence:
 6. Checkout is currently GBP-only, and vendor onboarding creates Stripe Express accounts with `country = GB`.
 7. The platform fee is currently computed as `10%` of the order subtotal and passed as `application_fee_amount`.
 8. Stripe redirects the buyer back to the hash-routed order tracker.
-9. [`stripe-webhook`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) verifies the signature, deduplicates the event, marks the order paid, records payment IDs and fee ledger fields, finalizes inventory atomically, writes audit rows, and queues notifications.
+9. [`stripe-webhook`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) verifies the signature, claims the event through retryable idempotency tracking, marks the order paid, records payment IDs and fee ledger fields, finalizes inventory atomically, and queues audit/notification side effects.
 10. If inventory finalization fails after capture, the webhook auto-refunds and records a refund event.
 11. [`payment_intent.payment_failed`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-webhook/index.ts) updates the order with failure timestamps and failure details.
 12. Vendor or admin status changes go through [`order-transition`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/order-transition/index.ts).
 13. Admin refunds go through [`stripe-refund`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-refund/index.ts).
+14. Admin payment repair for exceptional stuck orders goes through [`stripe-reconcile-order`](C:/Users/deang/OneDrive/Documents/GitHub/skiip/supabase/functions/stripe-reconcile-order/index.ts).
 
 Current operational lifecycle:
 

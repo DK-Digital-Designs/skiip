@@ -432,6 +432,12 @@ verify_jwt = false
 import_map = "./functions/stripe-refund/deno.json"
 entrypoint = "./functions/stripe-refund/index.ts"
 
+[functions.stripe-reconcile-order]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-reconcile-order/deno.json"
+entrypoint = "./functions/stripe-reconcile-order/index.ts"
+
 [functions.whatsapp-notify]
 enabled = true
 verify_jwt = false

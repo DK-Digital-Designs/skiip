@@ -7,16 +7,7 @@ import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
-
-const STATUS_COLORS = {
-    pending: '#9b9ba5',
-    pending_payment: '#9b9ba5',
-    paid: '#3b82f6',
-    preparing: '#f59e0b',
-    ready: '#10b981',
-    collected: '#8b5cf6',
-    cancelled: '#ef4444',
-};
+import { getOrderStatusColor, getOrderStatusLabel } from '../../lib/orders';
 
 export default function VendorDashboard() {
     const navigate = useNavigate();
@@ -236,7 +227,7 @@ export default function VendorDashboard() {
                 ) : (
                     <div style={{ display: 'grid', gap: '16px' }}>
                         {orders.map((order) => (
-                            <div key={order.id} className="card" style={{ borderLeft: `4px solid ${STATUS_COLORS[order.status] || '#ccc'}` }}>
+                            <div key={order.id} className="card" style={{ borderLeft: `4px solid ${getOrderStatusColor(order)}` }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
                                     <div>
                                         <h3 style={{ marginBottom: '4px' }}>Order #{order.id.slice(0, 8)}</h3>
@@ -250,8 +241,8 @@ export default function VendorDashboard() {
                                         )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>
-                                            {order.status === 'pending' ? 'WAITING FOR PAYMENT' : order.status.replace('_', ' ').toUpperCase()}
+                                        <p style={{ fontSize: '20px', fontWeight: '700', color: getOrderStatusColor(order) }}>
+                                            {getOrderStatusLabel(order)}
                                         </p>
                                         <p style={{ fontSize: '14px' }}>
                                             {order.customer_phone
