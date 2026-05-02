@@ -21,7 +21,14 @@ const stripe = new Stripe(stripeSecretKey, {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
-const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+function parseWebhookSecrets() {
+  return (Deno.env.get('STRIPE_WEBHOOK_SECRET') || '')
+    .split(',')
+    .map((secret) => secret.trim())
+    .filter(Boolean)
+}
+
+const endpointSecrets = parseWebhookSecrets()
 
 interface WebhookClaim {
   should_process: boolean
@@ -122,6 +129,23 @@ async function recordAuditLog(supabase: any, row: Record<string, unknown>) {
   if (error) {
     throw error
   }
+}
+
+async function constructStripeEvent(body: string, signature: string) {
+  if (!endpointSecrets.length) {
+    throw new Error('STRIPE_WEBHOOK_SECRET is not configured')
+  }
+
+  const errors: string[] = []
+  for (const secret of endpointSecrets) {
+    try {
+      return await stripe.webhooks.constructEventAsync(body, signature, secret)
+    } catch (error: unknown) {
+      errors.push(getErrorMessage(error))
+    }
+  }
+
+  throw new Error(errors[0] || 'Stripe webhook signature verification failed')
 }
 
 async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event) {
@@ -382,14 +406,15 @@ serve(async (req: Request) => {
     return new Response('No signature', { status: 400 })
   }
 
+  let eventId: string | null = null
+  let eventType: string | null = null
+
   try {
     const body = await req.text()
 
-    if (!endpointSecret) {
-      throw new Error('STRIPE_WEBHOOK_SECRET is not configured')
-    }
-
-    const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret)
+    const event = await constructStripeEvent(body, signature)
+    eventId = event.id
+    eventType = event.type
     const supabase = createServiceClient()
     const claim = await claimWebhookEvent(supabase, event)
 
@@ -418,10 +443,34 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
   } catch (error: unknown) {
-    log.error(`Webhook processing failed: ${getErrorMessage(error)}`, {
+    const errorMessage = getErrorMessage(error)
+    log.error(`Webhook processing failed: ${errorMessage}`, {
+      eventId,
+      eventType,
       stack: error instanceof Error ? error.stack : undefined,
     })
-    return new Response(JSON.stringify({ error: getErrorMessage(error) }), {
+
+    try {
+      await recordAuditLog(createServiceClient(), {
+        event_type: 'stripe_webhook_failed',
+        entity_type: 'stripe_event',
+        entity_id: null,
+        actor_role: 'system',
+        payload: {
+          stripe_event_id: eventId,
+          event_type: eventType,
+          error: errorMessage,
+        },
+      })
+    } catch (auditError: unknown) {
+      log.error('Failed to record webhook failure audit log', {
+        eventId,
+        eventType,
+        error: getErrorMessage(auditError),
+      })
+    }
+
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     })
