@@ -1,0 +1,7 @@
+interface:
+  display_name: "SKIIP Commit Conventions"
+  short_description: "Enforce standard SKIIP commit messages."
+  default_prompt: "Use $skiip-commit-conventions to draft a standard SKIIP Conventional Commit message."
+
+policy:
+  allow_implicit_invocation: true

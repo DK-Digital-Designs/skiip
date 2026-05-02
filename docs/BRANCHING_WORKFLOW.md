@@ -102,6 +102,7 @@ If a tool or automation creates a branch with a custom prefix such as `codex/...
 - Release from `staging` to `main` regularly so the branches do not drift too far apart.
 - Do not force-push shared integration branches unless there is an explicitly approved recovery reason.
 - Prefer PRs over direct commits to `staging` or `main`.
+- Use the commit format defined in [Commit Conventions](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/COMMIT_CONVENTIONS.md) for all human-authored commits.
 - Delete local and remote short-lived branches after merge.
 - Run `git fetch --prune` regularly.
 - Use `git branch -vv` to spot local branches whose upstream is marked as gone.

@@ -24,6 +24,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
   Covers day-to-day order operations, troubleshooting, refund handling, and operational caveats.
 - [Branching Workflow](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/BRANCHING_WORKFLOW.md)
   Defines the intended branch roles, PR targets, release promotion flow, hotfix handling, and branch hygiene rules.
+- [Commit Conventions](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/COMMIT_CONVENTIONS.md)
+  Defines the required Conventional Commit format and allowed commit types for SKIIP.
 - [GitHub Setup](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/GITHUB_SETUP.md)
   Covers GitHub Actions, the delivery board, labels, milestones, and the currently verified GitHub-side setup.
 - [Pull Request Review](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/PR_REVIEW.md)
@@ -34,6 +36,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
   Lists the next engineering priorities that are not already implemented.
 - [Docs Audit Report](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/DOCS_AUDIT_REPORT.md)
   Records the status of each reviewed doc, what changed, the key mismatches found, and any remaining ambiguities.
+- [Agent Automation Plan](C:/Users/deang/OneDrive/Documents/GitHub/skiip/docs/AGENT_AUTOMATION_PLAN.md)
+  Defines proposed SKIIP-specific agent skills, deterministic scripts, and read-only recurring automations for launch and operations workflows.
 
 ## Current Project Shape
 
