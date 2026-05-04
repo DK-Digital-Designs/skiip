@@ -403,13 +403,19 @@ import_map = "./functions/stripe-webhook/deno.json"
 entrypoint = "./functions/stripe-webhook/index.ts"
 
 [functions.stripe-onboarding-link]
-enabled = true
+  enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-onboarding-link/deno.json"
 entrypoint = "./functions/stripe-onboarding-link/index.ts"
 
+[functions.stripe-connect-status]
+  enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-connect-status/deno.json"
+entrypoint = "./functions/stripe-connect-status/index.ts"
+
 [functions.order-create]
-enabled = true
+  enabled = true
 verify_jwt = false
 import_map = "./functions/order-create/deno.json"
 entrypoint = "./functions/order-create/index.ts"

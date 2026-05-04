@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
@@ -11,6 +11,7 @@ import { getOrderStatusColor, getOrderStatusLabel } from '../../lib/orders';
 
 export default function VendorDashboard() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('active'); // active | scheduled | all
@@ -67,6 +68,24 @@ export default function VendorDashboard() {
                 return;
             }
 
+            const stripeReturned = new URLSearchParams(location.search).get('stripe_return') === '1';
+            if (stripeReturned) {
+                const { store: reconciledStore } = await StripeService.reconcileConnectStatus({
+                    storeId: storeData.id,
+                });
+
+                setStore(reconciledStore || storeData);
+
+                if (reconciledStore?.stripe_connect_status === 'ready') {
+                    addToast('Payment setup complete. Your shop can accept orders.', 'success');
+                } else {
+                    addToast('Payment setup still needs attention before orders can open.', 'info');
+                }
+
+                navigate('/vendor/dashboard', { replace: true });
+                return;
+            }
+
             setStore(storeData);
         } catch (error) {
             console.error('Auth check failed with specific error:', error);
@@ -119,8 +138,8 @@ export default function VendorDashboard() {
             setLoading(true);
             const { url } = await StripeService.createOnboardingLink({
                 storeId: store.id,
-                returnUrl: window.location.origin + '/vendor/dashboard',
-                refreshUrl: window.location.origin + '/vendor/dashboard',
+                returnUrl: window.location.origin + '/#/vendor/dashboard?stripe_return=1',
+                refreshUrl: window.location.origin + '/#/vendor/dashboard',
             });
 
             if (url) {
@@ -144,6 +163,16 @@ export default function VendorDashboard() {
         );
     }
 
+    const stripeConnectStatus = store?.stripe_connect_status
+        || (store?.stripe_onboarding_complete ? 'ready' : store?.stripe_account_id ? 'onboarding' : 'not_started');
+    const requiresPaymentSetup = Boolean(store && stripeConnectStatus !== 'ready');
+    const setupStatusCopy = {
+        not_started: 'Connect your bank account to start accepting orders.',
+        onboarding: 'Finish the Stripe setup steps so your shop can accept payments.',
+        restricted: 'Stripe needs updated information before your shop can accept payments.',
+        pending_verification: 'Stripe is verifying your payment setup. Orders stay paused until verification completes.',
+    };
+
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
             {/* Header */}
@@ -162,7 +191,7 @@ export default function VendorDashboard() {
 
             <div className="container">
                 {/* Onboarding Banner */}
-                {store && !store.stripe_onboarding_complete && (
+                {requiresPaymentSetup && (
                     <div className="card" style={{ 
                         background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
                         color: 'white', 
@@ -177,7 +206,7 @@ export default function VendorDashboard() {
                         <div style={{ maxWidth: '70%' }}>
                             <h2 style={{ marginBottom: '12px', color: 'white', fontSize: '24px' }}>⚡ Setup Required to Accept Payments</h2>
                             <p style={{ opacity: 0.95, fontSize: '16px', lineHeight: '1.5' }}>
-                                Your shop is currently in <strong>Limited Mode</strong>. You can manage products, but customers cannot place orders until you connect your bank account.
+                                Your shop is currently in <strong>Limited Mode</strong>. {setupStatusCopy[stripeConnectStatus] || setupStatusCopy.onboarding}
                             </p>
                         </div>
                         <button 

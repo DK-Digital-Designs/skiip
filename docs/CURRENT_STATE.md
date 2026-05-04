@@ -71,6 +71,7 @@ These statements reflect the actual current implementation.
 - protected edge functions intentionally use manual bearer validation for the May 2026 launch posture rather than Supabase gateway JWT enforcement
 - checkout currency is GBP
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
+- vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`
 - the repo still deploys a separate static marketing site, but it is not part of the order/payment source of truth
 
 ## Important Clarifications

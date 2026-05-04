@@ -5,6 +5,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
 import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
+import {
+  buildStripeConnectStoreUpdate,
+  deriveStripeConnectStatus,
+} from "../_shared/stripe-connect-status.ts"
 
 const log = logger('stripe-onboarding-link')
 
@@ -101,9 +105,15 @@ serve(async (req: Request) => {
 
       stripeAccountId = account.id
 
+      const derivedStatus = deriveStripeConnectStatus(account)
+      const statusUpdate = buildStripeConnectStoreUpdate(store, derivedStatus)
+
       const { error: updateError } = await supabase
         .from('stores')
-        .update({ stripe_account_id: stripeAccountId })
+        .update({
+          stripe_account_id: stripeAccountId,
+          ...statusUpdate,
+        })
         .eq('id', store_id)
 
       if (updateError) {

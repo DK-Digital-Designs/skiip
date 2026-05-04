@@ -9,6 +9,10 @@ import {
   buildPaymentReconciliation,
   retrievePaymentIntentWithCharge,
 } from "../_shared/stripe-reconciliation.ts"
+import {
+  buildStripeConnectStoreUpdate,
+  deriveStripeConnectStatus,
+} from "../_shared/stripe-connect-status.ts"
 
 const log = logger('stripe-webhook')
 
@@ -48,6 +52,21 @@ function getPaymentFailureDetails(paymentIntent: Stripe.PaymentIntent) {
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error)
 }
+
+const STORE_CONNECT_STATUS_SELECT = [
+  'id',
+  'stripe_onboarding_complete',
+  'stripe_connect_status',
+  'stripe_charges_enabled',
+  'stripe_payouts_enabled',
+  'stripe_card_payments_status',
+  'stripe_transfers_status',
+  'stripe_requirements_currently_due',
+  'stripe_requirements_past_due',
+  'stripe_requirements_pending_verification',
+  'stripe_requirements_disabled_reason',
+  'stripe_connect_last_checked_at',
+].join(', ')
 
 async function claimWebhookEvent(supabase: any, event: Stripe.Event) {
   const { data, error } = await supabase
@@ -354,15 +373,32 @@ async function handleStripeEvent(supabase: any, event: Stripe.Event) {
     await handlePaymentIntentFailed(supabase, event)
   } else if (event.type === 'account.updated') {
     const account = event.data.object as Stripe.Account
-    if (account.charges_enabled && account.details_submitted) {
-      const { error } = await supabase
-        .from('stores')
-        .update({ stripe_onboarding_complete: true })
-        .eq('stripe_account_id', account.id)
+    const { data: store, error: storeLookupError } = await supabase
+      .from('stores')
+      .select(STORE_CONNECT_STATUS_SELECT)
+      .eq('stripe_account_id', account.id)
+      .maybeSingle()
 
-      if (error) {
-        throw error
-      }
+    if (storeLookupError) {
+      throw storeLookupError
+    }
+
+    if (!store) {
+      log.warn('Account update ignored because no store has this Stripe account', {
+        accountId: account.id,
+      })
+      return
+    }
+
+    const derivedStatus = deriveStripeConnectStatus(account)
+    const update = buildStripeConnectStoreUpdate(store, derivedStatus)
+    const { error } = await supabase
+      .from('stores')
+      .update(update)
+      .eq('id', store.id)
+
+    if (error) {
+      throw error
     }
   } else if (event.type === 'charge.refunded') {
     const charge = event.data.object as Stripe.Charge

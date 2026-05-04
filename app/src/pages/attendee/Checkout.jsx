@@ -133,7 +133,9 @@ export default function Checkout() {
             }
 
             // 2. Pre-check Vendor Payment Readiness
-            if (vendor && !vendor.stripe_onboarding_complete) {
+            const vendorStripeStatus = vendor?.stripe_connect_status
+                || (vendor?.stripe_onboarding_complete ? 'ready' : 'onboarding');
+            if (vendor && vendorStripeStatus !== 'ready') {
                 addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
                 setProcessing(false);
                 return;

@@ -74,7 +74,7 @@ serve(async (req: Request) => {
 
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('stripe_account_id, stripe_onboarding_complete')
+      .select('stripe_account_id, stripe_connect_status')
       .eq('id', order.store_id)
       .single()
 
@@ -82,7 +82,7 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Store not found' }, 404, origin)
     }
 
-    if (!store.stripe_account_id || !store.stripe_onboarding_complete) {
+    if (!store.stripe_account_id || store.stripe_connect_status !== 'ready') {
       return jsonResponse(
         { error: 'VENDOR_NOT_READY', message: 'The vendor has not completed their payment setup.' },
         403,

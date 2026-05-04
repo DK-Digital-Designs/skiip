@@ -185,6 +185,7 @@ Current critical functions:
 - `stripe-refund`
 - `stripe-reconcile-order`
 - `stripe-onboarding-link`
+- `stripe-connect-status`
 - `notification-dispatch`
 - `resend-email-webhook`
 - `whatsapp-status-webhook`
@@ -239,6 +240,8 @@ Current payment specifics:
 - checkout currency is `gbp`
 - vendor onboarding creates Stripe Express accounts with `country = GB`
 - onboarding currently requests `card_payments` and `transfers`
+- vendor readiness is enforced through `stores.stripe_connect_status = 'ready'`
+- `stripe-connect-status` reconciles live Stripe account state after onboarding return
 - application fees are calculated as `10%` of order subtotal in `stripe-checkout`
 
 Important:

@@ -135,6 +135,12 @@ Sequence:
 13. Admin refunds go through [`stripe-refund`](../supabase/functions/stripe-refund/index.ts).
 14. Admin payment repair for exceptional stuck orders goes through [`stripe-reconcile-order`](../supabase/functions/stripe-reconcile-order/index.ts).
 
+Vendor Connect readiness:
+
+- [`stripe-connect-status`](../supabase/functions/stripe-connect-status/index.ts) actively reconciles live Stripe account state after onboarding return.
+- `stores.stripe_connect_status = 'ready'` is the canonical payment-readiness flag consumed by the dashboard and checkout.
+- Raw Stripe account fields are persisted on `stores` for debugging only.
+
 Current operational lifecycle:
 
 - `pending -> paid -> preparing -> ready -> collected`

@@ -106,6 +106,24 @@ Check:
 - hosted traffic is not relying on the wrong fallback origin set
 - staging smoke results for buyer, seller, and admin sign-in
 
+### Vendor completes Stripe onboarding but remains in Limited Mode
+
+Check:
+
+- `stores.stripe_account_id`
+- `stores.stripe_connect_status`
+- `stores.stripe_connect_last_checked_at`
+- raw Stripe observability fields on `stores`
+- Stripe `account.updated` webhook delivery for the same connected account
+
+Operational notes:
+
+- `stripe_connect_status = 'ready'` is the source of truth for vendor payment readiness.
+- The dashboard calls `stripe-connect-status` after Stripe returns to `/#/vendor/dashboard?stripe_return=1`.
+- The same status derivation is used by `stripe-webhook` and `stripe-connect-status`; it is safe if both run at the same time.
+- If the dashboard did not reconcile, sign in as the vendor and revisit the Stripe return URL or have an admin trigger the same authenticated function for the store.
+- Checkout remains blocked until the store has a Stripe account ID and `stripe_connect_status = 'ready'`.
+
 ### Buyer reports payment failure at checkout
 
 Check:
