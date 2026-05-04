@@ -43,7 +43,7 @@ async function signIn(page, email, password) {
   await page.goto(appPath('/login'));
   await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
   await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
+  await page.getByRole('textbox', { name: /^password$/i }).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
 }
 
