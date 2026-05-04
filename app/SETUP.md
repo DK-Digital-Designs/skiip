@@ -163,7 +163,8 @@ Repo-backed setup:
 
 Expected bucket posture:
 
-- public reads
+- public image serving via direct object URLs
+- no broad public listing policy on `storage.objects`
 - seller/admin uploads to `products/<store_id>/*`
 - PNG, JPG, and WebP only
 - 5MB maximum file size
