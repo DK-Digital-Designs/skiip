@@ -12,7 +12,8 @@
 | Dean Gibson | ~2.0 hours | 2026/04/28 | Planning and order creation hardening. Drafted upcoming feature plans and implemented atomic safety checks for order creation flows. |
 | Dean Gibson | ~4.0 hours | 2026/04/30 | Pre-launch operations and vendor features. Established version tracking, implemented scheduled collection flows, and hardened vendor-side launch access controls. |
 | Dean Gibson | ~3.5 hours | 2026/05/02 | Payment recovery, delivery triage, and documentation cleanup. Implemented Stripe payment state recovery, added multi-secret webhook support, verified the app locally, closed the resolved payment-pending issue, cleaned up the GitHub delivery board, and moved archive notes into `docs/archive`. |
-| **TOTAL** | **~25.0 hours** | | |
+| Dean Gibson | ~4.0 hours | 2026/05/04 | Documentation system strategy and planning. Evaluated the personal Wiki MkDocs/Obsidian model for SKIIP, refined the internal searchable docs approach, created GitHub issue `#36`, and added the follow-up operating-model comment covering Obsidian, repo docs, GitHub Issues, information boundaries, and private/local notes. |
+| **TOTAL** | **~29.0 hours** | | |
 
 ## May 2 End-of-Day Recap
 
@@ -28,6 +29,18 @@ Local verification completed successfully:
 - `npm run test:e2e`: 3 public smoke tests passed, 3 authenticated smoke tests remained credential-gated/skipped
 
 Remaining launch blockers are environment and secret parity, end-to-end Stripe payout/refund/reconciliation rehearsal, the final scheduled-order paid lifecycle pass, RLS/auth boundary sign-off, and the legacy admin-store archive failure.
+
+## May 4 Documentation System Planning Recap
+
+May 4 focused on documentation strategy rather than committed code. The main output was a refined internal documentation operating model for SKIIP:
+
+- keep `docs/` as the canonical repo-tracked project source of truth
+- use MkDocs Material as a searchable rendered layer over the existing Markdown docs
+- keep the existing GitHub Pages marketing-site deployment unchanged
+- treat Obsidian as a pre-doc rough-notes space, not a competing source of truth
+- separate shared internal documentation from ignored local/private notes and actual secret storage
+
+GitHub issue `#36` now tracks the implementation plan for the internal searchable docs system, with a follow-up comment capturing the refined Obsidian -> `docs/` -> GitHub Issues operating model.
 
 ## Full Commit Log (Phase 5+)
 
