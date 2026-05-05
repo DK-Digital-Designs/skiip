@@ -86,7 +86,7 @@ Recommended environment shape:
 
 Important current fallback:
 
-- if `ALLOWED_ORIGINS` is missing, code falls back to a hardcoded list that currently includes a Vercel preview domain: `https://skiip-4nzf8krt6-dkdigital.vercel.app`
+- if `ALLOWED_ORIGINS` is missing, code falls back to a hardcoded list that currently includes Vercel preview/staging domains: `https://skiip-4nzf8krt6-dkdigital.vercel.app` and `https://skiip-git-staging-dkdigital.vercel.app`
 
 Do not rely on that fallback in hosted environments.
 

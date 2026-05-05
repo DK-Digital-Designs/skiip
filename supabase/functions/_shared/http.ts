@@ -4,6 +4,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://skiip.co.uk',
   'https://www.skiip.co.uk',
   'https://skiip-4nzf8krt6-dkdigital.vercel.app',
+  'https://skiip-git-staging-dkdigital.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]

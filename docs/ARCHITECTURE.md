@@ -111,7 +111,7 @@ Auth response contract for protected functions:
 
 Important current behavior:
 
-- if `ALLOWED_ORIGINS` is not set, [`_shared/http.ts`](../supabase/functions/_shared/http.ts) falls back to a hardcoded list containing `https://skiip.co.uk`, `https://www.skiip.co.uk`, `https://skiip-4nzf8krt6-dkdigital.vercel.app`, `http://localhost:5173`, and `http://127.0.0.1:5173`
+- if `ALLOWED_ORIGINS` is not set, [`_shared/http.ts`](../supabase/functions/_shared/http.ts) falls back to a hardcoded list containing `https://skiip.co.uk`, `https://www.skiip.co.uk`, `https://skiip-4nzf8krt6-dkdigital.vercel.app`, `https://skiip-git-staging-dkdigital.vercel.app`, `http://localhost:5173`, and `http://127.0.0.1:5173`
 - hosted environments should set `ALLOWED_ORIGINS` explicitly rather than relying on that fallback
 
 ## Order and Payment Flow
