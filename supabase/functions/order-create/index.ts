@@ -97,14 +97,61 @@ serve(async (req: Request) => {
     }
 
     const productMap = new Map(products.map((product) => [product.id, product]))
-    const orderItems = normalizedItems.map((item) => {
+    const unavailableItems: string[] = []
+    const insufficientItems: Array<{
+      product_id: string
+      name: string
+      requested: number
+      available: number
+    }> = []
+
+    for (const item of normalizedItems) {
       const product = productMap.get(item.product_id)
       if (!product || product.deleted_at || product.status !== 'active') {
-        throw new Error(`Product ${item.product_id} is not available for ordering`)
+        unavailableItems.push(item.product_id)
+        continue
       }
       if ((product.inventory_quantity ?? 0) < item.quantity) {
-        throw new Error(`Insufficient inventory for ${product.name}`)
+        insufficientItems.push({
+          product_id: product.id,
+          name: product.name,
+          requested: item.quantity,
+          available: product.inventory_quantity ?? 0,
+        })
       }
+    }
+
+    if (unavailableItems.length > 0) {
+      return jsonResponse(
+        {
+          code: 'PRODUCT_UNAVAILABLE',
+          error: 'One or more items in your cart are no longer available. Please refresh your cart and try again.',
+          unavailable_items: unavailableItems,
+        },
+        400,
+        origin,
+      )
+    }
+
+    if (insufficientItems.length > 0) {
+      const firstItem = insufficientItems[0]
+      const itemLabel = insufficientItems.length === 1
+        ? `${firstItem.name} only has ${firstItem.available} left, but your cart asks for ${firstItem.requested}.`
+        : 'Some items in your cart do not have enough stock left.'
+
+      return jsonResponse(
+        {
+          code: 'INSUFFICIENT_INVENTORY',
+          error: `${itemLabel} Please reduce the quantity or remove the item, then try checkout again.`,
+          insufficient_items: insufficientItems,
+        },
+        400,
+        origin,
+      )
+    }
+
+    const orderItems = normalizedItems.map((item) => {
+      const product = productMap.get(item.product_id)!
       const unitPrice = roundMoney(Number(product.price))
       return {
         product_id: product.id,
