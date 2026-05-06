@@ -86,6 +86,31 @@ May 4 focused on documentation strategy rather than committed code. The main out
 
 GitHub issue `#36` now tracks the implementation plan for the internal searchable docs system, with a follow-up comment capturing the refined Obsidian -> `docs/` -> GitHub Issues operating model.
 
+## May 6 Notification Queueing Hardening
+
+May 6 issue `#45` hardened post-mutation notification queueing so successful order transitions, admin refunds, Stripe webhook payment completion, and admin payment reconciliation are not reported as failed solely because optional notification queueing failed afterward.
+
+Implementation notes:
+
+- added a shared best-effort transactional notification helper with explicit success/failure return values and normalized error logging
+- updated the affected Edge Functions to log function, operation, order, event, correlation/source event, and operation metadata when queueing fails
+- added Deno unit coverage for helper success, thrown `Error`, non-`Error` thrown values, and simulated successful mutation responses under forced queue failure
+- added Deno Edge Function tests to the app-quality CI workflow
+- updated notification and operations docs to distinguish committed business state, outbox rows, and queue insertion failures before an outbox row exists
+
+Local verification:
+
+- `npm run lint`: passed
+- `npm run test`: 35 tests passed
+- `npm run build`: passed
+- `deno check supabase/functions/tests/notifications-best-effort-test.ts`: passed
+- `deno test --no-run --allow-env --allow-read=supabase/functions supabase/functions/tests/notifications-best-effort-test.ts`: passed
+- direct Deno forced-failure eval confirmed `{ queued: false }` return and operator-useful log context
+
+Known local verification caveat:
+
+- `deno test` itself panicked on Windows Deno 2.7.14 after type-checking; CI on Ubuntu is the required authoritative runner before closing `#45`.
+
 ## Full Commit Log (Phase 5+)
 
 ```text

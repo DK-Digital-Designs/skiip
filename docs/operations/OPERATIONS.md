@@ -180,6 +180,7 @@ Check:
 Check:
 
 - `notification_logs`
+- edge function logs for best-effort queue failures before an outbox row exists
 - `notification_webhook_events`
 - provider secrets
 - provider webhook callbacks
@@ -189,6 +190,7 @@ Check:
 Operational note:
 
 - immediate sends are usually handled by background dispatch after the business mutation completes
+- post-mutation notification queueing is best-effort and should not make a committed order transition, refund, webhook payment completion, or admin reconciliation look failed
 - delayed retries or backlog sweeps require `notification-dispatch`
 - no scheduler for that endpoint is defined in this repository
 

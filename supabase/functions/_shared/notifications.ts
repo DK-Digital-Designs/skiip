@@ -36,6 +36,23 @@ type ProviderSender = (
   input: ProviderDispatchInput,
 ) => Promise<ProviderDispatchResult>;
 
+export type BestEffortNotificationContext = NotificationContext & {
+  functionName: string;
+  operation: string;
+  metadata?: Record<string, unknown>;
+};
+
+type BestEffortNotificationOptions = {
+  logger?: {
+    error: (message: string, context?: Record<string, unknown>) => void;
+  };
+  queueNotifications?: (context: NotificationContext) => Promise<unknown>;
+};
+
+export type BestEffortNotificationResult =
+  | { queued: true }
+  | { queued: false; error: string };
+
 const PROVIDER_SENDERS: Partial<
   Record<NotificationChannel, Record<string, ProviderSender>>
 > = {
@@ -76,6 +93,27 @@ function statusRank(status: string | null | undefined) {
     default:
       return -1;
   }
+}
+
+export function normalizeNotificationQueueError(error: unknown) {
+  if (error instanceof Error) {
+    return error.message || error.name;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  try {
+    const json = JSON.stringify(error);
+    if (json) {
+      return json;
+    }
+  } catch {
+    // Fall through to String() for values that cannot be serialized.
+  }
+
+  return String(error);
 }
 
 function getProviderSender(notification: NotificationLogRecord) {
@@ -243,7 +281,13 @@ function getBackgroundRuntime() {
     }
   ).EdgeRuntime;
 
-  return runtime?.waitUntil ? runtime : null;
+  if (typeof runtime?.waitUntil !== "function") {
+    return null;
+  }
+
+  return {
+    waitUntil: runtime.waitUntil.bind(runtime),
+  };
 }
 
 function scheduleNotificationDispatch(
@@ -491,6 +535,38 @@ export async function sendTransactionalNotifications({
   scheduleNotificationDispatch(supabase, `event:${eventType}`);
 
   return { queued: queuedRows.length };
+}
+
+export async function sendTransactionalNotificationsBestEffort(
+  {
+    functionName,
+    operation,
+    metadata,
+    ...notificationContext
+  }: BestEffortNotificationContext,
+  {
+    logger: bestEffortLogger = log,
+    queueNotifications = sendTransactionalNotifications,
+  }: BestEffortNotificationOptions = {},
+): Promise<BestEffortNotificationResult> {
+  try {
+    await queueNotifications(notificationContext);
+    return { queued: true };
+  } catch (error: unknown) {
+    const errorMessage = normalizeNotificationQueueError(error);
+    bestEffortLogger.error("Transactional notification queueing failed", {
+      functionName,
+      operation,
+      orderId: notificationContext.orderId,
+      eventType: notificationContext.eventType,
+      correlationId: notificationContext.correlationId || null,
+      sourceEventId: notificationContext.sourceEventId || null,
+      error: errorMessage,
+      metadata: metadata || {},
+    });
+
+    return { queued: false, error: errorMessage };
+  }
 }
 
 export async function applyWebhookStatusToNotification(

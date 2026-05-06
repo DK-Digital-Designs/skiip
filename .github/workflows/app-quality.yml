@@ -10,6 +10,7 @@ on:
     paths:
       - 'app/**'
       - 'supabase/**'
+      - '.github/workflows/app-quality.yml'
 
 jobs:
   quality:
@@ -29,6 +30,11 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install dependencies
         run: npm ci
 
@@ -37,6 +43,10 @@ jobs:
 
       - name: Unit tests
         run: npm run test
+
+      - name: Edge Function unit tests
+        working-directory: .
+        run: deno test --allow-env --allow-read=supabase/functions supabase/functions/tests/*.ts
 
       - name: Build
         run: npm run build

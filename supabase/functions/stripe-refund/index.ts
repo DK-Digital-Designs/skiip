@@ -5,7 +5,7 @@ import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
-import { sendTransactionalNotifications } from "../_shared/notifications.ts"
+import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
 
 const log = logger('stripe-refund')
 
@@ -119,11 +119,20 @@ serve(async (req: Request) => {
       },
     })
 
-    await sendTransactionalNotifications({
+    await sendTransactionalNotificationsBestEffort({
       supabase,
       orderId: order.id,
       eventType: 'order_refunded',
       correlationId: crypto.randomUUID(),
+      functionName: 'stripe-refund',
+      operation: 'admin_refund',
+      metadata: {
+        actorUserId: user.id,
+        actorRole: user.role,
+        refundId: refund.id,
+        refundAmount: Number(order.total || 0),
+        reason: body.reason?.trim() || 'Manual admin refund',
+      },
     })
 
     return jsonResponse({ refundId: refund.id }, 200, origin)
