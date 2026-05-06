@@ -5,15 +5,44 @@ import { AuthService } from '../../lib/services/auth.service';
 import { AdminService } from '../../lib/services/admin.service';
 import { RefundService } from '../../lib/services/refund.service';
 import { useToast } from '../../components/ui/Toast';
+import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
+import {
+    getOrderStateSummary,
+    getOrderStatusColor,
+    getOrderStatusLabel,
+    isPaymentReconciliationCandidate,
+} from '../../lib/orders';
+
+function hasValue(value) {
+    return value !== null && value !== undefined;
+}
+
+function formatMoney(value) {
+    if (!hasValue(value)) return 'not recorded';
+    return `GBP ${parseFloat(value || 0).toFixed(2)}`;
+}
+
+function hasReconciliationDetails(order) {
+    const isReconciledStatus = order.payment_status === 'succeeded' || order.payment_status === 'refunded';
+    return isReconciledStatus && (
+        order.payment_intent_id ||
+        order.charge_id ||
+        hasValue(order.platform_fee) ||
+        hasValue(order.stripe_fee) ||
+        hasValue(order.vendor_net)
+    );
+}
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const { addToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [refundingOrderId, setRefundingOrderId] = useState(null);
+    const [reconcilingOrderId, setReconcilingOrderId] = useState(null);
     const [stats, setStats] = useState({
         totalOrders: 0,
         activeOrders: 0,
+        failedPayments: 0,
         paidRevenue: 0,
         refundedRevenue: 0,
         statusCounts: {},
@@ -57,6 +86,7 @@ export default function AdminDashboard() {
         setStats({
             totalOrders: metrics?.totalOrders || 0,
             activeOrders: metrics?.activeOrders || 0,
+            failedPayments: metrics?.failedPayments || 0,
             paidRevenue: parseFloat(metrics?.paidRevenue || 0),
             refundedRevenue: parseFloat(metrics?.refundedRevenue || 0),
             statusCounts: metrics?.statusCounts || {},
@@ -90,6 +120,20 @@ export default function AdminDashboard() {
         }
     }
 
+    async function handleReconcile(orderId) {
+        try {
+            setReconcilingOrderId(orderId);
+            await AdminService.reconcileOrderPayment(orderId);
+            addToast('Payment reconciliation completed.', 'success');
+            await refreshDashboard();
+        } catch (error) {
+            console.error('Payment reconciliation failed:', error);
+            addToast(error.message || 'Payment reconciliation failed.', 'error');
+        } finally {
+            setReconcilingOrderId(null);
+        }
+    }
+
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -106,7 +150,6 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <Link to="/" className="btn btn-ghost">Return to Site</Link>
                         <Link to="/admin/vendors" className="btn btn-ghost">Manage Vendors</Link>
-                        <Link to="/admin/events" className="btn btn-ghost">Events</Link>
                         <button onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>
                 </div>
@@ -125,6 +168,10 @@ export default function AdminDashboard() {
                     <div className="card">
                         <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Paid Revenue</h3>
                         <p style={{ fontSize: '36px', fontWeight: '800', color: 'var(--accent)' }}>GBP {stats.paidRevenue.toFixed(2)}</p>
+                    </div>
+                    <div className="card">
+                        <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Failed Payments</h3>
+                        <p style={{ fontSize: '36px', fontWeight: '800', color: stats.failedPayments ? '#ef4444' : 'var(--accent)' }}>{stats.failedPayments}</p>
                     </div>
                     <div className="card">
                         <h3 className="text-muted" style={{ fontSize: '14px', marginBottom: '8px' }}>Refunded Revenue</h3>
@@ -205,13 +252,32 @@ export default function AdminDashboard() {
                                 <div>
                                     <h4>{order.order_number || `Order #${order.id.slice(0, 8)}`}</h4>
                                     <p className="text-muted" style={{ fontSize: '14px' }}>
-                                        {new Date(order.created_at).toLocaleString()} • {order.stores?.name || 'Unknown Store'} • {order.customer_phone}
+                                        {new Date(order.created_at).toLocaleString()} • {order.stores?.name || 'Unknown Store'} • {order.customer_phone || order.customer_email || 'No direct contact'}
                                     </p>
+                                    {getScheduledCollectionLabel(order) && (
+                                        <p className="text-accent" style={{ fontSize: '14px', marginTop: '6px' }}>
+                                            Scheduled collection: {getScheduledCollectionLabel(order)}
+                                        </p>
+                                    )}
+                                    {hasReconciliationDetails(order) && (
+                                        <p className="text-muted" style={{ fontSize: '12px', marginTop: '6px', maxWidth: '680px' }}>
+                                            Reconciliation: platform {formatMoney(order.platform_fee)}, Stripe {formatMoney(order.stripe_fee)}, vendor net {formatMoney(order.vendor_net)}
+                                            {order.payment_intent_id ? ` | PI ${order.payment_intent_id}` : ''}
+                                            {order.charge_id ? ` | Charge ${order.charge_id}` : ''}
+                                        </p>
+                                    )}
                                 </div>
                                 <div style={{ textAlign: 'right', display: 'grid', gap: '8px', justifyItems: 'end' }}>
                                     <div>
-                                        <p style={{ fontSize: '20px', fontWeight: '700' }}>GBP {parseFloat(order.total || 0).toFixed(2)}</p>
-                                        <p className="text-accent" style={{ fontSize: '13px' }}>{order.status} • {order.payment_status}</p>
+                                        <p style={{ fontSize: '20px', fontWeight: '700' }}>{formatMoney(order.total)}</p>
+                                        <p style={{ fontSize: '13px', color: getOrderStatusColor(order) }}>
+                                            {getOrderStatusLabel(order)} | {getOrderStateSummary(order)}
+                                        </p>
+                                        {order.payment_status === 'failed' && order.payment_failure_message && (
+                                            <p style={{ fontSize: '12px', color: '#ef4444', maxWidth: '280px' }}>
+                                                {order.payment_failure_message}
+                                            </p>
+                                        )}
                                     </div>
                                     {order.payment_status === 'succeeded' && order.status !== 'refunded' && (
                                         <button
@@ -221,6 +287,16 @@ export default function AdminDashboard() {
                                             style={{ color: '#ef4444', padding: '8px 12px', fontSize: '13px' }}
                                         >
                                             {refundingOrderId === order.id ? 'Refunding...' : 'Refund Order'}
+                                        </button>
+                                    )}
+                                    {isPaymentReconciliationCandidate(order) && (
+                                        <button
+                                            onClick={() => handleReconcile(order.id)}
+                                            className="btn btn-primary"
+                                            disabled={reconcilingOrderId === order.id}
+                                            style={{ padding: '8px 12px', fontSize: '13px' }}
+                                        >
+                                            {reconcilingOrderId === order.id ? 'Reconciling...' : 'Reconcile Payment'}
                                         </button>
                                     )}
                                 </div>

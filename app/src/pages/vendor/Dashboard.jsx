@@ -1,27 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
 import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
-
-const STATUS_COLORS = {
-    pending: '#9b9ba5',
-    pending_payment: '#9b9ba5',
-    paid: '#3b82f6',
-    preparing: '#f59e0b',
-    ready: '#10b981',
-    collected: '#8b5cf6',
-    cancelled: '#ef4444',
-};
+import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
+import { getOrderStatusColor, getOrderStatusLabel } from '../../lib/orders';
 
 export default function VendorDashboard() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('active'); // active | all
+    const [filter, setFilter] = useState('active'); // active | scheduled | all
     const { addToast } = useToast();
 
     // React Query Hooks
@@ -72,6 +65,24 @@ export default function VendorDashboard() {
                 console.warn('Auth check failed: Store not found for user', session.user.id);
                 addToast('No store found for this account.', 'error');
                 navigate('/');
+                return;
+            }
+
+            const stripeReturned = new URLSearchParams(location.search).get('stripe_return') === '1';
+            if (stripeReturned) {
+                const { store: reconciledStore } = await StripeService.reconcileConnectStatus({
+                    storeId: storeData.id,
+                });
+
+                setStore(reconciledStore || storeData);
+
+                if (reconciledStore?.stripe_connect_status === 'ready') {
+                    addToast('Payment setup complete. Your shop can accept orders.', 'success');
+                } else {
+                    addToast('Payment setup still needs attention before orders can open.', 'info');
+                }
+
+                navigate('/vendor/dashboard', { replace: true });
                 return;
             }
 
@@ -127,8 +138,8 @@ export default function VendorDashboard() {
             setLoading(true);
             const { url } = await StripeService.createOnboardingLink({
                 storeId: store.id,
-                returnUrl: window.location.origin + '/vendor/dashboard',
-                refreshUrl: window.location.origin + '/vendor/dashboard',
+                returnUrl: window.location.origin + '/#/vendor/dashboard?stripe_return=1',
+                refreshUrl: window.location.origin + '/#/vendor/dashboard',
             });
 
             if (url) {
@@ -152,6 +163,16 @@ export default function VendorDashboard() {
         );
     }
 
+    const stripeConnectStatus = store?.stripe_connect_status
+        || (store?.stripe_onboarding_complete ? 'ready' : store?.stripe_account_id ? 'onboarding' : 'not_started');
+    const requiresPaymentSetup = Boolean(store && stripeConnectStatus !== 'ready');
+    const setupStatusCopy = {
+        not_started: 'Connect your bank account to start accepting orders.',
+        onboarding: 'Finish the Stripe setup steps so your shop can accept payments.',
+        restricted: 'Stripe needs updated information before your shop can accept payments.',
+        pending_verification: 'Stripe is verifying your payment setup. Orders stay paused until verification completes.',
+    };
+
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
             {/* Header */}
@@ -170,7 +191,7 @@ export default function VendorDashboard() {
 
             <div className="container">
                 {/* Onboarding Banner */}
-                {store && !store.stripe_onboarding_complete && (
+                {requiresPaymentSetup && (
                     <div className="card" style={{ 
                         background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
                         color: 'white', 
@@ -185,7 +206,7 @@ export default function VendorDashboard() {
                         <div style={{ maxWidth: '70%' }}>
                             <h2 style={{ marginBottom: '12px', color: 'white', fontSize: '24px' }}>⚡ Setup Required to Accept Payments</h2>
                             <p style={{ opacity: 0.95, fontSize: '16px', lineHeight: '1.5' }}>
-                                Your shop is currently in <strong>Limited Mode</strong>. You can manage products, but customers cannot place orders until you connect your bank account.
+                                Your shop is currently in <strong>Limited Mode</strong>. {setupStatusCopy[stripeConnectStatus] || setupStatusCopy.onboarding}
                             </p>
                         </div>
                         <button 
@@ -213,6 +234,12 @@ export default function VendorDashboard() {
                         Active Orders
                     </button>
                     <button
+                        onClick={() => setFilter('scheduled')}
+                        className={filter === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
+                    >
+                        Scheduled Orders
+                    </button>
+                    <button
                         onClick={() => setFilter('all')}
                         className={filter === 'all' ? 'btn btn-primary' : 'btn btn-ghost'}
                     >
@@ -229,19 +256,30 @@ export default function VendorDashboard() {
                 ) : (
                     <div style={{ display: 'grid', gap: '16px' }}>
                         {orders.map((order) => (
-                            <div key={order.id} className="card" style={{ borderLeft: `4px solid ${STATUS_COLORS[order.status] || '#ccc'}` }}>
+                            <div key={order.id} className="card" style={{ borderLeft: `4px solid ${getOrderStatusColor(order)}` }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
                                     <div>
                                         <h3 style={{ marginBottom: '4px' }}>Order #{order.id.slice(0, 8)}</h3>
                                         <p className="text-muted" style={{ fontSize: '14px' }}>
                                             {new Date(order.created_at).toLocaleTimeString()}
                                         </p>
+                                        {getScheduledCollectionLabel(order) && (
+                                            <p className="text-accent" style={{ fontSize: '14px', marginTop: '6px' }}>
+                                                Scheduled collection: {getScheduledCollectionLabel(order)}
+                                            </p>
+                                        )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontSize: '20px', fontWeight: '700', color: STATUS_COLORS[order.status] }}>
-                                            {order.status === 'pending' ? 'WAITING FOR PAYMENT' : order.status.replace('_', ' ').toUpperCase()}
+                                        <p style={{ fontSize: '20px', fontWeight: '700', color: getOrderStatusColor(order) }}>
+                                            {getOrderStatusLabel(order)}
                                         </p>
-                                        <p style={{ fontSize: '14px' }}>📱 {order.customer_phone}</p>
+                                        <p style={{ fontSize: '14px' }}>
+                                            {order.customer_phone
+                                                ? `📱 ${order.customer_phone}`
+                                                : order.customer_email
+                                                    ? `✉️ ${order.customer_email}`
+                                                    : 'No direct contact'}
+                                        </p>
                                     </div>
                                 </div>
 

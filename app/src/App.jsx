@@ -12,17 +12,16 @@ import BuyerProfile from './pages/attendee/BuyerProfile';
 import UnifiedLogin from './pages/shared/Login';
 import UnifiedSignup from './pages/shared/Signup';
 
-import VendorSignup from './pages/vendor/Signup';
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
 
 import AdminDashboard from './pages/admin/DashboardV2';
 import AdminVendors from './pages/admin/Vendors';
-import AdminEvents from './pages/admin/Events';
 import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import GlobalHeader from './components/shared/GlobalHeader';
+import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
@@ -50,7 +49,6 @@ function App() {
                 <Route path="/order/profile" element={<BuyerProfile />} />
 
                 {/* Vendor Portal */}
-                <Route path="/vendor/signup" element={<VendorSignup />} />
                 <Route
                     path="/vendor/dashboard"
                     element={
@@ -85,18 +83,10 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                <Route
-                    path="/admin/events"
-                    element={
-                        <ProtectedRoute roles={['admin']}>
-                            <AdminEvents />
-                        </ProtectedRoute>
-                    }
-                />
-
                 {/* 404 Catch-all */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            <AppFooter />
             <ToastContainer />
         </>
     );

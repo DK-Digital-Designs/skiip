@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getFunctionAuthHeaders } from './function-auth';
 
 export const AdminService = {
     async getDashboardMetrics() {
@@ -14,11 +15,24 @@ export const AdminService = {
 
         const { data, error } = await supabase
             .from('orders')
-            .select('id, order_number, created_at, total, status, payment_status, customer_phone, refund_amount, stores(name)')
+            .select('id, order_number, created_at, total, status, payment_status, payment_failed_at, payment_failure_code, payment_failure_message, payment_intent_id, charge_id, checkout_session_id, paid_at, platform_fee, stripe_fee, vendor_net, customer_email, customer_phone, refund_amount, scheduled_collection_at, scheduled_collection_timezone, stores(name)')
             .order('created_at', { ascending: false })
             .limit(limit);
 
         if (error) throw error;
         return data || [];
+    },
+
+    async reconcileOrderPayment(orderId) {
+        if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
+
+        const { data, error } = await supabase.functions.invoke('stripe-reconcile-order', {
+            headers,
+            body: { orderId },
+        });
+
+        if (error) throw error;
+        return data;
     },
 };

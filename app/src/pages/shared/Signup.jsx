@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../lib/services/auth.service';
 import { useToast } from '../../components/ui/Toast';
 
 export default function UnifiedSignup() {
+    const navigate = useNavigate();
     const { addToast } = useToast();
-
     const [formData, setFormData] = useState({ email: '', password: '', fullName: '' });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [done, setDone] = useState(false); // confirmation state
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (event) => {
+        setFormData({ ...formData, [event.target.name]: event.target.value });
+    };
 
-    async function handleSignup(e) {
-        e.preventDefault();
+    async function handleSignup(event) {
+        event.preventDefault();
         setLoading(true);
+
         try {
-            // All public signups create a 'buyer' role — vendors are provisioned by admins
             await AuthService.signUp(formData.email, formData.password, formData.fullName, 'buyer');
-            setDone(true);
+            addToast('Account created. You can start ordering.', 'success');
+            navigate('/order');
         } catch (error) {
             addToast(error.message || 'Signup failed. Please try again.', 'error');
         } finally {
@@ -27,27 +29,9 @@ export default function UnifiedSignup() {
         }
     }
 
-    if (done) {
-        return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📬</div>
-                    <h2 style={{ marginBottom: '12px' }}>Check your inbox</h2>
-                    <p className="text-muted" style={{ marginBottom: '24px' }}>
-                        We sent a verification link to <strong>{formData.email}</strong>. Click it to activate your account.
-                    </p>
-                    <Link to="/login" className="btn btn-primary" style={{ width: '100%', display: 'block' }}>
-                        Back to Sign In
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div style={{ maxWidth: '400px', width: '100%' }}>
-                {/* Logo */}
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -102,7 +86,7 @@ export default function UnifiedSignup() {
                                     autoComplete="new-password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    placeholder="••••••••"
+                                    placeholder="Password"
                                     required
                                     minLength={6}
                                     style={{ paddingRight: '40px', width: '100%' }}
@@ -112,17 +96,20 @@ export default function UnifiedSignup() {
                                     onClick={() => setShowPassword(!showPassword)}
                                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     style={{
-                                        position: 'absolute', right: '12px', top: '50%',
-                                        transform: 'translateY(-50%)', background: 'none',
-                                        border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
-                                        padding: 0, display: 'flex', alignItems: 'center'
+                                        position: 'absolute',
+                                        right: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
                                     }}
                                 >
-                                    {showPassword ? (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                                    ) : (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                    )}
+                                    {showPassword ? 'Hide' : 'Show'}
                                 </button>
                             </div>
                         </div>

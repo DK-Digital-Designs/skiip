@@ -113,7 +113,6 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <Link to="/" className="btn btn-ghost">Return to Site</Link>
                         <Link to="/admin/vendors" className="btn btn-ghost">Manage Vendors</Link>
-                        <Link to="/admin/events" className="btn btn-ghost">Events</Link>
                         <button onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>
                 </div>
@@ -168,7 +167,7 @@ export default function AdminDashboard() {
                                 <div>
                                     <h4>Order #{order.id.slice(0, 8)}</h4>
                                     <p className="text-muted" style={{ fontSize: '14px' }}>
-                                        {new Date(order.created_at).toLocaleString()} • {order.customer_phone}
+                                        {new Date(order.created_at).toLocaleString()} • {order.customer_phone || order.customer_email || 'No direct contact'}
                                     </p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>

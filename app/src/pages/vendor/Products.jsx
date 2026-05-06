@@ -189,6 +189,7 @@ export default function VendorProducts() {
                             <ProductImageUpload
                                 onUpload={(url) => setFormData({ ...formData, images: [url] })}
                                 currentImageUrl={formData.images?.[0]}
+                                storeId={store?.id}
                             />
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                 <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost">Cancel</button>

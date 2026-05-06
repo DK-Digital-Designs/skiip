@@ -63,5 +63,29 @@ export const StripeService = {
         }
 
         return data; // { url }
+    },
+
+    /**
+     * Reconcile a vendor's Stripe Connect account status against live Stripe state.
+     * @param {object} params
+     * @param {string} params.storeId
+     */
+    async reconcileConnectStatus({ storeId }) {
+        if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
+
+        const { data, error } = await supabase.functions.invoke('stripe-connect-status', {
+            headers,
+            body: {
+                store_id: storeId,
+            }
+        });
+
+        if (error) {
+            console.error('Stripe Connect Status Error:', error);
+            throw new Error(error.message || 'Failed to refresh Stripe Connect status');
+        }
+
+        return data; // { store }
     }
 };

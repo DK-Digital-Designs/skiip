@@ -111,12 +111,10 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
+[storage.buckets."product-images"]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
@@ -405,13 +403,19 @@ import_map = "./functions/stripe-webhook/deno.json"
 entrypoint = "./functions/stripe-webhook/index.ts"
 
 [functions.stripe-onboarding-link]
-enabled = true
+  enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-onboarding-link/deno.json"
 entrypoint = "./functions/stripe-onboarding-link/index.ts"
 
+[functions.stripe-connect-status]
+  enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-connect-status/deno.json"
+entrypoint = "./functions/stripe-connect-status/index.ts"
+
 [functions.order-create]
-enabled = true
+  enabled = true
 verify_jwt = false
 import_map = "./functions/order-create/deno.json"
 entrypoint = "./functions/order-create/index.ts"
@@ -422,11 +426,23 @@ verify_jwt = false
 import_map = "./functions/order-transition/deno.json"
 entrypoint = "./functions/order-transition/index.ts"
 
+[functions.admin-store]
+enabled = true
+verify_jwt = false
+import_map = "./functions/admin-store/deno.json"
+entrypoint = "./functions/admin-store/index.ts"
+
 [functions.stripe-refund]
 enabled = true
 verify_jwt = false
 import_map = "./functions/stripe-refund/deno.json"
 entrypoint = "./functions/stripe-refund/index.ts"
+
+[functions.stripe-reconcile-order]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-reconcile-order/deno.json"
+entrypoint = "./functions/stripe-reconcile-order/index.ts"
 
 [functions.whatsapp-notify]
 enabled = true
@@ -437,3 +453,13 @@ entrypoint = "./functions/whatsapp-notify/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/whatsapp-status-webhook/index.ts"
+
+[functions.notification-dispatch]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/notification-dispatch/index.ts"
+
+[functions.resend-email-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/resend-email-webhook/index.ts"

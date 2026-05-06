@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
-export default function ProductImageUpload({ onUpload, currentImageUrl }) {
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = {
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+};
+
+export default function ProductImageUpload({ onUpload, currentImageUrl, storeId }) {
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(currentImageUrl);
 
@@ -14,9 +21,22 @@ export default function ProductImageUpload({ onUpload, currentImageUrl }) {
             }
 
             const file = e.target.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `products/${fileName}`;
+            const fileExt = ALLOWED_IMAGE_TYPES[file.type];
+
+            if (!fileExt) {
+                throw new Error('Product images must be PNG, JPG, or WebP.');
+            }
+
+            if (file.size > MAX_IMAGE_SIZE_BYTES) {
+                throw new Error('Product images must be 5MB or smaller.');
+            }
+
+            if (!storeId) {
+                throw new Error('Store context is required before uploading product images.');
+            }
+
+            const fileName = `${crypto.randomUUID()}.${fileExt}`;
+            const filePath = `products/${storeId}/${fileName}`;
 
             // Upload the file to Supabase Storage
             const { error: uploadError } = await supabase.storage
@@ -63,7 +83,7 @@ export default function ProductImageUpload({ onUpload, currentImageUrl }) {
                 <div>
                     <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,image/webp"
                         onChange={handleUpload}
                         disabled={uploading}
                         style={{ display: 'none' }}

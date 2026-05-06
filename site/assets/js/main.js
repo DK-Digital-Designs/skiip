@@ -50,27 +50,14 @@ function initWaitlist() {
     waitlistForms.forEach(form => {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+
             const formData = new FormData(form);
-            const data = {
-                email: formData.get('email'),
-                name: formData.get('name') || ''
-            };
-            Storage.addToWaitlist(data);
-
-            // Show success
+            const name = formData.get('name') || '';
+            const email = formData.get('email') || '';
+            const body = encodeURIComponent(`${name}\n${email}`);
             const btn = form.querySelector('button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Subscribed!';
-            btn.style.background = '#22c55e';
-            form.reset();
-
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '';
-                const modal = form.closest('.modal-overlay');
-                if (modal) modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 2000);
+            btn.innerHTML = 'Email us instead';
+            window.location.href = `mailto:partners@skiip.co.uk?subject=Skiip%20launch%20interest&body=${body}`;
         });
     });
 }

@@ -1,98 +1,62 @@
-# SKIIP - Premium Festival Ordering Platform
+# SKIIP
 
-**Skip the queue. Order food and drinks instantly from your phone.**
+SKIIP is a festival and venue ordering platform.
 
-SKIIP is a high-performance, multi-tenant ordering platform designed for high-concurrency environments like music festivals and large-scale venues. It provides a seamless guest checkout experience for attendees and robust management tools for vendors and administrators.
+The current product supports:
+- buyer signup/login and authenticated checkout
+- vendor storefronts and live order handling
+- Stripe Connect onboarding and Stripe Checkout
+- webhook-driven payment finalization
+- vendor/admin operational dashboards
+- a separate static marketing site in `site/`
 
----
+The source of truth for project documentation is the [`docs`](docs) directory.
 
-## 🔐 Demo Accounts (Testing)
+Start here:
+- [Documentation Index](docs/README.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Current State](docs/CURRENT_STATE.md)
+- [Deployment](docs/launch/DEPLOYMENT.md)
+- [Operations](docs/operations/OPERATIONS.md)
+- [Branching Workflow](docs/delivery/BRANCHING_WORKFLOW.md)
+- [GitHub Setup](docs/delivery/GITHUB_SETUP.md)
+- [PR Review](docs/delivery/PR_REVIEW.md)
+- [Testing Data](docs/operations/TESTING_DATA.md)
+- [Roadmap](docs/ROADMAP.md)
 
-Use these credentials to explore the different roles within the ecosystem:
+## Repo Layout
 
-### Legacy Accounts
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Super Admin** | `admin@example.com` | `password123` |
-| **Vendor (Burger Bliss)**| `vendor@example.com` | `password123` |
-| **Standard Buyer** | `buyer@example.com` | `password123` |
+- [`app`](app): React/Vite product app
+- [`supabase`](supabase): schema, migrations, edge functions
+- [`site`](site): static marketing site
+- [`docs`](docs): project documentation
 
-### New 2026 Testing Accounts (Stripe Connect Phase 1)
-| Role | Email | Password | Setup Status |
-| :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin2026@example.com` | `password2026` | Confirmed |
-| **Vendor (Skiip Test Kitchen)**| `vendor2026@example.com` | `password2026` | Confirmed, Store Created |
-| **Standard Buyer** | `buyer2026@example.com` | `password2026` | Confirmed |
+## Local Development
 
----
+App:
 
-## 📱 Ecosystem Roles
-
-### 🎟️ Attendee Experience
-- **Frictionless Ordering**: Browse menus and add items to a persistent cart.
-- **Guest Checkout**: Securely checkout using just a phone number or email.
-- **Real-time Tracking**: Watch your order status change from "Pending" to "Ready" via live Supabase updates.
-- **Stable UX**: Specialized reconnection logic and storage sanitization to ensure the app works in crowded festival environments.
-
-### 🏪 Vendor Portal
-- **Order Management**: Real-time dashboard with audio alerts for new orders.
-- **Menu Control**: (In Progress) Toggle stock availability and manage product listings.
-- **Quick Actions**: Double-tap status updates to move orders through the pipeline.
-
-### 🛡️ Admin Suite
-- **Live Metrics**: Dashboard connected to live production data (Revenue, Order volume, Vendor count).
-- **Vendor CRUD**: Full control to create, approve, or suspend vendor stores.
-- **System Health**: Monitoring for Supabase connectivity and Stripe webhook status.
-
----
-
-## 🛠️ Technology Stack
-
-- **Frontend**: React 18 + Vite (optimized for speed/LCP)
-- **Styling**: Modern CSS with high-end glassmorphism and responsiveness.
-- **Backend / DB**: Supabase (PostgreSQL + Realtime + Auth)
-- **Payments**: Stripe (UK Standard GBP Integration)
-- **Infrastructure**: Vercel (Deployed in London/LHR region for low latency)
-
----
-
-## 🚀 Getting Started
-
-### 1. Installation
 ```bash
+cd app
 npm install
-```
-
-### 2. Environment Setup
-Copy `.env.example` to `.env` and provide your credentials:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_STRIPE_PUBLISHABLE_KEY`
-
-### 3. Local Development
-```bash
 npm run dev
 ```
 
-For a deeper dive into architecture and setup, see [SETUP.md](SETUP.md).
+Quality checks:
 
----
+```bash
+cd app
+npm run lint
+npm run test
+npm run build
+```
 
-## 🏁 Current Status: PILOT READY
+Supabase:
 
-✅ **Infrastructure**: UK Localization (GBP), Error Tracking (Sentry), Loading States.
-✅ **Payments**: Stripe UK integration verified.
-✅ **Admin**: Vendor management and live dashboard complete.
-✅ **Stability**: Global storage sanitization and auth-lock fail-safes implemented.
+```bash
+supabase login
+supabase link --project-ref <project-ref>
+supabase db push
+supabase functions deploy
+```
 
-🔜 **Next Steps**:
-- High-concurrency load testing.
-- QR Code Batch Generation toolkit.
-- "Global Pause" Emergency override.
-
----
-
-## 📝 License
-
-Private Property - **Skiip Technologies © 2026**
-All rights reserved.
+See [Deployment](docs/launch/DEPLOYMENT.md) for the actual environment and deployment model.

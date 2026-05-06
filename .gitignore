@@ -37,4 +37,5 @@ dist-ssr
 coverage
 playwright-report
 test-results
+test-results-alt
 

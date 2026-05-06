@@ -1,0 +1,7 @@
+interface:
+  display_name: "SKIIP Doc Truth Maintainer"
+  short_description: "Keep SKIIP docs aligned with repo reality."
+  default_prompt: "Use $skiip-doc-truth-maintainer to check SKIIP documentation against the current repository state."
+
+policy:
+  allow_implicit_invocation: true

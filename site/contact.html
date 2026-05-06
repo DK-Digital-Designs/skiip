@@ -91,12 +91,12 @@
                                     <textarea name="message" rows="5" placeholder="How can we help?"
                                         required></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Open Email</button>
                             </form>
                             <div id="contact-success" style="display: none;" class="text-center">
                                 <div class="text-accent" style="font-size: 48px; margin-bottom: 16px;">✓</div>
-                                <h3>Message Sent!</h3>
-                                <p class="text-muted">We'll be in touch soon.</p>
+                                <h3>Email Ready</h3>
+                                <p class="text-muted">Send the prepared email from your mail app.</p>
                             </div>
                         </div>
                     </div>
@@ -109,26 +109,27 @@
         <div class="container">
             <div class="footer-bottom">
                 <p>&copy; 2026 Skiip Technologies. All rights reserved.</p>
+                <p class="text-muted" data-app-version>Version v0.22.0</p>
                 <a href="index.html" class="logo" style="font-size: 18px;">SKI<span>IP</span></a>
             </div>
         </div>
     </footer>
 
-    <script type="module">
-        import { Storage } from '/assets/js/storage.js';
-
+    <script>
         document.getElementById('contact-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-
-            Storage.saveContactMessage(data);
+            const subject = encodeURIComponent(data.subject || 'Skiip enquiry');
+            const body = encodeURIComponent(`${data.firstName || ''} ${data.lastName || ''}\n${data.email || ''}\n\n${data.message || ''}`);
 
             form.style.display = 'none';
             document.getElementById('contact-success').style.display = 'block';
+            window.location.href = `mailto:partners@skiip.co.uk?subject=${subject}&body=${body}`;
         });
     </script>
+    <script type="module" src="/assets/js/version.js"></script>
     <script type="module" src="/assets/js/main.js"></script>
 </body>
 

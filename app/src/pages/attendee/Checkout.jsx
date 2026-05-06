@@ -7,6 +7,12 @@ import { StoreService } from '../../lib/services/store.service';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
+import {
+    collectionInputToIso,
+    getMinimumScheduledCollectionInputValue,
+    getScheduledCollectionLabel,
+    toScheduledCollectionPayload,
+} from '../../lib/scheduledCollection';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -21,6 +27,8 @@ export default function Checkout() {
     const [notes, setNotes] = useState('');
     const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [collectionMode, setCollectionMode] = useState('immediate');
+    const [scheduledCollection, setScheduledCollection] = useState('');
 
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
@@ -92,20 +100,42 @@ export default function Checkout() {
             }
 
             // 1. Validation
-            if (!email || !phone) {
-                addToast('Please provide both an email and a phone number.', 'error');
+            const trimmedEmail = email.trim();
+            const trimmedPhone = phone.trim();
+
+            if (!trimmedEmail) {
+                addToast('Please provide an email address.', 'error');
                 setProcessing(false);
                 return;
             }
 
-            if (!whatsappOptIn) {
-                addToast('Please confirm WhatsApp opt-in to continue checkout.', 'error');
+            if (whatsappOptIn && !trimmedPhone) {
+                addToast('Add a WhatsApp number if you want WhatsApp order updates.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            if (collectionMode === 'scheduled' && !scheduledCollection) {
+                addToast('Choose a scheduled collection time.', 'error');
+                setProcessing(false);
+                return;
+            }
+
+            let scheduledPayload;
+            try {
+                scheduledPayload = collectionMode === 'scheduled'
+                    ? toScheduledCollectionPayload(scheduledCollection)
+                    : toScheduledCollectionPayload('');
+            } catch (error) {
+                addToast(error.message || 'Choose a valid scheduled collection time.', 'error');
                 setProcessing(false);
                 return;
             }
 
             // 2. Pre-check Vendor Payment Readiness
-            if (vendor && !vendor.stripe_onboarding_complete) {
+            const vendorStripeStatus = vendor?.stripe_connect_status
+                || (vendor?.stripe_onboarding_complete ? 'ready' : 'onboarding');
+            if (vendor && vendorStripeStatus !== 'ready') {
                 addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
                 setProcessing(false);
                 return;
@@ -113,11 +143,12 @@ export default function Checkout() {
 
             const order = await OrderService.createOrder({
                 items: items,
-                customer_email: email || user?.email,
-                customer_phone: phone,
+                customer_email: trimmedEmail || user?.email,
+                customer_phone: trimmedPhone || null,
                 whatsapp_opt_in: whatsappOptIn,
                 notes: notes,
-                tip_amount: tipAmount
+                tip_amount: tipAmount,
+                ...scheduledPayload,
             });
 
             // 3. Process Payment via Stripe
@@ -161,6 +192,16 @@ export default function Checkout() {
         );
     }
 
+    const scheduledPreviewIso = collectionMode === 'scheduled'
+        ? collectionInputToIso(scheduledCollection)
+        : null;
+    const scheduledPreview = scheduledPreviewIso
+        ? getScheduledCollectionLabel({
+            scheduled_collection_at: scheduledPreviewIso,
+            scheduled_collection_timezone: 'Europe/London',
+        })
+        : '';
+
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
             <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
@@ -196,6 +237,45 @@ export default function Checkout() {
                         <span>Total</span>
                         <span className="text-accent">£{total.toFixed(2)}</span>
                     </div>
+                </div>
+
+                {/* Collection Time */}
+                <div className="card" style={{ marginBottom: '24px' }}>
+                    <h3 style={{ marginBottom: '16px' }}>Collection Time</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                        <button
+                            type="button"
+                            onClick={() => setCollectionMode('immediate')}
+                            className={collectionMode === 'immediate' ? 'btn btn-primary' : 'btn btn-ghost'}
+                        >
+                            As soon as ready
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setCollectionMode('scheduled')}
+                            className={collectionMode === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
+                        >
+                            Scheduled
+                        </button>
+                    </div>
+
+                    {collectionMode === 'scheduled' && (
+                        <>
+                            <label>Collection date and time</label>
+                            <input
+                                type="datetime-local"
+                                value={scheduledCollection}
+                                min={getMinimumScheduledCollectionInputValue()}
+                                onChange={(e) => setScheduledCollection(e.target.value)}
+                                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
+                            />
+                            {scheduledPreview && (
+                                <p className="text-accent" style={{ fontSize: '14px', marginTop: '12px' }}>
+                                    Scheduled for {scheduledPreview}
+                                </p>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Tip Selection */}
@@ -245,15 +325,17 @@ export default function Checkout() {
                             style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
 
-                        <label>WhatsApp Number</label>
+                        <label>WhatsApp Number (Optional)</label>
                         <input
                             type="tel"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="+44 XX XXX XXXX"
-                            required
                             style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
                         />
+                        <p className="text-muted" style={{ fontSize: '13px', marginTop: '-4px', marginBottom: '16px' }}>
+                            Only needed if you want transactional WhatsApp updates, such as when your order is ready.
+                        </p>
 
                         <label>Notes (Optional)</label>
                         <textarea
@@ -267,7 +349,7 @@ export default function Checkout() {
                     <div className="card" style={{ marginBottom: '24px' }}>
                         <h3 style={{ marginBottom: '8px' }}>WhatsApp Updates</h3>
                         <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
-                            Purely transactional. No marketing. Standard rates apply.
+                            Optional and purely transactional. No marketing. Standard rates may apply.
                         </p>
 
                         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
@@ -276,9 +358,8 @@ export default function Checkout() {
                                 checked={whatsappOptIn}
                                 onChange={(e) => setWhatsappOptIn(e.target.checked)}
                                 style={{ marginTop: '2px' }}
-                                required
                             />
-                            <span>Opt-in to receiving order updates via WhatsApp.</span>
+                            <span>Send me WhatsApp updates for my order.</span>
                         </label>
                     </div>
 

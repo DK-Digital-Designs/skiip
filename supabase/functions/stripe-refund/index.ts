@@ -1,8 +1,8 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotifications } from "../_shared/notifications.ts"
@@ -33,6 +33,11 @@ serve(async (req: Request) => {
 
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405, origin)
+  }
+
+  if (!isAllowedOrigin(origin)) {
+    log.warn('Rejected request from disallowed origin', { origin })
+    return jsonResponse({ error: 'Origin not allowed' }, 403, origin)
   }
 
   try {
@@ -118,12 +123,13 @@ serve(async (req: Request) => {
       supabase,
       orderId: order.id,
       eventType: 'order_refunded',
+      correlationId: crypto.randomUUID(),
     })
 
     return jsonResponse({ refundId: refund.id }, 200, origin)
   } catch (err: unknown) {
     const error = err as Error
     log.error('Refund failed', { error: error.message, stack: error.stack })
-    return jsonResponse({ error: error.message || 'Refund failed' }, 400, origin)
+    return jsonResponse({ error: error.message || 'Refund failed' }, getAuthErrorStatus(err) || 400, origin)
   }
 })

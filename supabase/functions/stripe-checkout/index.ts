@@ -1,8 +1,8 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { buildCorsHeaders, jsonResponse } from "../_shared/http.ts"
-import { requireUser } from "../_shared/auth.ts"
+import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
+import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 
@@ -25,15 +25,6 @@ interface CheckoutRequest {
   returnUrl: string
 }
 
-function validateReturnUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    return parsed.protocol === 'https:' || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
-  } catch {
-    return false
-  }
-}
-
 serve(async (req: Request) => {
   const origin = req.headers.get('origin')
   const corsHeaders = buildCorsHeaders(origin)
@@ -46,13 +37,18 @@ serve(async (req: Request) => {
     return jsonResponse({ error: 'Method not allowed' }, 405, origin)
   }
 
+  if (!isAllowedOrigin(origin)) {
+    log.warn('Rejected request from disallowed origin', { origin })
+    return jsonResponse({ error: 'Origin not allowed' }, 403, origin)
+  }
+
   try {
     const user = await requireUser(req)
     const body = (await req.json()) as CheckoutRequest
     const orderId = body.orderDetails?.order_id
     const returnUrl = body.returnUrl
 
-    if (!orderId || !validateReturnUrl(returnUrl)) {
+    if (!orderId || !isAllowedRedirectUrl(returnUrl)) {
       return jsonResponse({ error: 'Missing order_id or valid returnUrl' }, 400, origin)
     }
 
@@ -72,13 +68,13 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Forbidden' }, 403, origin)
     }
 
-    if (order.status !== 'pending' || order.payment_status !== 'pending') {
+    if (order.status !== 'pending' || !['pending', 'failed'].includes(order.payment_status)) {
       return jsonResponse({ error: 'Order is not in a payable state' }, 409, origin)
     }
 
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('stripe_account_id, stripe_onboarding_complete')
+      .select('stripe_account_id, stripe_connect_status')
       .eq('id', order.store_id)
       .single()
 
@@ -86,7 +82,7 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Store not found' }, 404, origin)
     }
 
-    if (!store.stripe_account_id || !store.stripe_onboarding_complete) {
+    if (!store.stripe_account_id || store.stripe_connect_status !== 'ready') {
       return jsonResponse(
         { error: 'VENDOR_NOT_READY', message: 'The vendor has not completed their payment setup.' },
         403,
@@ -118,6 +114,16 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
     }
 
+    const hasInvalidItemQuantity = orderItems.some((item) => {
+      const quantity = Number(item.quantity)
+      return !Number.isSafeInteger(quantity) || quantity <= 0
+    })
+
+    if (hasInvalidItemQuantity) {
+      log.warn('Order has invalid item quantities', { orderId })
+      return jsonResponse({ error: 'Order item quantity is invalid' }, 409, origin)
+    }
+
     const lineItems = orderItems.map((item) => ({
       price_data: {
         currency: 'gbp',
@@ -126,7 +132,7 @@ serve(async (req: Request) => {
         },
         unit_amount: Math.max(1, Math.round(Number(item.price) * 100)),
       },
-      quantity: Math.max(1, Number(item.quantity) || 1),
+      quantity: Number(item.quantity),
     }))
 
     if (tipAmount > 0) {
@@ -169,6 +175,10 @@ serve(async (req: Request) => {
         checkout_session_id: session.id,
         tip_amount: tipAmount,
         platform_fee: applicationFeeAmount / 100,
+        payment_status: 'pending',
+        payment_failed_at: null,
+        payment_failure_code: null,
+        payment_failure_message: null,
       })
       .eq('id', orderId)
 
@@ -180,7 +190,7 @@ serve(async (req: Request) => {
   } catch (err: unknown) {
     const error = err as Error
     log.error('Checkout session creation failed', { error: error.message, stack: error.stack })
-    const status = error.message.includes('token') ? 401 : 400
+    const status = getAuthErrorStatus(err) || 400
     return jsonResponse({ error: error.message || 'Payment initialization failed' }, status, origin)
   }
 })

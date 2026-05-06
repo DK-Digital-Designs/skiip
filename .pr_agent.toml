@@ -1,0 +1,30 @@
+[github_app]
+pr_commands = [
+    "/agentic_describe",
+    "/agentic_review"
+]
+handle_push_trigger = true
+push_commands = [
+    "/agentic_review"
+]
+
+[review_agent]
+comments_location_policy = "both"
+inline_comments_severity_threshold = 3
+issues_user_guidelines = """
+Focus on production-impacting issues for SKIIP.
+
+Prioritize:
+- payment correctness and Stripe Connect flows
+- auth, authorization, and RLS/data isolation
+- webhook idempotency, order-state transitions, and inventory integrity
+- notification delivery correctness and environment/config drift
+- migration safety and backwards-compatible operational changes
+
+Ignore style-only nits that are already covered by ESLint, Prettier, or the existing CI checks unless they hide a real bug.
+"""
+compliance_user_guidelines = """
+Treat payments, auth, refunds, notifications, secrets, allowed origins, and schema drift as compliance-critical areas for this repository.
+
+Prefer high-signal findings over cosmetic commentary.
+"""
