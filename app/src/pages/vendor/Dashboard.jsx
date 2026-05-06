@@ -14,6 +14,11 @@ import {
     getAllowedOrderTransitions,
     getOrderStatusColor,
     getOrderStatusLabel,
+    getVendorLaneEmptyMessage,
+    getVendorOrderActionHint,
+    getVendorOrderItemSummary,
+    getVendorPrimaryTransition,
+    getVendorTransitionSuccessMessage,
     groupVendorOrdersByLane,
 } from '../../lib/orders';
 
@@ -22,12 +27,6 @@ const FILTERS = [
     { id: 'scheduled', label: 'Scheduled' },
     { id: 'all', label: 'All' },
 ];
-
-const PRIMARY_TRANSITIONS = {
-    paid: { status: 'preparing', label: 'Start' },
-    preparing: { status: 'ready', label: 'Ready' },
-    ready: { status: 'collected', label: 'Collected' },
-};
 
 const pageStyles = {
     minHeight: '100vh',
@@ -65,9 +64,27 @@ function getOrderTotal(order) {
 }
 
 function getOrderContact(order) {
-    if (order?.customer_phone) return order.customer_phone;
-    if (order?.customer_email) return order.customer_email;
-    return 'No direct contact';
+    if (order?.customer_phone) {
+        return {
+            label: order.customer_phone,
+            href: `tel:${order.customer_phone}`,
+            type: 'Phone',
+        };
+    }
+
+    if (order?.customer_email) {
+        return {
+            label: order.customer_email,
+            href: `mailto:${order.customer_email}`,
+            type: 'Email',
+        };
+    }
+
+    return {
+        label: 'No buyer contact',
+        href: null,
+        type: 'Contact',
+    };
 }
 
 function getLaneDefinitions(filter) {
@@ -80,8 +97,11 @@ function getLaneDefinitions(filter) {
 function VendorOrderCard({ order, isBusy, onTransition }) {
     const scheduledCollectionLabel = getScheduledCollectionLabel(order);
     const allowedTransitions = getAllowedOrderTransitions(order.status);
-    const primaryTransition = PRIMARY_TRANSITIONS[order.status];
+    const primaryTransition = getVendorPrimaryTransition(order.status);
     const canCancel = allowedTransitions.includes('cancelled');
+    const contact = getOrderContact(order);
+    const itemSummary = getVendorOrderItemSummary(order);
+    const actionHint = getVendorOrderActionHint(order);
 
     return (
         <article
@@ -101,6 +121,9 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                     </h3>
                     <p className="text-muted" style={{ fontSize: '12px' }}>
                         {order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Time unknown'}
+                    </p>
+                    <p className="text-muted" style={{ fontSize: '12px', marginTop: '4px' }}>
+                        {itemSummary}
                     </p>
                 </div>
                 <span
@@ -139,22 +162,40 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
             )}
 
             <div style={{ display: 'grid', gap: '8px' }}>
-                {(order.order_items || []).map((item, index) => (
+                {(order.order_items || []).length === 0 ? (
+                    <p className="text-muted" style={{ fontSize: '13px' }}>Item details are not available for this order.</p>
+                ) : (
+                    (order.order_items || []).map((item, index) => (
+                        <div
+                            key={`${order.id || 'order'}-${index}`}
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'minmax(0, 1fr) auto',
+                                gap: '8px',
+                                fontSize: '14px',
+                            }}
+                        >
+                            <span style={{ overflowWrap: 'anywhere' }}>
+                                <strong>{item.quantity} x</strong> {item.product_snapshot?.name || 'Item'}
+                            </span>
+                            <span>{formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}</span>
+                        </div>
+                    ))
+                )}
+                {order.notes && (
                     <div
-                        key={`${order.id || 'order'}-${index}`}
                         style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr auto',
-                            gap: '8px',
-                            fontSize: '14px',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            color: 'var(--text-muted)',
+                            fontSize: '13px',
+                            overflowWrap: 'anywhere',
                         }}
                     >
-                        <span style={{ overflowWrap: 'anywhere' }}>
-                            {item.quantity} x {item.product_snapshot?.name || 'Item'}
-                        </span>
-                        <span>{formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}</span>
+                        Note: {order.notes}
                     </div>
-                ))}
+                )}
             </div>
 
             <div
@@ -170,8 +211,25 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                     <span>Total</span>
                     <span className="text-accent">{formatCurrency(getOrderTotal(order))}</span>
                 </div>
-                <div className="text-muted" style={{ overflowWrap: 'anywhere' }}>
-                    Contact: {getOrderContact(order)}
+                <div style={{ display: 'grid', gap: '4px' }}>
+                    <span className="text-muted" style={{ fontSize: '12px' }}>{contact.type}</span>
+                    {contact.href ? (
+                        <a href={contact.href} className="text-accent" style={{ overflowWrap: 'anywhere', textDecoration: 'none', fontWeight: 700 }}>
+                            {contact.label}
+                        </a>
+                    ) : (
+                        <span className="text-muted">{contact.label}</span>
+                    )}
+                </div>
+                <div
+                    style={{
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.035)',
+                        color: 'var(--text-muted)',
+                    }}
+                >
+                    {actionHint}
                 </div>
             </div>
 
@@ -184,7 +242,7 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                         onClick={() => onTransition(order.id, primaryTransition.status)}
                         style={{ minHeight: '40px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
                     >
-                        {primaryTransition.label}
+                        {isBusy ? 'Updating...' : primaryTransition.label}
                     </button>
                 )}
                 {canCancel && (
@@ -195,7 +253,7 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                         onClick={() => onTransition(order.id, 'cancelled')}
                         style={{ minHeight: '40px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', color: '#f87171' }}
                     >
-                        Cancel
+                        {isBusy ? 'Updating...' : 'Cancel order'}
                     </button>
                 )}
             </div>
@@ -242,7 +300,7 @@ function QueueLane({ lane, orders, transitioningOrderId, onTransition }) {
                         fontSize: '13px',
                     }}
                 >
-                    No orders in this lane
+                    {getVendorLaneEmptyMessage(lane.id)}
                 </div>
             ) : (
                 <div style={{ display: 'grid', gap: '12px' }}>
@@ -362,11 +420,11 @@ export default function VendorDashboard() {
             { orderId, status: newStatus },
             {
                 onSuccess: () => {
-                    addToast(`Order marked as ${newStatus}`, 'success');
+                    addToast(getVendorTransitionSuccessMessage(newStatus), 'success');
                 },
                 onError: (error) => {
                     console.error('Error updating status:', error);
-                    addToast(error.message || 'Failed to update status', 'error');
+                    addToast('Could not update the order. Refresh the queue and try again.', 'error');
                 },
                 onSettled: () => {
                     setTransitioningOrderId(null);

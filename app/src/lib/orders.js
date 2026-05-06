@@ -65,6 +65,28 @@ export const VENDOR_ORDER_LANE_DEFINITIONS = [
 export const VENDOR_ACTIVE_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', 'ready'];
 export const VENDOR_ALL_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', 'ready', 'done', 'closed'];
 
+export const VENDOR_LANE_EMPTY_MESSAGES = {
+  attention: 'No orders need review.',
+  paid: 'No paid orders waiting to start.',
+  preparing: 'No orders are currently being prepared.',
+  ready: 'No orders are waiting for collection.',
+  done: 'No collected orders in this view.',
+  closed: 'No cancelled or refunded orders in this view.',
+};
+
+export const VENDOR_PRIMARY_TRANSITIONS = {
+  paid: { status: 'preparing', label: 'Start prep' },
+  preparing: { status: 'ready', label: 'Mark ready' },
+  ready: { status: 'collected', label: 'Mark collected' },
+};
+
+export const VENDOR_TRANSITION_SUCCESS_MESSAGES = {
+  preparing: 'Order moved to Preparing.',
+  ready: 'Order marked Ready for collection.',
+  collected: 'Order marked Collected.',
+  cancelled: 'Order cancelled.',
+};
+
 export function getVendorOrderLane(order) {
   const status = order?.status;
   const paymentStatus = order?.payment_status;
@@ -101,6 +123,72 @@ export function groupVendorOrdersByLane(orders, laneIds = VENDOR_ACTIVE_ORDER_LA
   }
 
   return grouped;
+}
+
+export function getVendorLaneEmptyMessage(laneId) {
+  return VENDOR_LANE_EMPTY_MESSAGES[laneId] || 'No orders in this lane.';
+}
+
+export function getVendorPrimaryTransition(status) {
+  return VENDOR_PRIMARY_TRANSITIONS[status] || null;
+}
+
+export function getVendorTransitionSuccessMessage(status) {
+  return VENDOR_TRANSITION_SUCCESS_MESSAGES[status] || 'Order updated.';
+}
+
+export function getVendorOrderItemSummary(order) {
+  const items = order?.order_items || [];
+  if (items.length === 0) return 'No item details available';
+
+  const units = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const itemLabel = items.length === 1 ? 'item' : 'items';
+  const unitLabel = units === 1 ? 'unit' : 'units';
+
+  return `${items.length} ${itemLabel} / ${units} ${unitLabel}`;
+}
+
+export function getVendorOrderActionHint(order) {
+  const status = order?.status;
+  const paymentStatus = order?.payment_status;
+
+  if (status === 'pending' && paymentStatus === 'succeeded') {
+    return 'Payment captured. Ask admin to reconcile before preparing.';
+  }
+
+  if (status === 'pending' && paymentStatus === 'pending') {
+    return 'Buyer has not completed payment yet. Do not prepare.';
+  }
+
+  if (paymentStatus === 'failed') {
+    return 'Payment failed. Do not prepare this order.';
+  }
+
+  if (status === 'paid') {
+    return 'Ready to start preparing.';
+  }
+
+  if (status === 'preparing') {
+    return 'Mark ready once packed for collection.';
+  }
+
+  if (status === 'ready') {
+    return 'Hand off to the buyer, then mark collected.';
+  }
+
+  if (status === 'collected') {
+    return 'Collected by the buyer.';
+  }
+
+  if (status === 'cancelled') {
+    return 'Cancelled order. No prep needed.';
+  }
+
+  if (status === 'refunded' || paymentStatus === 'refunded') {
+    return 'Refunded order. No prep needed.';
+  }
+
+  return 'Review order state before taking action.';
 }
 
 export function isRefundableOrder(order) {
