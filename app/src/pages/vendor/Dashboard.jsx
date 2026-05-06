@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
@@ -7,19 +7,276 @@ import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
-import { getOrderStatusColor, getOrderStatusLabel } from '../../lib/orders';
+import {
+    VENDOR_ACTIVE_ORDER_LANE_IDS,
+    VENDOR_ALL_ORDER_LANE_IDS,
+    VENDOR_ORDER_LANE_DEFINITIONS,
+    getAllowedOrderTransitions,
+    getOrderStatusColor,
+    getOrderStatusLabel,
+    groupVendorOrdersByLane,
+} from '../../lib/orders';
+
+const FILTERS = [
+    { id: 'active', label: 'Active' },
+    { id: 'scheduled', label: 'Scheduled' },
+    { id: 'all', label: 'All' },
+];
+
+const PRIMARY_TRANSITIONS = {
+    paid: { status: 'preparing', label: 'Start' },
+    preparing: { status: 'ready', label: 'Ready' },
+    ready: { status: 'collected', label: 'Collected' },
+};
+
+const pageStyles = {
+    minHeight: '100vh',
+    paddingBottom: '40px',
+};
+
+const headerStyles = {
+    padding: '20px 0',
+    borderBottom: '1px solid var(--stroke)',
+    marginBottom: '32px',
+};
+
+const queueStyles = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gap: '16px',
+    alignItems: 'start',
+};
+
+const laneStyles = {
+    minHeight: '360px',
+    border: '1px solid var(--stroke)',
+    borderRadius: '8px',
+    background: 'rgba(255, 255, 255, 0.025)',
+    padding: '14px',
+};
+
+function formatCurrency(value) {
+    const amount = Number(value || 0);
+    return `GBP ${amount.toFixed(2)}`;
+}
+
+function getOrderTotal(order) {
+    return Number(order?.total ?? order?.total_amount ?? 0);
+}
+
+function getOrderContact(order) {
+    if (order?.customer_phone) return order.customer_phone;
+    if (order?.customer_email) return order.customer_email;
+    return 'No direct contact';
+}
+
+function getLaneDefinitions(filter) {
+    const laneIds = filter === 'all' ? VENDOR_ALL_ORDER_LANE_IDS : VENDOR_ACTIVE_ORDER_LANE_IDS;
+    return laneIds
+        .map((laneId) => VENDOR_ORDER_LANE_DEFINITIONS.find((lane) => lane.id === laneId))
+        .filter(Boolean);
+}
+
+function VendorOrderCard({ order, isBusy, onTransition }) {
+    const scheduledCollectionLabel = getScheduledCollectionLabel(order);
+    const allowedTransitions = getAllowedOrderTransitions(order.status);
+    const primaryTransition = PRIMARY_TRANSITIONS[order.status];
+    const canCancel = allowedTransitions.includes('cancelled');
+
+    return (
+        <article
+            className="card"
+            style={{
+                display: 'grid',
+                gap: '14px',
+                padding: '16px',
+                borderRadius: '8px',
+                borderLeft: `4px solid ${getOrderStatusColor(order)}`,
+            }}
+        >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'start' }}>
+                <div>
+                    <h3 style={{ fontSize: '16px', lineHeight: '1.25', marginBottom: '4px' }}>
+                        Order #{String(order.id || '').slice(0, 8)}
+                    </h3>
+                    <p className="text-muted" style={{ fontSize: '12px' }}>
+                        {order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Time unknown'}
+                    </p>
+                </div>
+                <span
+                    style={{
+                        flexShrink: 0,
+                        maxWidth: '128px',
+                        overflowWrap: 'anywhere',
+                        padding: '5px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--stroke)',
+                        color: getOrderStatusColor(order),
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        lineHeight: 1.2,
+                        textAlign: 'right',
+                    }}
+                >
+                    {getOrderStatusLabel(order)}
+                </span>
+            </div>
+
+            {scheduledCollectionLabel && (
+                <div
+                    style={{
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(139, 92, 246, 0.12)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        color: 'var(--text)',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                    }}
+                >
+                    Collection: {scheduledCollectionLabel}
+                </div>
+            )}
+
+            <div style={{ display: 'grid', gap: '8px' }}>
+                {(order.order_items || []).map((item, index) => (
+                    <div
+                        key={`${order.id || 'order'}-${index}`}
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto',
+                            gap: '8px',
+                            fontSize: '14px',
+                        }}
+                    >
+                        <span style={{ overflowWrap: 'anywhere' }}>
+                            {item.quantity} x {item.product_snapshot?.name || 'Item'}
+                        </span>
+                        <span>{formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}</span>
+                    </div>
+                ))}
+            </div>
+
+            <div
+                style={{
+                    display: 'grid',
+                    gap: '6px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid var(--stroke)',
+                    fontSize: '13px',
+                }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontWeight: 800 }}>
+                    <span>Total</span>
+                    <span className="text-accent">{formatCurrency(getOrderTotal(order))}</span>
+                </div>
+                <div className="text-muted" style={{ overflowWrap: 'anywhere' }}>
+                    Contact: {getOrderContact(order)}
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {primaryTransition && allowedTransitions.includes(primaryTransition.status) && (
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={isBusy}
+                        onClick={() => onTransition(order.id, primaryTransition.status)}
+                        style={{ minHeight: '40px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
+                    >
+                        {primaryTransition.label}
+                    </button>
+                )}
+                {canCancel && (
+                    <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={isBusy}
+                        onClick={() => onTransition(order.id, 'cancelled')}
+                        style={{ minHeight: '40px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', color: '#f87171' }}
+                    >
+                        Cancel
+                    </button>
+                )}
+            </div>
+        </article>
+    );
+}
+
+function QueueLane({ lane, orders, transitioningOrderId, onTransition }) {
+    return (
+        <section style={laneStyles}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'start', marginBottom: '14px' }}>
+                <div>
+                    <h2 style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{lane.title}</h2>
+                    <p className="text-muted" style={{ fontSize: '12px', lineHeight: 1.35, marginTop: '4px' }}>{lane.description}</p>
+                </div>
+                <span
+                    style={{
+                        display: 'inline-flex',
+                        minWidth: '32px',
+                        height: '28px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid var(--stroke)',
+                        fontWeight: 800,
+                    }}
+                >
+                    {orders.length}
+                </span>
+            </div>
+
+            {orders.length === 0 ? (
+                <div
+                    style={{
+                        minHeight: '140px',
+                        display: 'grid',
+                        placeItems: 'center',
+                        border: '1px dashed var(--stroke)',
+                        borderRadius: '8px',
+                        color: 'var(--text-muted)',
+                        textAlign: 'center',
+                        padding: '16px',
+                        fontSize: '13px',
+                    }}
+                >
+                    No orders in this lane
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                    {orders.map((order) => (
+                        <VendorOrderCard
+                            key={order.id}
+                            order={order}
+                            isBusy={transitioningOrderId === order.id}
+                            onTransition={onTransition}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}
 
 export default function VendorDashboard() {
     const navigate = useNavigate();
     const location = useLocation();
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('active'); // active | scheduled | all
+    const [filter, setFilter] = useState('active');
+    const [transitioningOrderId, setTransitioningOrderId] = useState(null);
     const { addToast } = useToast();
 
-    // React Query Hooks
-    const { data: orders = [], refetch: fetchOrders } = useStoreOrders(store?.id, filter);
+    const { data: orders = [], refetch: fetchOrders, isLoading: ordersLoading, isError: ordersFailed } = useStoreOrders(store?.id, filter);
     const updateOrderStatusMutation = useUpdateOrderStatus();
+
+    const lanes = useMemo(() => getLaneDefinitions(filter), [filter]);
+    const groupedOrders = useMemo(
+        () => groupVendorOrdersByLane(orders, lanes.map((lane) => lane.id)),
+        [orders, lanes],
+    );
 
     useEffect(() => {
         checkAuth();
@@ -27,14 +284,13 @@ export default function VendorDashboard() {
 
     useEffect(() => {
         if (store && isSupabaseConfigured()) {
-            // Subscribe to realtime order updates
             const subscription = supabase
                 .channel('store-orders')
                 .on('postgres_changes', {
                     event: '*',
                     schema: 'public',
                     table: 'orders',
-                    filter: `store_id=eq.${store.id}`
+                    filter: `store_id=eq.${store.id}`,
                 }, () => {
                     fetchOrders();
                     playNotificationSound();
@@ -48,7 +304,6 @@ export default function VendorDashboard() {
     async function checkAuth() {
         try {
             if (!isSupabaseConfigured()) {
-                // Demo mode mock data
                 setStore({ id: '1', name: 'Burger Bliss (Demo)', description: 'Demo Store' });
                 setLoading(false);
                 return;
@@ -102,6 +357,7 @@ export default function VendorDashboard() {
             return;
         }
 
+        setTransitioningOrderId(orderId);
         updateOrderStatusMutation.mutate(
             { orderId, status: newStatus },
             {
@@ -110,8 +366,11 @@ export default function VendorDashboard() {
                 },
                 onError: (error) => {
                     console.error('Error updating status:', error);
-                    addToast('Failed to update status', 'error');
-                }
+                    addToast(error.message || 'Failed to update status', 'error');
+                },
+                onSettled: () => {
+                    setTransitioningOrderId(null);
+                },
             }
         );
     }
@@ -174,157 +433,121 @@ export default function VendorDashboard() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
-            {/* Header */}
-            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={pageStyles}>
+            <header style={headerStyles}>
+                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div>
-                        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>{store?.name}</h1>
+                        <h1 style={{ fontSize: '24px', fontWeight: 800 }}>{store?.name}</h1>
                         <p className="text-muted" style={{ fontSize: '14px' }}>Vendor Dashboard</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button onClick={() => navigate('/vendor/products')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>Manage Products</button>
-                        <button onClick={handleLogout} className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: '14px' }}>Logout</button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button onClick={() => navigate('/vendor/products')} className="btn btn-primary" style={{ minHeight: '40px', padding: '8px 14px', borderRadius: '8px', fontSize: '14px' }}>Products</button>
+                        <button onClick={handleLogout} className="btn btn-ghost" style={{ minHeight: '40px', padding: '8px 14px', borderRadius: '8px', fontSize: '14px' }}>Logout</button>
                     </div>
                 </div>
             </header>
 
-            <div className="container">
-                {/* Onboarding Banner */}
+            <main className="container">
                 {requiresPaymentSetup && (
-                    <div className="card" style={{ 
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
-                        color: 'white', 
-                        marginBottom: '32px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '30px',
-                        border: '2px solid rgba(255,255,255,0.1)',
-                        boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.4)'
-                    }}>
-                        <div style={{ maxWidth: '70%' }}>
-                            <h2 style={{ marginBottom: '12px', color: 'white', fontSize: '24px' }}>⚡ Setup Required to Accept Payments</h2>
-                            <p style={{ opacity: 0.95, fontSize: '16px', lineHeight: '1.5' }}>
-                                Your shop is currently in <strong>Limited Mode</strong>. {setupStatusCopy[stripeConnectStatus] || setupStatusCopy.onboarding}
+                    <section
+                        style={{
+                            background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                            color: 'white',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '18px',
+                            padding: '24px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.16)',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        <div style={{ maxWidth: '680px' }}>
+                            <h2 style={{ marginBottom: '8px', color: 'white', fontSize: '22px' }}>Setup required to accept payments</h2>
+                            <p style={{ opacity: 0.95, fontSize: '15px', lineHeight: 1.5 }}>
+                                Your shop is currently in limited mode. {setupStatusCopy[stripeConnectStatus] || setupStatusCopy.onboarding}
                             </p>
                         </div>
-                        <button 
-                            onClick={handleConnectStripe} 
-                            className="btn" 
-                            style={{ 
-                                background: 'white', 
-                                color: '#4f46e5', 
-                                fontWeight: '800', 
-                                padding: '14px 28px',
-                                fontSize: '15px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        <button
+                            onClick={handleConnectStripe}
+                            className="btn"
+                            style={{
+                                background: 'white',
+                                color: '#1d4ed8',
+                                fontWeight: 800,
+                                minHeight: '44px',
+                                padding: '10px 18px',
+                                borderRadius: '8px',
+                                fontSize: '14px',
                             }}
                         >
-                            Complete Setup Now
+                            Complete Setup
+                        </button>
+                    </section>
+                )}
+
+                <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
+                    <div>
+                        <h2 style={{ fontSize: '20px', fontWeight: 800 }}>Order Queue</h2>
+                        <p className="text-muted" style={{ fontSize: '14px' }}>
+                            {orders.length} {orders.length === 1 ? 'order' : 'orders'} shown
+                        </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {FILTERS.map((item) => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setFilter(item.id)}
+                                className={filter === item.id ? 'btn btn-primary' : 'btn btn-ghost'}
+                                style={{ minHeight: '40px', padding: '8px 14px', borderRadius: '8px', fontSize: '14px' }}
+                            >
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
+                </section>
+
+                {ordersLoading && (
+                    <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
+                        <div className="spinner" style={{ marginBottom: '16px' }}></div>
+                        <p className="text-muted">Loading orders</p>
+                    </div>
+                )}
+
+                {!ordersLoading && ordersFailed && (
+                    <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
+                        <h3 style={{ marginBottom: '8px' }}>Could not load orders</h3>
+                        <p className="text-muted" style={{ marginBottom: '16px' }}>Refresh the queue or try again shortly.</p>
+                        <button type="button" className="btn btn-primary" onClick={() => fetchOrders()} style={{ borderRadius: '8px' }}>
+                            Refresh
                         </button>
                     </div>
                 )}
-                {/* Filter Tabs */}
-                <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
-                    <button
-                        onClick={() => setFilter('active')}
-                        className={filter === 'active' ? 'btn btn-primary' : 'btn btn-ghost'}
-                    >
-                        Active Orders
-                    </button>
-                    <button
-                        onClick={() => setFilter('scheduled')}
-                        className={filter === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
-                    >
-                        Scheduled Orders
-                    </button>
-                    <button
-                        onClick={() => setFilter('all')}
-                        className={filter === 'all' ? 'btn btn-primary' : 'btn btn-ghost'}
-                    >
-                        All Orders
-                    </button>
-                </div>
 
-                {/* Orders Grid */}
-                {orders.length === 0 ? (
-                    <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-                        <h3>No orders yet</h3>
-                        <p className="text-muted">New orders will appear here</p>
+                {!ordersLoading && !ordersFailed && orders.length === 0 && (
+                    <div className="card" style={{ textAlign: 'center', padding: '56px' }}>
+                        <h3 style={{ marginBottom: '8px' }}>No orders yet</h3>
+                        <p className="text-muted">New orders will appear here as soon as they reach this vendor.</p>
                     </div>
-                ) : (
-                    <div style={{ display: 'grid', gap: '16px' }}>
-                        {orders.map((order) => (
-                            <div key={order.id} className="card" style={{ borderLeft: `4px solid ${getOrderStatusColor(order)}` }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-                                    <div>
-                                        <h3 style={{ marginBottom: '4px' }}>Order #{order.id.slice(0, 8)}</h3>
-                                        <p className="text-muted" style={{ fontSize: '14px' }}>
-                                            {new Date(order.created_at).toLocaleTimeString()}
-                                        </p>
-                                        {getScheduledCollectionLabel(order) && (
-                                            <p className="text-accent" style={{ fontSize: '14px', marginTop: '6px' }}>
-                                                Scheduled collection: {getScheduledCollectionLabel(order)}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontSize: '20px', fontWeight: '700', color: getOrderStatusColor(order) }}>
-                                            {getOrderStatusLabel(order)}
-                                        </p>
-                                        <p style={{ fontSize: '14px' }}>
-                                            {order.customer_phone
-                                                ? `📱 ${order.customer_phone}`
-                                                : order.customer_email
-                                                    ? `✉️ ${order.customer_email}`
-                                                    : 'No direct contact'}
-                                        </p>
-                                    </div>
-                                </div>
+                )}
 
-                                {/* Order Items */}
-                                <div style={{ marginBottom: '16px', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    {(order.order_items || []).map((item, idx) => (
-                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <span>{item.quantity}× {item.product_snapshot?.name || 'Item'}</span>
-                                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
-                                        </div>
-                                    ))}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--stroke)', fontWeight: '700' }}>
-                                        <span>Total</span>
-                                        <span className="text-accent">£{order.total?.toFixed(2) || order.total_amount?.toFixed(2)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                                    {order.status === 'paid' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="btn btn-primary">
-                                            👨‍🍳 Start Preparing
-                                        </button>
-                                    )}
-                                    {order.status === 'preparing' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'ready')} className="btn btn-primary">
-                                            ✅ Mark as Ready
-                                        </button>
-                                    )}
-                                    {order.status === 'ready' && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'collected')} className="btn btn-primary">
-                                            🎉 Mark as Collected
-                                        </button>
-                                    )}
-                                    {(order.status === 'pending' || order.status === 'paid' || order.status === 'preparing' || order.status === 'ready') && (
-                                        <button onClick={() => updateOrderStatus(order.id, 'cancelled')} className="btn btn-ghost" style={{ color: '#ef4444' }}>
-                                            ❌ Cancel Order
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                {!ordersLoading && !ordersFailed && orders.length > 0 && (
+                    <div style={queueStyles}>
+                        {lanes.map((lane) => (
+                            <QueueLane
+                                key={lane.id}
+                                lane={lane}
+                                orders={groupedOrders[lane.id] || []}
+                                transitioningOrderId={transitioningOrderId}
+                                onTransition={updateOrderStatus}
+                            />
                         ))}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }
