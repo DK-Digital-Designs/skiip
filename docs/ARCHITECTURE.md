@@ -35,7 +35,7 @@ Current routed surfaces in [App.jsx](../app/src/App.jsx):
 - shared buyer/admin/seller login and buyer signup
 - admin-created vendor onboarding for launch; `/vendor/signup` is not exposed in the app router
 - buyer ordering flow
-- vendor dashboard and product management
+- vendor kanban order dashboard and product management
 - admin dashboard and vendor management
 - admin events are deferred and `/admin/events` is not exposed for launch
 
@@ -183,7 +183,7 @@ Important current limitations:
 Realtime is used for:
 
 - buyer order tracking
-- vendor order dashboard refreshes
+- vendor kanban order dashboard refreshes
 
 Relevant frontend surfaces:
 

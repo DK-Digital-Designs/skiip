@@ -13,7 +13,51 @@
 | Dean Gibson | ~4.0 hours | 2026/04/30 | Pre-launch operations and vendor features. Established version tracking, implemented scheduled collection flows, and hardened vendor-side launch access controls. |
 | Dean Gibson | ~3.5 hours | 2026/05/02 | Payment recovery, delivery triage, and documentation cleanup. Implemented Stripe payment state recovery, added multi-secret webhook support, verified the app locally, closed the resolved payment-pending issue, cleaned up the GitHub delivery board, and moved archive notes into `docs/archive`. |
 | Dean Gibson | ~4.0 hours | 2026/05/04 | Documentation system strategy and planning. Evaluated the personal Wiki MkDocs/Obsidian model for SKIIP, refined the internal searchable docs approach, created GitHub issue `#36`, and added the follow-up operating-model comment covering Obsidian, repo docs, GitHub Issues, information boundaries, and private/local notes. |
-| **TOTAL** | **~29.0 hours** | | |
+| Dean Gibson | ~4.5 hours | 2026/05/05 | Staging launch-readiness verification and checkout hardening. Returned structured checkout inventory errors, added the staging app origin to the Edge Function allow-list, captured the May 2026 project assessment, and recorded manual staging evidence for normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer tracking, admin visibility, vendor onboarding readiness, and multi-vendor routing. |
+| Dean Gibson | ~5.0 hours | 2026/05/06 | Release, vendor operations, and closeout audit work. Promoted the `v0.22.0` baseline, added the vendor kanban order queue, advanced the staging baseline to `0.23.0`, re-ran local lint/unit/build/e2e verification, audited remaining closeout risks, and updated GitHub issue notes so launch blockers and follow-ups stay visible. |
+| **TOTAL** | **~38.5 hours** | | |
+
+## May 6 Closeout Audit And Issue Hygiene Recap
+
+May 6 focused on turning recent implementation work into a clearer launch-closeout view.
+
+Completed or confirmed:
+
+- promoted the `v0.22.0` baseline toward production through PR `#40`
+- merged the vendor kanban order queue through PR `#44`
+- synchronized the staging baseline to `0.23.0`
+- confirmed local verification still passes:
+  - `npm run lint`
+  - `npm run test`: 35 tests passed
+  - `npm run build`
+  - `npm run test:e2e`: 3 public smoke tests passed, 3 authenticated smoke tests skipped without credentials
+  - `npm audit --audit-level=moderate`: 0 vulnerabilities
+
+Key closeout risks recorded for follow-up:
+
+- Stripe refund, payout, and reconciliation sign-off remains open through `#16` and `#39`
+- live environment and secret parity remains open through `#17`
+- notification provider verification and outbox recovery remains open through `#18`
+- staging smoke and seed discipline remains open through `#19`
+- backend boundary audit remains open through `#28`
+- a newly identified notification-side-effect issue should be tracked separately: post-mutation notification failures can make successful order transitions or refunds look failed to the UI
+
+Standing practice added: meaningful work sessions should now update this progress file and the relevant GitHub issues before final handoff, without waiting for a separate prompt.
+
+## May 5 Staging Readiness Recap
+
+May 5 focused on hardening the staging baseline after manual launch-path verification.
+
+The checkout path was improved so inventory and Edge Function failures return structured, buyer-friendly errors rather than generic failure states. The Edge Function allow-list was updated for the staging origin, and the May 2026 project assessment was added to the docs so the remaining launch risks are explicit.
+
+Manual staging evidence showed that the core buyer -> payment -> vendor -> admin loop is broadly workable, including normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer live tracking, admin dashboard visibility, vendor onboarding readiness, and multi-vendor routing.
+
+Remaining from that pass:
+
+- refund verification was split into focused issue `#39`
+- broader Stripe launch readiness remains tracked in `#16`
+- environment parity remains tracked in `#17`
+- notification provider setup/retry verification remains tracked in `#18`
 
 ## May 2 End-of-Day Recap
 
@@ -45,6 +89,12 @@ GitHub issue `#36` now tracks the implementation plan for the internal searchabl
 ## Full Commit Log (Phase 5+)
 
 ```text
+71d3bb0 - 2026-05-06 : feat(vendor): add kanban order queue
+1e96f97 - 2026-05-06 : feat(vendor): add kanban order queue
+7786b05 - 2026-05-06 : chore(release): bump version to 0.22.0
+214e835 - 2026-05-05 : docs: capture May 2026 project assessment
+8cb0117 - 2026-05-05 : fix(supabase): include staging origin in function allow-list
+ac2a7c7 - 2026-05-05 : fix(orders): return structured checkout inventory errors
 cee462f - 2026-05-02 : chore: move archive docs to docs/archive and clean up root
 db5ca74 - 2026-05-02 : fix(payments): support multiple Stripe webhook secrets
 431152b - 2026-05-02 : docs: add agent automation and commit standards

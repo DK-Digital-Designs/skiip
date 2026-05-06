@@ -84,7 +84,7 @@ These items matter, but they do not block a safe first launch if Priority 1 is c
   - refunded orders
   - notification failures
   - individual vendor performance and payout context
-- Add stronger vendor-side search, filtering, and volume handling for larger order queues.
+- Continue vendor-side queue polish with search, clearer order cards, and higher-volume handling on top of the current kanban baseline.
 - Add buyer profile defaults for checkout data such as phone and country instead of relying on one deployment default country code.
 
 ### Engineering Quality

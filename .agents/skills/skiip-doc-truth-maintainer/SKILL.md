@@ -50,6 +50,7 @@ For known drift-prone checks, read `references/drift-checks.md`.
 5. Patch the narrowest doc set that removes the mismatch.
 6. Update `docs/README.md` if a new source-of-truth doc is added.
 7. When implementation changed, ensure operational docs are updated in the same pass where relevant.
+8. For meaningful launch, closeout, or delivery-state work, update `PROGRESS-2.md` and the relevant GitHub issue notes before final handoff. If a finding is not already tracked, create a new issue rather than leaving it only in chat.
 
 ## Verification Targets
 
