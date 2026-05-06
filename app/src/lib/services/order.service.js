@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getFunctionAuthHeaders } from './function-auth';
+import { createCheckoutFunctionError } from './function-error';
 
 export const OrderService = {
     /**
@@ -37,7 +38,7 @@ export const OrderService = {
             body: payload,
         });
 
-        if (error) throw error;
+        if (error) throw await createCheckoutFunctionError(error);
         if (!data?.order) throw new Error('Order creation returned no order');
         return data.order;
     },

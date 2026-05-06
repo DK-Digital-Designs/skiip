@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { getFunctionAuthHeaders } from './function-auth';
+import { createCheckoutFunctionError } from './function-error';
 
 export const StripeService = {
     /**
@@ -24,14 +25,7 @@ export const StripeService = {
 
         if (error) {
             console.error('Stripe Checkout Error:', error);
-            
-            // If it's a 403 or has specific details, throw a more useful error
-            if (error.context?.status === 403 || error.status === 403) {
-                // If we can get the JSON response (VENDOR_NOT_READY etc.)
-                throw new Error('VENDOR_NOT_READY');
-            }
-            
-            throw new Error(error.message || 'Failed to initialize payment');
+            throw await createCheckoutFunctionError(error);
         }
 
         return data; // { sessionId, url }
