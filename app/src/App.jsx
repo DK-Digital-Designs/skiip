@@ -52,7 +52,7 @@ function App() {
                 <Route
                     path="/vendor/dashboard"
                     element={
-                        <ProtectedRoute roles={['seller', 'admin']}>
+                        <ProtectedRoute roles={['seller']}>
                             <VendorDashboard />
                         </ProtectedRoute>
                     }
@@ -60,7 +60,7 @@ function App() {
                 <Route
                     path="/vendor/products"
                     element={
-                        <ProtectedRoute roles={['seller', 'admin']}>
+                        <ProtectedRoute roles={['seller']}>
                             <VendorProducts />
                         </ProtectedRoute>
                     }
