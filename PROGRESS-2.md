@@ -15,7 +15,28 @@
 | Dean Gibson | ~4.0 hours | 2026/05/04 | Documentation system strategy and planning. Evaluated the personal Wiki MkDocs/Obsidian model for SKIIP, refined the internal searchable docs approach, created GitHub issue `#36`, and added the follow-up operating-model comment covering Obsidian, repo docs, GitHub Issues, information boundaries, and private/local notes. |
 | Dean Gibson | ~4.5 hours | 2026/05/05 | Staging launch-readiness verification and checkout hardening. Returned structured checkout inventory errors, added the staging app origin to the Edge Function allow-list, captured the May 2026 project assessment, and recorded manual staging evidence for normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer tracking, admin visibility, vendor onboarding readiness, and multi-vendor routing. |
 | Dean Gibson | ~5.0 hours | 2026/05/06 | Release, vendor operations, and closeout audit work. Promoted the `v0.22.0` baseline, added the vendor kanban order queue, advanced the staging baseline to `0.23.0`, re-ran local lint/unit/build/e2e verification, audited remaining closeout risks, and updated GitHub issue notes so launch blockers and follow-ups stay visible. |
-| **TOTAL** | **~38.5 hours** | | |
+| Dean Gibson | ~3.0 hours | 2026/05/07 | Phase 5 closeout refinements and client framing. Hardened notification queueing side effects, blocked admins from seller routes, improved checkout Edge Function error display, polished vendor order cards, added the project evolution client review, and refreshed the Phase 5 client/internal/momentum docs to match the current `v0.24.0` staging baseline. |
+| **TOTAL** | **~41.5 hours** | | |
+
+## May 7 Phase 5 Client And Closeout Refresh
+
+May 7 focused on closing the gap between the May 2 Phase 5 reports and the work completed afterward.
+
+Completed or captured:
+
+- made post-mutation notification queueing best-effort so successful transitions, refunds, webhook completion, and admin reconciliation are not reported as failed solely because optional notification queueing failed
+- prevented admin accounts from entering seller routes
+- improved checkout display for structured Edge Function validation errors
+- polished vendor order queue cards
+- added the client-facing project evolution review explaining the difference between delivered Phase 5 hardening, Phase 6 launch readiness, and Phase 7+ future scope
+- updated all `docs/phase-5/` reports through May 7 with current version, issue counts, recent commits, verification baseline, and launch-readiness gates
+
+Current `staging` baseline after this pass:
+
+- version: `0.24.0`
+- head before this docs refresh: `be5ae14 docs: add project evolution review document detailing platform growth and phase history`
+- GitHub issues checked: 30 total, 17 closed, 13 open
+- open P0 launch gates: `#16` Stripe payment/payout/refund/reconciliation readiness and `#17` environment/secret parity
 
 ## May 6 Closeout Audit And Issue Hygiene Recap
 
@@ -114,6 +135,14 @@ Known local verification caveat:
 ## Full Commit Log (Phase 5+)
 
 ```text
+be5ae14 - 2026-05-07 : docs: add project evolution review document detailing platform growth and phase history
+8794d0d - 2026-05-07 : feat(vendor): polish order queue cards
+c161fa0 - 2026-05-07 : fix(checkout): surface Edge Function validation errors
+6104e86 - 2026-05-07 : fix(auth): prevent admins entering seller routes
+d61ed12 - 2026-05-07 : fix(notifications): make post-mutation queueing best-effort
+bf48d07 - 2026-05-06 : docs(scope): add project evolution and scope reviews
+da612d7 - 2026-05-06 : docs(delivery): record closeout progress and issue hygiene
+63bb3af - 2026-05-06 : chore(release): sync staging baseline to 0.23.0
 71d3bb0 - 2026-05-06 : feat(vendor): add kanban order queue
 1e96f97 - 2026-05-06 : feat(vendor): add kanban order queue
 7786b05 - 2026-05-06 : chore(release): bump version to 0.22.0
