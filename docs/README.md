@@ -39,10 +39,11 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 
 ## Delivery
 
+- Progress logs live in [`PROGRESS.md`](../PROGRESS.md) and [`PROGRESS-2.md`](../PROGRESS-2.md). For active Phase 5+ closeout work, update `PROGRESS-2.md` and the relevant GitHub issues as part of the normal handoff.
 - [Agent Automation Plan](delivery/AGENT_AUTOMATION_PLAN.md)
   Defines proposed SKIIP-specific agent skills, deterministic scripts, and read-only recurring automations for launch and operations workflows.
 - [Branching Workflow](delivery/BRANCHING_WORKFLOW.md)
-  Defines the intended branch roles, PR targets, release promotion flow, hotfix handling, and branch hygiene rules.
+  Defines the intended branch roles, PR targets, release promotion flow, hotfix handling, branch hygiene rules, and standing progress/issue update practice.
 - [Commit Conventions](delivery/COMMIT_CONVENTIONS.md)
   Defines the required Conventional Commit format and allowed commit types for SKIIP.
 - [Docs Audit Report](delivery/DOCS_AUDIT_REPORT.md)
@@ -54,6 +55,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 
 ## Reference
 
+- [Backend Boundary Audit](reference/BACKEND_BOUNDARY_AUDIT.md)
+  Inventories browser-initiated write paths and classifies the current server-authoritative, RLS-protected, and roadmap-hardening boundaries.
 - [RLS Access Matrix](reference/RLS_ACCESS_MATRIX.md)
   Captures the launch access boundary for buyer, seller, admin, and service-role paths.
 

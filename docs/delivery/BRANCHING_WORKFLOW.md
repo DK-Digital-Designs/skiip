@@ -107,6 +107,20 @@ If a tool or automation creates a branch with a custom prefix such as `codex/...
 - Run `git fetch --prune` regularly.
 - Use `git branch -vv` to spot local branches whose upstream is marked as gone.
 
+## Progress And Issue Hygiene
+
+For every meaningful SKIIP work session, progress and issue tracking are part of the work, not a separate optional cleanup step.
+
+Before final handoff, the person or agent doing the work should:
+
+1. Update the relevant GitHub issue with what changed, what was verified, what remains blocked, and who or what owns the next step.
+2. Create a new GitHub issue when a risk or task is not already tracked, rather than hiding it in chat or local notes.
+3. Update [`PROGRESS-2.md`](../../PROGRESS-2.md) when the session changes implementation state, launch posture, verification evidence, delivery process, or closeout risk.
+4. Update the progress total and commit list when committed work exists for the period being summarized.
+5. State explicitly in the final handoff if no progress or issue update was needed, with the reason.
+
+This is the default operating rule for launch hardening and closeout work. It should be done without waiting for a separate reminder.
+
 ## Direct-to-Main Exceptions
 
 The default rule is that short-lived work branches target `staging`.

@@ -2,6 +2,17 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 
+function getRoleHomeRoute(role) {
+    switch (role) {
+        case 'admin':
+            return '/admin/dashboard';
+        case 'seller':
+            return '/vendor/dashboard';
+        default:
+            return '/';
+    }
+}
+
 /**
  * ProtectedRoute component to guard routes based on authentication and roles
  * @param {Object} props
@@ -28,7 +39,7 @@ export default function ProtectedRoute({ children, roles }) {
     if (roles && roles.length > 0) {
         if (!profile || !roles.includes(profile.role)) {
             // Not authorized for this role
-            return <Navigate to="/" replace />;
+            return <Navigate to={getRoleHomeRoute(profile?.role)} replace />;
         }
     }
 

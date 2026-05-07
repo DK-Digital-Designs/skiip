@@ -4,6 +4,13 @@ import {
   getOrderStateSummary,
   getOrderStatusColor,
   getOrderStatusLabel,
+  getVendorLaneEmptyMessage,
+  getVendorOrderActionHint,
+  getVendorOrderItemSummary,
+  getVendorOrderLane,
+  getVendorPrimaryTransition,
+  getVendorTransitionSuccessMessage,
+  groupVendorOrdersByLane,
   isPaymentReconciliationCandidate,
   isRefundableOrder,
   roundCurrency,
@@ -72,5 +79,61 @@ describe('order utilities', () => {
       payment_status: 'succeeded',
       payment_intent_id: 'pi_test_123',
     })).toBe(false);
+  });
+
+  it('assigns vendor orders to operational lanes', () => {
+    expect(getVendorOrderLane({ status: 'paid', payment_status: 'succeeded' })).toBe('paid');
+    expect(getVendorOrderLane({ status: 'preparing', payment_status: 'succeeded' })).toBe('preparing');
+    expect(getVendorOrderLane({ status: 'ready', payment_status: 'succeeded' })).toBe('ready');
+    expect(getVendorOrderLane({ status: 'pending', payment_status: 'succeeded' })).toBe('attention');
+    expect(getVendorOrderLane({ status: 'cancelled', payment_status: 'succeeded' })).toBe('closed');
+    expect(getVendorOrderLane({ status: 'collected', payment_status: 'succeeded' })).toBe('done');
+  });
+
+  it('groups and sorts vendor orders by lane timing', () => {
+    const grouped = groupVendorOrdersByLane([
+      { id: 'later', status: 'paid', payment_status: 'succeeded', created_at: '2026-05-06T10:05:00Z' },
+      { id: 'ready', status: 'ready', payment_status: 'succeeded', created_at: '2026-05-06T10:00:00Z' },
+      { id: 'first', status: 'paid', payment_status: 'succeeded', created_at: '2026-05-06T10:01:00Z' },
+      { id: 'done', status: 'collected', payment_status: 'succeeded', created_at: '2026-05-06T10:02:00Z' },
+    ]);
+
+    expect(grouped.paid.map((order) => order.id)).toEqual(['first', 'later']);
+    expect(grouped.ready.map((order) => order.id)).toEqual(['ready']);
+    expect(grouped.done).toBeUndefined();
+  });
+
+  it('summarizes vendor order items for compact queue cards', () => {
+    expect(getVendorOrderItemSummary({
+      order_items: [
+        { quantity: 2 },
+        { quantity: 1 },
+      ],
+    })).toBe('2 items / 3 units');
+
+    expect(getVendorOrderItemSummary({ order_items: [{ quantity: 1 }] })).toBe('1 item / 1 unit');
+    expect(getVendorOrderItemSummary({ order_items: [] })).toBe('No item details available');
+  });
+
+  it('returns vendor action hints for operational states', () => {
+    expect(getVendorOrderActionHint({ status: 'pending', payment_status: 'succeeded' })).toBe(
+      'Payment captured. Ask admin to reconcile before preparing.'
+    );
+    expect(getVendorOrderActionHint({ status: 'paid', payment_status: 'succeeded' })).toBe('Ready to start preparing.');
+    expect(getVendorOrderActionHint({ status: 'ready', payment_status: 'succeeded' })).toBe(
+      'Hand off to the buyer, then mark collected.'
+    );
+    expect(getVendorOrderActionHint({ status: 'paid', payment_status: 'failed' })).toBe(
+      'Payment failed. Do not prepare this order.'
+    );
+  });
+
+  it('keeps vendor lane and transition copy buyer-safe and non-raw', () => {
+    expect(getVendorLaneEmptyMessage('paid')).toBe('No paid orders waiting to start.');
+    expect(getVendorLaneEmptyMessage('missing')).toBe('No orders in this lane.');
+    expect(getVendorPrimaryTransition('preparing')).toEqual({ status: 'ready', label: 'Mark ready' });
+    expect(getVendorPrimaryTransition('cancelled')).toBeNull();
+    expect(getVendorTransitionSuccessMessage('ready')).toBe('Order marked Ready for collection.');
+    expect(getVendorTransitionSuccessMessage('unknown')).toBe('Order updated.');
   });
 });

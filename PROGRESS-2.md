@@ -13,7 +13,72 @@
 | Dean Gibson | ~4.0 hours | 2026/04/30 | Pre-launch operations and vendor features. Established version tracking, implemented scheduled collection flows, and hardened vendor-side launch access controls. |
 | Dean Gibson | ~3.5 hours | 2026/05/02 | Payment recovery, delivery triage, and documentation cleanup. Implemented Stripe payment state recovery, added multi-secret webhook support, verified the app locally, closed the resolved payment-pending issue, cleaned up the GitHub delivery board, and moved archive notes into `docs/archive`. |
 | Dean Gibson | ~4.0 hours | 2026/05/04 | Documentation system strategy and planning. Evaluated the personal Wiki MkDocs/Obsidian model for SKIIP, refined the internal searchable docs approach, created GitHub issue `#36`, and added the follow-up operating-model comment covering Obsidian, repo docs, GitHub Issues, information boundaries, and private/local notes. |
-| **TOTAL** | **~29.0 hours** | | |
+| Dean Gibson | ~4.5 hours | 2026/05/05 | Staging launch-readiness verification and checkout hardening. Returned structured checkout inventory errors, added the staging app origin to the Edge Function allow-list, captured the May 2026 project assessment, and recorded manual staging evidence for normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer tracking, admin visibility, vendor onboarding readiness, and multi-vendor routing. |
+| Dean Gibson | ~5.0 hours | 2026/05/06 | Release, vendor operations, and closeout audit work. Promoted the `v0.22.0` baseline, added the vendor kanban order queue, advanced the staging baseline to `0.23.0`, re-ran local lint/unit/build/e2e verification, audited remaining closeout risks, and updated GitHub issue notes so launch blockers and follow-ups stay visible. |
+| Dean Gibson | ~3.0 hours | 2026/05/07 | Phase 5 closeout refinements and client framing. Hardened notification queueing side effects, blocked admins from seller routes, improved checkout Edge Function error display, polished vendor order cards, added the project evolution client review, and refreshed the Phase 5 client/internal/momentum docs to match the current `v0.24.0` staging baseline. |
+| **TOTAL** | **~41.5 hours** | | |
+
+## May 7 Phase 5 Client And Closeout Refresh
+
+May 7 focused on closing the gap between the May 2 Phase 5 reports and the work completed afterward.
+
+Completed or captured:
+
+- made post-mutation notification queueing best-effort so successful transitions, refunds, webhook completion, and admin reconciliation are not reported as failed solely because optional notification queueing failed
+- prevented admin accounts from entering seller routes
+- improved checkout display for structured Edge Function validation errors
+- polished vendor order queue cards
+- added the client-facing project evolution review explaining the difference between delivered Phase 5 hardening, Phase 6 launch readiness, and Phase 7+ future scope
+- updated all `docs/phase-5/` reports through May 7 with current version, issue counts, recent commits, verification baseline, and launch-readiness gates
+
+Current `staging` baseline after this pass:
+
+- version: `0.24.0`
+- head before this docs refresh: `be5ae14 docs: add project evolution review document detailing platform growth and phase history`
+- GitHub issues checked: 30 total, 17 closed, 13 open
+- open P0 launch gates: `#16` Stripe payment/payout/refund/reconciliation readiness and `#17` environment/secret parity
+
+## May 6 Closeout Audit And Issue Hygiene Recap
+
+May 6 focused on turning recent implementation work into a clearer launch-closeout view.
+
+Completed or confirmed:
+
+- promoted the `v0.22.0` baseline toward production through PR `#40`
+- merged the vendor kanban order queue through PR `#44`
+- synchronized the staging baseline to `0.23.0`
+- confirmed local verification still passes:
+  - `npm run lint`
+  - `npm run test`: 35 tests passed
+  - `npm run build`
+  - `npm run test:e2e`: 3 public smoke tests passed, 3 authenticated smoke tests skipped without credentials
+  - `npm audit --audit-level=moderate`: 0 vulnerabilities
+
+Key closeout risks recorded for follow-up:
+
+- Stripe refund, payout, and reconciliation sign-off remains open through `#16` and `#39`
+- live environment and secret parity remains open through `#17`
+- notification provider verification and outbox recovery remains open through `#18`
+- staging smoke and seed discipline remains open through `#19`
+- backend boundary audit remains open through `#28`
+- a newly identified notification-side-effect issue should be tracked separately: post-mutation notification failures can make successful order transitions or refunds look failed to the UI
+
+Standing practice added: meaningful work sessions should now update this progress file and the relevant GitHub issues before final handoff, without waiting for a separate prompt.
+
+## May 5 Staging Readiness Recap
+
+May 5 focused on hardening the staging baseline after manual launch-path verification.
+
+The checkout path was improved so inventory and Edge Function failures return structured, buyer-friendly errors rather than generic failure states. The Edge Function allow-list was updated for the staging origin, and the May 2026 project assessment was added to the docs so the remaining launch risks are explicit.
+
+Manual staging evidence showed that the core buyer -> payment -> vendor -> admin loop is broadly workable, including normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer live tracking, admin dashboard visibility, vendor onboarding readiness, and multi-vendor routing.
+
+Remaining from that pass:
+
+- refund verification was split into focused issue `#39`
+- broader Stripe launch readiness remains tracked in `#16`
+- environment parity remains tracked in `#17`
+- notification provider setup/retry verification remains tracked in `#18`
 
 ## May 2 End-of-Day Recap
 
@@ -42,9 +107,48 @@ May 4 focused on documentation strategy rather than committed code. The main out
 
 GitHub issue `#36` now tracks the implementation plan for the internal searchable docs system, with a follow-up comment capturing the refined Obsidian -> `docs/` -> GitHub Issues operating model.
 
+## May 6 Notification Queueing Hardening
+
+May 6 issue `#45` hardened post-mutation notification queueing so successful order transitions, admin refunds, Stripe webhook payment completion, and admin payment reconciliation are not reported as failed solely because optional notification queueing failed afterward.
+
+Implementation notes:
+
+- added a shared best-effort transactional notification helper with explicit success/failure return values and normalized error logging
+- updated the affected Edge Functions to log function, operation, order, event, correlation/source event, and operation metadata when queueing fails
+- added Deno unit coverage for helper success, thrown `Error`, non-`Error` thrown values, and simulated successful mutation responses under forced queue failure
+- added Deno Edge Function tests to the app-quality CI workflow
+- updated notification and operations docs to distinguish committed business state, outbox rows, and queue insertion failures before an outbox row exists
+
+Local verification:
+
+- `npm run lint`: passed
+- `npm run test`: 35 tests passed
+- `npm run build`: passed
+- `deno check supabase/functions/tests/notifications-best-effort-test.ts`: passed
+- `deno test --no-run --allow-env --allow-read=supabase/functions supabase/functions/tests/notifications-best-effort-test.ts`: passed
+- direct Deno forced-failure eval confirmed `{ queued: false }` return and operator-useful log context
+
+Known local verification caveat:
+
+- `deno test` itself panicked on Windows Deno 2.7.14 after type-checking; CI on Ubuntu is the required authoritative runner before closing `#45`.
+
 ## Full Commit Log (Phase 5+)
 
 ```text
+be5ae14 - 2026-05-07 : docs: add project evolution review document detailing platform growth and phase history
+8794d0d - 2026-05-07 : feat(vendor): polish order queue cards
+c161fa0 - 2026-05-07 : fix(checkout): surface Edge Function validation errors
+6104e86 - 2026-05-07 : fix(auth): prevent admins entering seller routes
+d61ed12 - 2026-05-07 : fix(notifications): make post-mutation queueing best-effort
+bf48d07 - 2026-05-06 : docs(scope): add project evolution and scope reviews
+da612d7 - 2026-05-06 : docs(delivery): record closeout progress and issue hygiene
+63bb3af - 2026-05-06 : chore(release): sync staging baseline to 0.23.0
+71d3bb0 - 2026-05-06 : feat(vendor): add kanban order queue
+1e96f97 - 2026-05-06 : feat(vendor): add kanban order queue
+7786b05 - 2026-05-06 : chore(release): bump version to 0.22.0
+214e835 - 2026-05-05 : docs: capture May 2026 project assessment
+8cb0117 - 2026-05-05 : fix(supabase): include staging origin in function allow-list
+ac2a7c7 - 2026-05-05 : fix(orders): return structured checkout inventory errors
 cee462f - 2026-05-02 : chore: move archive docs to docs/archive and clean up root
 db5ca74 - 2026-05-02 : fix(payments): support multiple Stripe webhook secrets
 431152b - 2026-05-02 : docs: add agent automation and commit standards

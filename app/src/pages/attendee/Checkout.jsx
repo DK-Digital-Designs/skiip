@@ -6,6 +6,7 @@ import { OrderService } from '../../lib/services/order.service';
 import { StoreService } from '../../lib/services/store.service';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { StripeService } from '../../lib/services/stripe.service';
+import { GENERIC_CHECKOUT_ERROR_MESSAGE } from '../../lib/services/function-error';
 import { useToast } from '../../components/ui/Toast';
 import {
     collectionInputToIso,
@@ -167,13 +168,7 @@ export default function Checkout() {
             }
         } catch (error) {
             console.error('Checkout error:', error);
-            
-            // Specific error handling for vendor status from Edge Function
-            if (error.message?.includes('VENDOR_NOT_READY')) {
-                addToast('Oops! This vendor is still setting up their bank account on SKIIP. Please try again later.', 'error');
-            } else {
-                addToast('We had trouble starting the payment. Please check back soon.', 'error');
-            }
+            addToast(error.buyerMessage || GENERIC_CHECKOUT_ERROR_MESSAGE, 'error');
         } finally {
             setProcessing(false);
         }

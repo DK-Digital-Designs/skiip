@@ -4,7 +4,7 @@ import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
-import { sendTransactionalNotifications } from "../_shared/notifications.ts"
+import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
 
 const log = logger('order-transition')
 
@@ -128,11 +128,19 @@ serve(async (req: Request) => {
 
     const notificationEvent = EVENT_MAP[body.status]
     if (notificationEvent) {
-      await sendTransactionalNotifications({
+      await sendTransactionalNotificationsBestEffort({
         supabase,
         orderId: order.id,
         eventType: notificationEvent,
         correlationId: crypto.randomUUID(),
+        functionName: 'order-transition',
+        operation: 'order_status_transition',
+        metadata: {
+          actorUserId: user.id,
+          actorRole: user.role,
+          previousStatus: order.status,
+          nextStatus: body.status,
+        },
       })
     }
 

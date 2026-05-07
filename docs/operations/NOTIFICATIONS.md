@@ -57,6 +57,8 @@ Important rules:
 
 - notification delivery is not the source of truth for order state
 - a failed notification must not block the order/payment mutation that created it
+- post-mutation notification queueing is best-effort for order transitions, refunds, webhook payment completion, and admin reconciliation
+- if queueing fails before a `notification_logs` row exists, operators must investigate function logs; `notification-dispatch` can only retry rows that were successfully written
 
 ## Current Operational Limitation
 
@@ -67,6 +69,7 @@ Current behavior:
 - immediate sends are attempted in edge-runtime background work
 - stale or failed rows can be reclaimed and retried through `claim_notification_logs()`
 - [`notification-dispatch`](../../supabase/functions/notification-dispatch/index.ts) exists to drain backlog
+- queue insertion failures are logged with function, operation, order, event, correlation/source event, and supplied operation metadata
 
 Important:
 
@@ -209,10 +212,21 @@ Run this after the real provider setup is complete:
 9. Confirm failed sends, if forced, record `failed_at`, error message, and retry metadata.
 10. If retry sweeps are part of the environment, trigger `notification-dispatch` and confirm backlog rows are reclaimed correctly.
 
+## Forced Queue Failure Check
+
+Use this only in a local or staging-safe environment.
+
+1. Force `sendTransactionalNotifications()` to fail after a successful authoritative mutation, for example by temporarily making the `notification_logs` insert path return an error.
+2. Run an order transition or admin refund against a safe test order.
+3. Confirm the mutation response still succeeds and the order/refund state is committed.
+4. Confirm function logs include the function name, operation, order id, event type, normalized error, and operation metadata.
+5. Restore the forced failure immediately and confirm normal notification queueing resumes.
+
 ## Operational Notes
 
 - `notification_logs` is both the delivery log and the durable outbox.
 - `notification_webhook_events` is the idempotent webhook receipt log.
 - `notification-dispatch` is the only retry/backlog sweep mechanism currently present in the repo.
 - no in-repo scheduler calls `notification-dispatch`.
+- `notification-dispatch` does not recreate notifications that failed before an outbox row was inserted.
 - the intended launch-safe baseline is implemented in code; the remaining work is provider-account setup, secret injection, and live verification.

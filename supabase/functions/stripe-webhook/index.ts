@@ -3,7 +3,7 @@ import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { logger } from "../_shared/logger.ts"
 import { createServiceClient } from "../_shared/service.ts"
-import { sendTransactionalNotifications } from "../_shared/notifications.ts"
+import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
 import {
   buildPaidOrderUpdates,
   buildPaymentReconciliation,
@@ -264,12 +264,20 @@ async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event
       },
     }))
 
-    await runBestEffort('Refund notification queue', () => sendTransactionalNotifications({
+    await sendTransactionalNotificationsBestEffort({
       supabase,
       orderId,
       eventType: 'order_refunded',
       sourceEventId: event.id,
-    }))
+      functionName: 'stripe-webhook',
+      operation: 'inventory_auto_refund_after_payment',
+      metadata: {
+        stripeEventId: event.id,
+        stripeEventType: event.type,
+        refundId: refund.id,
+        paymentIntentId: reconciliation.paymentIntentId,
+      },
+    })
 
     return
   }
@@ -287,12 +295,21 @@ async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event
     },
   }))
 
-  await runBestEffort('Paid-order notification queue', () => sendTransactionalNotifications({
+  await sendTransactionalNotificationsBestEffort({
     supabase,
     orderId,
     eventType: 'order_paid',
     sourceEventId: event.id,
-  }))
+    functionName: 'stripe-webhook',
+    operation: 'checkout_session_completed',
+    metadata: {
+      stripeEventId: event.id,
+      stripeEventType: event.type,
+      checkoutSessionId: session.id,
+      paymentIntentId: reconciliation.paymentIntentId,
+      chargeId: reconciliation.chargeId,
+    },
+  })
 }
 
 async function handlePaymentIntentFailed(supabase: any, event: Stripe.Event) {

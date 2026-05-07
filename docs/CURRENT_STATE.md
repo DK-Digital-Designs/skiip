@@ -31,7 +31,7 @@ The production-critical path that exists in code today is:
 - admin-created vendor onboarding for launch
 - store lookup from authenticated seller
 - product management
-- order list with active/all filtering
+- kanban-style order queue with active, scheduled, and all-order filtering
 - `paid -> preparing -> ready -> collected`
 - cancellation path
 - Stripe onboarding link generation
@@ -67,6 +67,7 @@ These statements reflect the actual current implementation.
 - order totals are computed on the server
 - payment finalization is webhook-driven
 - vendor/admin order status changes go through edge functions
+- vendor order queue lanes are frontend grouping only; `order-transition` remains the source of truth for status changes
 - admin vendor/store mutations go through `admin-store`
 - protected edge functions intentionally use manual bearer validation for the May 2026 launch posture rather than Supabase gateway JWT enforcement
 - checkout currency is GBP
@@ -169,6 +170,7 @@ These areas are still intentionally incomplete:
 Recent hardening work introduced:
 
 - production-oriented order/payment flow
+- vendor kanban order queue for active kitchen operations
 - authoritative edge functions for order creation, transitions, onboarding, and refunds
 - admin metrics RPC with failed-payment reporting
 - audit logging
@@ -202,7 +204,7 @@ These extend the [Known Weak Spots](#known-weak-spots) section above with items 
 
 #### Test coverage is the single largest launch risk
 
-Current automated coverage: 22 unit tests, 3 public e2e smoke tests, 3 skipped auth tests.
+Current automated coverage: 35 unit tests, 3 public e2e smoke tests, 3 skipped auth tests.
 
 The following paths have no automated test coverage:
 

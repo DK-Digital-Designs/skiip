@@ -5,7 +5,7 @@ import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
-import { sendTransactionalNotifications } from "../_shared/notifications.ts"
+import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
 import {
   buildPaidOrderUpdates,
   buildPaymentReconciliation,
@@ -185,12 +185,21 @@ serve(async (req: Request) => {
     })
 
     if (!wasAlreadyPaid) {
-      await runBestEffort('Paid-order reconciliation notification queue', () => sendTransactionalNotifications({
+      await sendTransactionalNotificationsBestEffort({
         supabase,
         orderId: order.id,
         eventType: 'order_paid',
         correlationId: crypto.randomUUID(),
-      }))
+        functionName: 'stripe-reconcile-order',
+        operation: 'admin_reconcile_order',
+        metadata: {
+          actorUserId: user.id,
+          actorRole: user.role,
+          checkoutSessionId: order.checkout_session_id,
+          paymentIntentId: reconciliation.paymentIntentId,
+          chargeId: reconciliation.chargeId,
+        },
+      })
     }
 
     return jsonResponse({
