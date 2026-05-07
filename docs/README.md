@@ -55,6 +55,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 
 ## Reference
 
+- [Backend Boundary Audit](reference/BACKEND_BOUNDARY_AUDIT.md)
+  Inventories browser-initiated write paths and classifies the current server-authoritative, RLS-protected, and roadmap-hardening boundaries.
 - [RLS Access Matrix](reference/RLS_ACCESS_MATRIX.md)
   Captures the launch access boundary for buyer, seller, admin, and service-role paths.
 
