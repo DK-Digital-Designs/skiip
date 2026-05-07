@@ -27,7 +27,8 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
-- `v0.22.0` is the current production/main baseline tag for the May 2026 launch-hardening work.
-- `0.24.0` is the current staging baseline after the May 6-7 vendor operations, auth, checkout, notification, scope, and Phase 5 closeout work.
+- `0.25.0` is the current production/main baseline after the May 6-7 vendor operations, auth, checkout, notification, dependency remediation, scope, and Phase 5 closeout work.
+- `0.24.0` was the staging baseline after the May 6-7 vendor operations, auth, checkout, notification, scope, and Phase 5 closeout work.
+- `v0.22.0` was the previous production/main baseline tag for the May 2026 launch-hardening work.
 - `0.23.0` was the staging baseline after the vendor kanban order queue feature.
 - `0.20.0` was the first tracked May 2026 pre-launch staging baseline.
