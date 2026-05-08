@@ -20,6 +20,7 @@ import {
     getVendorPrimaryTransition,
     getVendorTransitionSuccessMessage,
     groupVendorOrdersByLane,
+    canCancelUnpaidOrder,
 } from '../../lib/orders';
 
 const FILTERS = [
@@ -98,7 +99,8 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
     const scheduledCollectionLabel = getScheduledCollectionLabel(order);
     const allowedTransitions = getAllowedOrderTransitions(order.status);
     const primaryTransition = getVendorPrimaryTransition(order.status);
-    const canCancel = allowedTransitions.includes('cancelled');
+    const canCancel = allowedTransitions.includes('cancelled')
+        && (order.status !== 'pending' || canCancelUnpaidOrder(order));
     const contact = getOrderContact(order);
     const itemSummary = getVendorOrderItemSummary(order);
     const actionHint = getVendorOrderActionHint(order);

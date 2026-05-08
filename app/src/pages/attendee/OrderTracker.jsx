@@ -2,10 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { OrderService } from '../../lib/services/order.service';
+import { StripeService } from '../../lib/services/stripe.service';
 import { useCart } from '../../lib/hooks/useCart';
 import { useToast } from '../../components/ui/Toast';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
+import {
+    canCancelUnpaidOrder,
+    canContinuePendingPayment,
+    getBuyerOrderStatusDescription,
+    getBuyerOrderStatusLabel,
+    getOrderStatusColor,
+} from '../../lib/orders';
 
 const STATUS_CONFIG = {
     pending: { label: 'Order Placed', color: '#9b9ba5', icon: '📝' },
@@ -33,12 +41,14 @@ export default function OrderTracker() {
     const [loading, setLoading] = useState(true);
     const [connectionStatus, setConnectionStatus] = useState('connected'); // connected, reconnecting, error
     const [showSuccessOverlay, setShowSuccessOverlay] = useState(isSuccess);
+    const [actionBusy, setActionBusy] = useState(null);
 
     useEffect(() => {
         if (isCanceled) {
-            addToast('Payment cancelled. Your cart is preserved.', 'info');
-            navigate('/order'); // Go back to vendors
-            return;
+            addToast('Payment was not completed. You can continue payment or cancel the order.', 'info');
+            if (orderId && !pathOrderId) {
+                navigate(`/order/track/${orderId}`, { replace: true });
+            }
         }
 
         if (isSuccess && orderId) {
@@ -87,6 +97,61 @@ export default function OrderTracker() {
             subscription.unsubscribe();
         };
     }, [orderId]);
+
+    async function handleContinuePayment() {
+        if (!order?.id) return;
+
+        if (!isSupabaseConfigured()) {
+            addToast('Demo mode: payment recovery simulated.', 'info');
+            return;
+        }
+
+        setActionBusy('payment');
+        try {
+            const session = await StripeService.createCheckoutSession({
+                orderId: order.id,
+                returnUrl: window.location.origin + '/#/order/track',
+            });
+
+            if (session?.url) {
+                window.location.href = session.url;
+                return;
+            }
+
+            throw new Error('Failed to generate payment link');
+        } catch (error) {
+            console.error('Continue payment failed:', error);
+            addToast(error.buyerMessage || 'Could not restart payment. Please try again.', 'error');
+        } finally {
+            setActionBusy(null);
+        }
+    }
+
+    async function handleCancelOrder() {
+        if (!order?.id) return;
+
+        if (!isSupabaseConfigured()) {
+            setOrder((current) => ({ ...current, status: 'cancelled' }));
+            addToast('Demo mode: order cancelled.', 'info');
+            return;
+        }
+
+        setActionBusy('cancel');
+        try {
+            const updatedOrder = await OrderService.updateOrderStatus(order.id, 'cancelled');
+            setOrder((current) => ({
+                ...current,
+                ...(updatedOrder || {}),
+                status: updatedOrder?.status || 'cancelled',
+            }));
+            addToast('Order cancelled.', 'success');
+        } catch (error) {
+            console.error('Cancel order failed:', error);
+            addToast('Could not cancel this order. Refresh and try again.', 'error');
+        } finally {
+            setActionBusy(null);
+        }
+    }
 
     async function fetchOrder() {
         try {
@@ -143,6 +208,11 @@ export default function OrderTracker() {
     const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
     const orderItems = order.order_items || [];
     const scheduledCollectionLabel = getScheduledCollectionLabel(order);
+    const canContinuePayment = canContinuePendingPayment(order);
+    const canCancelOrder = canCancelUnpaidOrder(order);
+    const buyerStatusLabel = getBuyerOrderStatusLabel(order);
+    const buyerStatusDescription = getBuyerOrderStatusDescription(order);
+    const buyerStatusColor = getOrderStatusColor(order);
 
     return (
         <>
@@ -207,13 +277,51 @@ export default function OrderTracker() {
                 </div>
 
                 {/* Status Card */}
-                <div className="card" style={{ textAlign: 'center', padding: '40px', marginBottom: '24px', border: `2px solid ${statusConfig.color}` }}>
+                <div className="card" style={{ textAlign: 'center', padding: '40px', marginBottom: '24px', border: `2px solid ${buyerStatusColor}` }}>
                     <div style={{ fontSize: '60px', marginBottom: '16px' }}>{statusConfig.icon}</div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px', color: statusConfig.color }}>
-                        {statusConfig.label}
+                    <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px', color: buyerStatusColor }}>
+                        {buyerStatusLabel}
                     </h1>
                     <p className="text-muted">Order #{order.id.slice(0, 8)}</p>
+                    {buyerStatusDescription && (
+                        <p className="text-muted" style={{ maxWidth: '360px', margin: '12px auto 0', lineHeight: 1.5 }}>
+                            {buyerStatusDescription}
+                        </p>
+                    )}
                 </div>
+
+                {(canContinuePayment || canCancelOrder) && (
+                    <div className="card" style={{ marginBottom: '24px', border: '1px solid rgba(245, 158, 11, 0.45)' }}>
+                        <h3 style={{ marginBottom: '8px' }}>Payment needed</h3>
+                        <p className="text-muted" style={{ marginBottom: '16px', lineHeight: 1.5 }}>
+                            This order has not been paid for yet. Continue to secure payment or cancel it if you no longer need it.
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            {canContinuePayment && (
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    disabled={Boolean(actionBusy)}
+                                    onClick={handleContinuePayment}
+                                    style={{ minHeight: '42px', borderRadius: '8px' }}
+                                >
+                                    {actionBusy === 'payment' ? 'Opening payment...' : 'Continue payment'}
+                                </button>
+                            )}
+                            {canCancelOrder && (
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    disabled={Boolean(actionBusy)}
+                                    onClick={handleCancelOrder}
+                                    style={{ minHeight: '42px', borderRadius: '8px', color: '#f87171' }}
+                                >
+                                    {actionBusy === 'cancel' ? 'Cancelling...' : 'Cancel order'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Vendor Info */}
                 {vendor && (

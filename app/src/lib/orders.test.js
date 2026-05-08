@@ -11,6 +11,10 @@ import {
   getVendorPrimaryTransition,
   getVendorTransitionSuccessMessage,
   groupVendorOrdersByLane,
+  canCancelUnpaidOrder,
+  canContinuePendingPayment,
+  getBuyerOrderStatusDescription,
+  getBuyerOrderStatusLabel,
   isPaymentReconciliationCandidate,
   isRefundableOrder,
   roundCurrency,
@@ -40,7 +44,24 @@ describe('order utilities', () => {
 
   it('returns production-safe order transitions', () => {
     expect(getAllowedOrderTransitions('paid')).toEqual(['preparing', 'cancelled']);
-    expect(getAllowedOrderTransitions('pending')).toEqual([]);
+    expect(getAllowedOrderTransitions('pending')).toEqual(['cancelled']);
+  });
+
+  it('detects unpaid pending orders that buyers can recover or cancel', () => {
+    expect(canContinuePendingPayment({ status: 'pending', payment_status: 'pending' })).toBe(true);
+    expect(canCancelUnpaidOrder({ status: 'pending', payment_status: 'failed' })).toBe(true);
+    expect(canCancelUnpaidOrder({ status: 'pending', payment_status: 'succeeded' })).toBe(false);
+    expect(canContinuePendingPayment({ status: 'paid', payment_status: 'succeeded' })).toBe(false);
+  });
+
+  it('returns buyer-safe pending payment copy', () => {
+    const pendingOrder = { status: 'pending', payment_status: 'pending' };
+    const failedOrder = { status: 'pending', payment_status: 'failed' };
+
+    expect(getBuyerOrderStatusLabel(pendingOrder)).toBe('Payment pending');
+    expect(getBuyerOrderStatusDescription(pendingOrder)).toContain('waiting for payment');
+    expect(getBuyerOrderStatusLabel(failedOrder)).toBe('Payment failed');
+    expect(getBuyerOrderStatusDescription(failedOrder)).toContain('try again');
   });
 
   it('detects refundable orders', () => {

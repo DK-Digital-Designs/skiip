@@ -2,12 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { OrderService } from '../../lib/services/order.service';
+import { StripeService } from '../../lib/services/stripe.service';
+import { useToast } from '../../components/ui/Toast';
+import {
+    canCancelUnpaidOrder,
+    canContinuePendingPayment,
+    getBuyerOrderStatusLabel,
+} from '../../lib/orders';
 
 export default function BuyerProfile() {
     const { user, profile, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [actionBusy, setActionBusy] = useState(null);
+    const { addToast } = useToast();
 
     useEffect(() => {
         if (authLoading) return;
@@ -39,7 +49,64 @@ export default function BuyerProfile() {
         }
 
         fetchHistory();
-    }, [user, navigate]);
+    }, [authLoading, user, navigate]);
+
+    async function handleContinuePayment(event, order) {
+        event.stopPropagation();
+
+        if (!isSupabaseConfigured()) {
+            addToast('Demo mode: payment recovery simulated.', 'info');
+            return;
+        }
+
+        setActionBusy(`${order.id}:payment`);
+        try {
+            const session = await StripeService.createCheckoutSession({
+                orderId: order.id,
+                returnUrl: window.location.origin + '/#/order/track',
+            });
+
+            if (session?.url) {
+                window.location.href = session.url;
+                return;
+            }
+
+            throw new Error('Failed to generate payment link');
+        } catch (error) {
+            console.error('Continue payment failed:', error);
+            addToast(error.buyerMessage || 'Could not restart payment. Please try again.', 'error');
+        } finally {
+            setActionBusy(null);
+        }
+    }
+
+    async function handleCancelOrder(event, order) {
+        event.stopPropagation();
+
+        if (!isSupabaseConfigured()) {
+            setOrders((current) => current.map((item) => (
+                item.id === order.id ? { ...item, status: 'cancelled' } : item
+            )));
+            addToast('Demo mode: order cancelled.', 'info');
+            return;
+        }
+
+        setActionBusy(`${order.id}:cancel`);
+        try {
+            const updatedOrder = await OrderService.updateOrderStatus(order.id, 'cancelled');
+            setOrders((current) => current.map((item) => (
+                item.id === order.id
+                    ? { ...item, ...(updatedOrder || {}), status: updatedOrder?.status || 'cancelled' }
+                    : item
+            )));
+            addToast('Order cancelled.', 'success');
+        } catch (error) {
+            console.error('Cancel order failed:', error);
+            addToast('Could not cancel this order. Refresh and try again.', 'error');
+        } finally {
+            setActionBusy(null);
+        }
+    }
 
     if (authLoading) return <div className="container" style={{ paddingTop: '60px' }}>Loading profile...</div>;
     if (!user) return null;
@@ -70,31 +137,75 @@ export default function BuyerProfile() {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-16">
-                        {orders.map(order => (
-                            <div key={order.id} className="card flex justify-between items-center" onClick={() => navigate(`/order/track/${order.id}`)} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                                <div className="flex gap-16 items-center">
-                                    {order.stores?.logo_url ? (
-                                        <img src={order.stores.logo_url} alt={order.stores.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            🍽️
+                        {orders.map((order) => {
+                            const canContinuePayment = canContinuePendingPayment(order);
+                            const canCancelOrder = canCancelUnpaidOrder(order);
+                            const paymentBusy = actionBusy === `${order.id}:payment`;
+                            const cancelBusy = actionBusy === `${order.id}:cancel`;
+                            const statusLabel = getBuyerOrderStatusLabel(order);
+
+                            return (
+                                <div
+                                    key={order.id}
+                                    className="card"
+                                    onClick={() => navigate(`/order/track/${order.id}`)}
+                                    style={{ cursor: 'pointer', transition: 'transform 0.2s', display: 'grid', gap: '14px' }}
+                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex gap-16 items-center">
+                                            {order.stores?.logo_url ? (
+                                                <img src={order.stores.logo_url} alt={order.stores.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                                            ) : (
+                                                <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    🍽️
+                                                </div>
+                                            )}
+                                            <div>
+                                                <h4 style={{ marginBottom: '4px' }}>{order.stores?.name || 'Unknown Store'}</h4>
+                                                <p className="text-muted" style={{ fontSize: '13px' }}>
+                                                    {new Date(order.created_at).toLocaleDateString()} • {order.order_number}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <h4 style={{ marginBottom: '4px' }}>£{parseFloat(order.total).toFixed(2)}</h4>
+                                            <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: order.status === 'collected' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: order.status === 'collected' ? '#10b981' : '#f59e0b' }}>
+                                                {statusLabel}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {(canContinuePayment || canCancelOrder) && (
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                            {canContinuePayment && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-primary"
+                                                    disabled={Boolean(actionBusy)}
+                                                    onClick={(event) => handleContinuePayment(event, order)}
+                                                    style={{ minHeight: '38px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
+                                                >
+                                                    {paymentBusy ? 'Opening payment...' : 'Continue payment'}
+                                                </button>
+                                            )}
+                                            {canCancelOrder && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-ghost"
+                                                    disabled={Boolean(actionBusy)}
+                                                    onClick={(event) => handleCancelOrder(event, order)}
+                                                    style={{ minHeight: '38px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', color: '#f87171' }}
+                                                >
+                                                    {cancelBusy ? 'Cancelling...' : 'Cancel order'}
+                                                </button>
+                                            )}
                                         </div>
                                     )}
-                                    <div>
-                                        <h4 style={{ marginBottom: '4px' }}>{order.stores?.name || 'Unknown Store'}</h4>
-                                        <p className="text-muted" style={{ fontSize: '13px' }}>
-                                            {new Date(order.created_at).toLocaleDateString()} • {order.order_number}
-                                        </p>
-                                    </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <h4 style={{ marginBottom: '4px' }}>£{parseFloat(order.total).toFixed(2)}</h4>
-                                    <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: order.status === 'collected' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: order.status === 'collected' ? '#10b981' : '#f59e0b' }}>
-                                        {order.status.toUpperCase()}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
