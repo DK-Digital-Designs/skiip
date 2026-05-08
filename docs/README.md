@@ -75,10 +75,10 @@ SKIIP currently consists of:
 
 - a React 19 + Vite product app in [`app`](../app)
 - a Supabase backend in [`supabase`](../supabase)
-- a separate static marketing site in [`site`](../site)
+- a separate marketing site maintained in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 
 Important current reality:
 
 - the product app is the operational source of truth for ordering
-- the marketing site is separate and uses email-draft contact flows for launch rather than backend-integrated lead capture
+- the marketing site is separate from this repo and should not be treated as backend-integrated lead capture unless that external repo is updated to support it
 - `supabase/migrations/` is the authoritative schema source; older schema snapshot files are not

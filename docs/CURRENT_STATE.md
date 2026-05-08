@@ -73,7 +73,7 @@ These statements reflect the actual current implementation.
 - checkout currency is GBP
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`
-- the repo still deploys a separate static marketing site, but it is not part of the order/payment source of truth
+- the marketing site now lives outside this repo in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing) and is not part of the order/payment source of truth
 
 ## Important Clarifications
 
@@ -118,15 +118,15 @@ Important operational limit:
 - there is no scheduler defined in this repository for delayed retry sweeps
 - [`notification-dispatch`](../supabase/functions/notification-dispatch/index.ts) must be triggered manually or by an external scheduler if backlog recovery matters
 
-### The static marketing site is not operational lead capture
+### The marketing site is not operational lead capture
 
-The `site/` directory is a separate marketing surface.
+The marketing surface is maintained outside this repository.
 
 Current reality:
 
-- waitlist and contact forms open email drafts for launch
-- analytics is a stub
-- some links and copy are still demo-oriented or stale
+- do not assume marketing-site forms are backend-integrated
+- marketing analytics and lead capture are owned by the external marketing repo
+- the product app in this repo remains the operational surface
 
 Do not treat the marketing site as a backend-integrated operational surface.
 
@@ -163,7 +163,7 @@ These areas are still intentionally incomplete:
 - post-launch reassessment of gateway JWT enforcement versus manual edge-function auth
 - automated retry scheduling for notification backlog recovery
 - event-management tooling
-- production-grade marketing-site lead capture
+- production-grade marketing-site lead capture in the external marketing repo
 
 ## What Changed Recently
 
@@ -270,5 +270,5 @@ The migration chain removed the database trigger that originally called `whatsap
 - **Notification retry scheduler.** See pre-launch risk item above. If deferred past launch, ensure the manual operator sweep process is documented and understood.
 - **Mobile-first buyer flow polish.** Event-day buyers are on phones. The current roadmap places this at Priority 3, but the use case warrants moving it earlier post-launch.
 - **Admin investigation tooling.** `audit_logs` and `notification_logs` have the data. Surfacing failed payments, notification failures, and per-vendor payout context in the admin UI reduces dependency on direct database access during incidents.
-- **Marketing site operational integration.** Waitlist and contact forms currently open email drafts. Resend is already in the stack and could power real form submission. Basic analytics (`Plausible` or `GA4`) would take minimal effort to add.
+- **Marketing site operational integration.** If the external marketing repo needs real lead capture, connect it to a supported backend path instead of treating it as a static brochure surface.
 - **Buyer profile defaults for checkout.** Storing country and phone on the buyer profile would reduce checkout friction, particularly at an event where users are on mobile under time pressure.

@@ -17,7 +17,7 @@ This is the intended operating model for the repository. It is not the same thin
 | `chore/*` | Maintenance, tooling, refactors, cleanup | Usually create from `staging`. Merge back into `staging` unless the change is explicitly repository-admin-only. |
 | `hotfix/*` | Urgent production fixes | Create from `main`. Merge into `main` first, then bring the same fix back into `staging` so the branches do not drift. |
 | `release/*` | Optional release hardening branch | Create from `staging` when a release needs a freeze or coordinated hardening. Merge into `main` once approved, then sync any release-only fixes back into `staging`. |
-| `gh-pages` | Deployment artifact branch for the static site | Not a feature-development branch. Treat it as a publishing branch managed by the site deployment flow. |
+| `gh-pages` | Legacy branch still present in GitHub | No longer used by this repository's active deployment model. Treat it as legacy until it is explicitly deleted from GitHub. |
 
 ## Workflow Classification
 

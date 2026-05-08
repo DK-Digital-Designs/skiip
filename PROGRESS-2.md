@@ -16,7 +16,23 @@
 | Dean Gibson | ~4.5 hours | 2026/05/05 | Staging launch-readiness verification and checkout hardening. Returned structured checkout inventory errors, added the staging app origin to the Edge Function allow-list, captured the May 2026 project assessment, and recorded manual staging evidence for normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer tracking, admin visibility, vendor onboarding readiness, and multi-vendor routing. |
 | Dean Gibson | ~5.0 hours | 2026/05/06 | Release, vendor operations, and closeout audit work. Promoted the `v0.22.0` baseline, added the vendor kanban order queue, advanced the staging baseline to `0.23.0`, re-ran local lint/unit/build/e2e verification, audited remaining closeout risks, and updated GitHub issue notes so launch blockers and follow-ups stay visible. |
 | Dean Gibson | ~3.0 hours | 2026/05/07 | Phase 5 closeout refinements and client framing. Hardened notification queueing side effects, blocked admins from seller routes, improved checkout Edge Function error display, polished vendor order cards, added the project evolution client review, and refreshed the Phase 5 client/internal/momentum docs to match the current `v0.24.0` staging baseline. |
-| **TOTAL** | **~41.5 hours** | | |
+| Dean Gibson | ~1.0 hour | 2026/05/08 | Repository cleanup for retired marketing-site ownership. Removed the in-repo GitHub Pages workflow and local `site/` surface, repointed repo docs to the external `skiip-marketing` repository, and verified remote branch state so delivery docs distinguish the retired workflow from the still-present legacy `gh-pages` branch. |
+| **TOTAL** | **~42.5 hours** | | |
+
+## May 8 Marketing Repo Retirement Recap
+
+May 8 focused on removing the retired GitHub Pages marketing surface from this repository and aligning the documentation with the new ownership model.
+
+Completed or verified:
+
+- removed the in-repo GitHub Pages workflow
+- removed the legacy `site/` directory from the worktree
+- updated source-of-truth docs to point marketing ownership at `DK-Digital-Designs/skiip-marketing`
+- verified with `git fetch --prune` and `git branch -r` that `origin/gh-pages` still exists remotely, so delivery docs now treat it as a legacy branch rather than pretending it is gone
+
+Remaining external cleanup:
+
+- if `gh-pages` should disappear completely, delete the remote branch and unpublish or retarget any GitHub Pages settings in GitHub itself
 
 ## May 7 Phase 5 Client And Closeout Refresh
 

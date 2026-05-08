@@ -108,8 +108,8 @@ These points matter because they affect launch scope and commercial expectations
 - The current platform fee logic is 10% of order subtotal.
 - Protected edge functions currently use manual bearer validation.
 - Notifications are architected for Resend email and Twilio WhatsApp, but provider setup, secrets, and end-to-end verification still matter.
-- The static marketing site is separate from the product app and should not be treated as the operational source of truth.
-- Marketing-site waitlist/contact capture is currently not production-grade lead capture.
+- The marketing site is separate from the product app and should not be treated as the operational source of truth.
+- Marketing-site waitlist/contact capture should be treated as external marketing-repo scope, not product-app scope.
 
 ---
 

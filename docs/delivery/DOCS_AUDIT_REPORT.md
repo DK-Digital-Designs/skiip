@@ -29,16 +29,16 @@ Scope reviewed:
 - `supabase/config.toml` references `supabase/seed.sql`, but that file is not committed.
 - signup UI implies email verification while repo auth config disables confirmations.
 - admin vendor management performs direct browser-side store writes and hard deletes, which had not been called out clearly.
-- the marketing site's waitlist/contact forms are localStorage-only, not backend-integrated.
+- the separate marketing surface was not backend-integrated and needed to be treated outside the product app's operational flow.
 
 ## Per-Document Review
 
 ## `docs/ARCHITECTURE.md`
 
 - Status: partially outdated
-- Summary of changes: updated runtime architecture to document HashRouter usage, invite-code vendor signup, admin direct store writes, GBP/GB Stripe constraints, notification outbox behavior, marketing-site localStorage capture, legacy schema snapshots, and current legacy compatibility code.
+- Summary of changes: updated runtime architecture to document HashRouter usage, invite-code vendor signup, admin direct store writes, GBP/GB Stripe constraints, notification outbox behavior, the separate marketing surface boundary, legacy schema snapshots, and current legacy compatibility code.
 - Key mismatches found: the old version did not clearly separate current production paths from legacy files and placeholders, and it did not document the hardcoded origin fallback or the non-authoritative admin vendor operations.
-- High-risk documentation gaps: missing vendor invite-code path, missing note that `whatsapp-notify` is legacy compatibility code, missing note that marketing-site forms are not operational backend capture.
+- High-risk documentation gaps: missing vendor invite-code path, missing note that `whatsapp-notify` is legacy compatibility code, missing note that the marketing surface is not operational backend capture.
 - Assumptions: none beyond repository code.
 
 ## `docs/delivery/BRANCHING_WORKFLOW.md`
@@ -54,7 +54,7 @@ Scope reviewed:
 - Status: partially outdated
 - Summary of changes: clarified the current working baseline, added the signup confirmation mismatch, documented direct admin vendor writes, documented lack of in-repo notification retry scheduling, called out missing seed/reset support, and separated active statuses from legacy schema remnants.
 - Key mismatches found: the old version understated current operational weaknesses around environment drift, test/reset drift, and admin browser-side writes.
-- High-risk documentation gaps: missing note that signup UX and auth config disagree; missing note that notification recovery is not scheduled; missing note that marketing-site forms are not operational.
+- High-risk documentation gaps: missing note that signup UX and auth config disagree; missing note that notification recovery is not scheduled; missing note that the separate marketing surface is not operational.
 - Assumptions: treated repo config as the source of truth for auth confirmation behavior because hosted Supabase settings are not directly visible from the repo.
 
 ## `docs/launch/DEPLOYMENT.md`
@@ -76,7 +76,7 @@ Scope reviewed:
 ## `docs/launch/LAUNCH_CHECKLIST.md`
 
 - Status: partially outdated
-- Summary of changes: added explicit gates for `ALLOWED_ORIGINS`, notification retry recovery, signup-policy alignment, vendor onboarding path choice, and marketing-site non-operational form capture.
+- Summary of changes: added explicit gates for `ALLOWED_ORIGINS`, notification retry recovery, signup-policy alignment, vendor onboarding path choice, and marketing-surface non-operational form capture.
 - Key mismatches found: the previous checklist did not reflect the current signup-policy mismatch, undocumented origin fallback, or the fact that notification retry sweeping requires an external/manual path.
 - High-risk documentation gaps: missing gate for Stripe-onboarded seller rehearsal; missing gate for explicit notification-retry ownership.
 - Assumptions: none beyond repository code and current docs.
@@ -108,15 +108,15 @@ Scope reviewed:
 ## `docs/README.md`
 
 - Status: partially outdated
-- Summary of changes: added the audit report, clarified that the site is a separate marketing surface with localStorage-only capture, and reiterated that migrations are the schema source of truth.
-- Key mismatches found: the old index did not point readers at the audit report and did not clearly warn about the marketing-site/backend separation.
+- Summary of changes: added the audit report, clarified that the marketing surface is separate from the product app, and reiterated that migrations are the schema source of truth.
+- Key mismatches found: the old index did not point readers at the audit report and did not clearly warn about the marketing-surface/backend separation.
 - High-risk documentation gaps: missing warning that legacy schema snapshots are not authoritative.
 - Assumptions: none.
 
 ## `docs/ROADMAP.md`
 
 - Status: heavily outdated
-- Summary of changes: removed items that are already implemented or already documented elsewhere, and rewrote the roadmap around real remaining gaps: auth posture, RLS audit, origin/env hygiene, notification retry ownership, payment-path rehearsal, vendor onboarding decisions, and marketing-site cleanup.
+- Summary of changes: removed items that are already implemented or already documented elsewhere, and rewrote the roadmap around real remaining gaps: auth posture, RLS audit, origin/env hygiene, notification retry ownership, payment-path rehearsal, vendor onboarding decisions, and external marketing-repo ownership.
 - Key mismatches found: the previous roadmap still listed already-done work such as failed-payment handling, secret inventory work, notification outbox basics, launch checklist creation, and incident/runbook creation.
 - High-risk documentation gaps: without rewrite, the roadmap would encourage duplicate work and mask the real unresolved issues.
 - Assumptions: roadmap priority ordering is inferred from current repo risk profile and open GitHub launch-readiness issues.

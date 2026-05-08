@@ -18,6 +18,10 @@ It covers:
 - The intended branching model lives in [Branching Workflow](BRANCHING_WORKFLOW.md)
 - No issue templates, pull request templates, or `CODEOWNERS` file are currently present in the repository
 
+Current note:
+
+- `gh-pages` still exists remotely as a legacy branch, but the repo no longer uses an in-repo GitHub Pages deployment workflow
+
 ## GitHub Actions
 
 Current workflows in [`.github/workflows`](../../.github/workflows):
@@ -42,25 +46,7 @@ Checks:
 - `npm run test`
 - `npm run build`
 
-### 2. Deploy Marketing Site to GitHub Pages
-
-File: [deploy-site.yml](../../.github/workflows/deploy-site.yml)
-
-Purpose:
-
-- publish the static `site/` directory to GitHub Pages
-
-Trigger:
-
-- `push` to `main` when `site/**` or the workflow file changes
-- manual `workflow_dispatch`
-
-Notes:
-
-- uses the `github-pages` environment
-- grants `pages: write` and `id-token: write`
-
-### 3. Staging Smoke Checks
+### 2. Staging Smoke Checks
 
 File: [staging-smoke.yml](../../.github/workflows/staging-smoke.yml)
 

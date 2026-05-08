@@ -8,7 +8,7 @@ The current product supports:
 - Stripe Connect onboarding and Stripe Checkout
 - webhook-driven payment finalization
 - vendor/admin operational dashboards
-- a separate static marketing site in `site/`
+- a separate marketing site maintained in the external repo [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 
 The source of truth for project documentation is the [`docs`](docs) directory.
 
@@ -28,7 +28,6 @@ Start here:
 
 - [`app`](app): React/Vite product app
 - [`supabase`](supabase): schema, migrations, edge functions
-- [`site`](site): static marketing site
 - [`docs`](docs): project documentation
 
 ## Local Development

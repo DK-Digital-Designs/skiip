@@ -7,13 +7,13 @@ SKIIP uses multiple deployment surfaces:
 - Vercel for the React product app in `app/`
 - Supabase for database, auth, realtime, storage, and edge functions
 - Stripe for checkout, Connect onboarding, refunds, and webhooks
-- GitHub Pages for the static marketing site in `site/`
+- an external marketing repo: [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 - optional notification providers: Resend for email and Twilio for WhatsApp
 
 Current deployment split in the repo:
 
-- the product app and marketing site are separate deployables
-- only the marketing site has an in-repo deployment workflow
+- the product app is the only deployable surface in this repository
+- the marketing site is maintained outside this repository
 - the product app's Vercel deployment is configured outside the repo, with repo-side behavior defined mainly by [`app/vercel.json`](../../app/vercel.json)
 
 Current recommendation:
@@ -317,16 +317,15 @@ The product app deploy uses [`app/vercel.json`](../../app/vercel.json) to set ba
 
 ## Static Marketing Site Deployment
 
-The static site deploy is defined in [deploy-site.yml](../../.github/workflows/deploy-site.yml).
+The marketing site is no longer part of this repository.
 
-Current behavior:
+Current source of truth:
 
-- pushes to `main` that touch `site/**` publish to GitHub Pages
-- the site is uploaded as static files from `./site`
+- [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 
 Current caution:
 
-- site waitlist/contact forms open email drafts for launch and should not be treated as backend-integrated deployment behavior
+- do not treat the marketing surface as backend-integrated deployment behavior unless that external repo is explicitly wired for it
 
 ## Post-Deploy Verification
 

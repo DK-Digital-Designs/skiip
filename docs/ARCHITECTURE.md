@@ -2,16 +2,15 @@
 
 ## Overview
 
-SKIIP is a monorepo with three distinct surfaces:
+SKIIP is a monorepo with two active surfaces:
 
 - [`app`](../app): the product application for buyers, sellers, and admins
 - [`supabase`](../supabase): Postgres schema and migrations, RLS, auth integration, and edge functions
-- [`site`](../site): a separate static marketing site
 
 Current deployment split:
 
-- the product app is built from `app/` and deployed separately from the site
-- the marketing site is published from `site/` to GitHub Pages
+- the product app is built from `app/`
+- the marketing site is maintained outside this repository in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 - Supabase is the system of record for auth, data, realtime, and server-side business logic
 
 ## Frontend
@@ -251,13 +250,10 @@ Also note:
 
 ## Marketing Site
 
-The `site/` directory is not the product app. It is a separate static marketing site.
+The marketing site is no longer part of this repository.
 
-Current reality for the marketing site:
+Current reality:
 
-- it is deployed independently from the product app
-- waitlist and contact forms open email drafts for launch rather than writing browser-only leads
-- [`analytics.js`](../site/assets/js/analytics.js) is a stub, not a live analytics integration
-- several links and claims remain marketing/demo oriented and should not be treated as operational product behavior
-
-That means the marketing site is currently presentation-only, not an operational source of leads, support tickets, or runtime product truth.
+- the product app in this repo remains the operational source of truth
+- the marketing surface now lives in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
+- marketing content, lead capture, analytics, and deployment behavior for that surface should be maintained in that external repo
