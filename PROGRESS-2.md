@@ -15,9 +15,10 @@
 | Dean Gibson | ~4.0 hours | 2026/05/04 | Documentation system strategy and planning. Evaluated the personal Wiki MkDocs/Obsidian model for SKIIP, refined the internal searchable docs approach, created GitHub issue `#36`, and added the follow-up operating-model comment covering Obsidian, repo docs, GitHub Issues, information boundaries, and private/local notes. |
 | Dean Gibson | ~4.5 hours | 2026/05/05 | Staging launch-readiness verification and checkout hardening. Returned structured checkout inventory errors, added the staging app origin to the Edge Function allow-list, captured the May 2026 project assessment, and recorded manual staging evidence for normal orders, scheduled orders, Stripe payment return, vendor lifecycle transitions, buyer tracking, admin visibility, vendor onboarding readiness, and multi-vendor routing. |
 | Dean Gibson | ~5.0 hours | 2026/05/06 | Release, vendor operations, and closeout audit work. Promoted the `v0.22.0` baseline, added the vendor kanban order queue, advanced the staging baseline to `0.23.0`, re-ran local lint/unit/build/e2e verification, audited remaining closeout risks, and updated GitHub issue notes so launch blockers and follow-ups stay visible. |
-| Dean Gibson | ~3.0 hours | 2026/05/07 | Phase 5 closeout refinements and client framing. Hardened notification queueing side effects, blocked admins from seller routes, improved checkout Edge Function error display, polished vendor order cards, added the project evolution client review, and refreshed the Phase 5 client/internal/momentum docs to match the current `v0.24.0` staging baseline. |
+| Dean Gibson | ~3.0 hours | 2026/05/07 | Phase 5 closeout refinements, release promotion, and client framing. Hardened notification queueing side effects, blocked admins from seller routes, improved checkout Edge Function error display, polished vendor order cards, added the project evolution client review, refreshed the Phase 5 client/internal/momentum docs to match the current `v0.24.0` staging baseline, closed the dependency/security cleanup issue, and promoted the synced `0.25.0` baseline toward `main`. |
 | Dean Gibson | ~1.5 hours | 2026/05/08 | Repository cleanup and release preparation for retired marketing-site ownership. Removed the in-repo GitHub Pages workflow and local `site/` surface, repointed repo docs to the external `skiip-marketing` repository, verified remote branch state so delivery docs distinguish the retired workflow from the still-present legacy `gh-pages` branch, removed stale site-version sync behavior, and prepared the `0.26.0` staging release/tag baseline after confirming the deployed staging continuation-payment flow works. |
-| **TOTAL** | **~43.0 hours** | | |
+| Dean Gibson | ~2.5 hours | 2026/05/08 | Payment recovery closeout, issue hygiene, and notification-provider handover tracking. Merged the pending-payment recovery and idempotent unpaid-cancellation fixes into `staging`, confirmed the new `v0.26.0` release PR to `main` was opened for review without merging, closed the resolved payment-recovery issue, opened follow-up issues for provider-account handover and production data cleanup, and captured external hosted-provider progress for Resend secret rotation and webhook setup while documenting the remaining Twilio/WhatsApp account migration work. |
+| **TOTAL** | **~45.5 hours** | | |
 
 ## May 8 Marketing Repo Retirement Recap
 
@@ -36,6 +37,26 @@ Remaining external cleanup:
 
 - if `gh-pages` should disappear completely, delete the remote branch and unpublish or retarget any GitHub Pages settings in GitHub itself
 
+## May 8 Payment Recovery And Provider Ops Follow-Up
+
+May 8 also covered the release and operational follow-up around the stabilized staging checkout path.
+
+Completed or captured:
+
+- merged PR `#51` so `staging` now includes pending-payment recovery controls from `cfbe894`
+- merged PR `#52` so unpaid cancellation retries are idempotent through `40d0139`
+- opened PR `#53` from `staging` to `main` for the retired marketing-site cleanup plus the `0.26.0` release baseline, without merging it yet
+- closed resolved GitHub issue `#49` for pending-payment recovery and cancellation controls
+- confirmed the current issue board now shows 23 closed issues and 10 open issues
+- opened issue `#54` to track provider-account ownership handover for Resend email and Twilio WhatsApp
+- opened issue `#55` to track production cutover data cleanup and fresh-branch preparation after final testing
+- captured external hosted-provider progress: the Resend API key and webhook secret were rotated in the hosted Supabase project `jmqjuvfjthwbsbelgccs`, and the Resend webhook target remains `https://jmqjuvfjthwbsbelgccs.supabase.co/functions/v1/resend-email-webhook` with the documented delivery, failure, bounce, complaint, suppression, and delay events
+
+Still external / not complete:
+
+- the current email template/sender presentation still needs polish
+- Twilio/WhatsApp still needs a SKIIP-owned account, billing handover, fresh secrets, and the final approved templates
+
 ## May 7 Phase 5 Client And Closeout Refresh
 
 May 7 focused on closing the gap between the May 2 Phase 5 reports and the work completed afterward.
@@ -46,6 +67,8 @@ Completed or captured:
 - prevented admin accounts from entering seller routes
 - improved checkout display for structured Edge Function validation errors
 - polished vendor order queue cards
+- updated vulnerable dev tooling and closed issue `#48` for dependency/security cleanup
+- promoted the synced `0.25.0` baseline toward `main` through PR `#50`
 - added the client-facing project evolution review explaining the difference between delivered Phase 5 hardening, Phase 6 launch readiness, and Phase 7+ future scope
 - updated all `docs/phase-5/` reports through May 7 with current version, issue counts, recent commits, verification baseline, and launch-readiness gates
 
@@ -153,6 +176,15 @@ Known local verification caveat:
 ## Full Commit Log (Phase 5+)
 
 ```text
+10442d9 - 2026-05-08 : chore(release): bump staging baseline to 0.26.0
+ffa8977 - 2026-05-08 : chore(site): retire in-repo marketing surface
+40d0139 - 2026-05-08 : fix(orders): make unpaid cancellation idempotent
+cfbe894 - 2026-05-08 : fix(payments)!: add pending payment recovery controls
+a22da44 - 2026-05-07 : chore(release): sync 0.25.0 baseline
+fc90f1f - 2026-05-07 : chore(release): promote staging to main
+3ae428f - 2026-05-07 : chore: ignore aider temporary files in .gitignore
+2d42571 - 2026-05-07 : build(deps): update vulnerable dev tooling
+a2e7b44 - 2026-05-07 : docs: add backend boundary audit
 be5ae14 - 2026-05-07 : docs: add project evolution review document detailing platform growth and phase history
 8794d0d - 2026-05-07 : feat(vendor): polish order queue cards
 c161fa0 - 2026-05-07 : fix(checkout): surface Edge Function validation errors
