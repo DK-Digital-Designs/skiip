@@ -5,18 +5,14 @@ import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
+import {
+  getAllowedOrderTransitions,
+  isBuyerOwnedUnpaidCancellation,
+  isIdempotentUnpaidCancellation,
+  isPendingUnpaidCancellation,
+} from "../_shared/order-transitions.ts"
 
 const log = logger('order-transition')
-
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: ['cancelled'],
-  paid: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
-  ready: ['collected', 'cancelled'],
-  collected: [],
-  cancelled: [],
-  refunded: [],
-}
 
 const EVENT_MAP: Record<string, 'order_preparing' | 'order_ready' | 'order_cancelled' | undefined> = {
   preparing: 'order_preparing',
@@ -65,12 +61,9 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order not found' }, 404, origin)
     }
 
-    const isUnpaidPendingCancellation = (
-      order.status === 'pending'
-      && body.status === 'cancelled'
-      && ['pending', 'failed'].includes(order.payment_status || 'pending')
-    )
-    const isBuyerOwnedCancellation = isUnpaidPendingCancellation && order.user_id === user.id
+    const isUnpaidPendingCancellation = isPendingUnpaidCancellation(order, body.status)
+    const isIdempotentCancellation = isIdempotentUnpaidCancellation(order, body.status)
+    const isBuyerOwnedCancellation = isBuyerOwnedUnpaidCancellation(order, body.status, user.id)
 
     if (user.role !== 'admin' && !isBuyerOwnedCancellation) {
       const { data: store, error: storeError } = await supabase
@@ -89,7 +82,15 @@ serve(async (req: Request) => {
       }
     }
 
-    const allowedNextStatuses = ALLOWED_TRANSITIONS[order.status] || []
+    if (isIdempotentCancellation) {
+      return jsonResponse(
+        { order: { id: order.id, status: order.status } },
+        200,
+        origin,
+      )
+    }
+
+    const allowedNextStatuses = getAllowedOrderTransitions(order.status)
     if (!allowedNextStatuses.includes(body.status)) {
       return jsonResponse(
         { error: `Invalid status transition: ${order.status} -> ${body.status}` },
