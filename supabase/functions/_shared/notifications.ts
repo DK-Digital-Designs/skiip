@@ -12,12 +12,16 @@ import { createNotificationPayloadSnapshot } from "./notification-content.ts";
 import { sendResendEmailMessage } from "./providers/resend-email.ts";
 import { sendTwilioWhatsAppMessage } from "./providers/twilio-whatsapp.ts";
 import {
-  ProviderDispatchError,
+  checkWhatsAppDispatchGuard,
+  type WhatsAppDispatchRunState,
+} from "./whatsapp-guard.ts";
+import {
   type NotificationChannel,
   type NotificationContext,
   type NotificationLogRecord,
   type NotificationPayloadSnapshot,
   type OrderNotificationRecord,
+  ProviderDispatchError,
   type ProviderDispatchInput,
   type ProviderDispatchResult,
 } from "./notification-types.ts";
@@ -35,6 +39,10 @@ type DeliveryStatus =
 type ProviderSender = (
   input: ProviderDispatchInput,
 ) => Promise<ProviderDispatchResult>;
+
+type DispatchRunState = {
+  whatsapp: WhatsAppDispatchRunState;
+};
 
 export type BestEffortNotificationContext = NotificationContext & {
   functionName: string;
@@ -117,8 +125,8 @@ export function normalizeNotificationQueueError(error: unknown) {
 }
 
 function getProviderSender(notification: NotificationLogRecord) {
-  const configuredProvider =
-    notification.provider || getConfiguredProvider(notification.channel);
+  const configuredProvider = notification.provider ||
+    getConfiguredProvider(notification.channel);
   const channelProviders = PROVIDER_SENDERS[notification.channel];
 
   if (!configuredProvider || !channelProviders) {
@@ -159,10 +167,9 @@ function coercePayloadSnapshot(
 
   return {
     orderId,
-    storeId:
-      snapshot.storeId === null || snapshot.storeId === undefined
-        ? null
-        : String(snapshot.storeId),
+    storeId: snapshot.storeId === null || snapshot.storeId === undefined
+      ? null
+      : String(snapshot.storeId),
     orderNumber,
     customerEmail:
       snapshot.customerEmail === null || snapshot.customerEmail === undefined
@@ -177,27 +184,24 @@ function coercePayloadSnapshot(
       snapshot.refundAmount === null || snapshot.refundAmount === undefined
         ? null
         : String(snapshot.refundAmount),
-    scheduledCollectionAt:
-      snapshot.scheduledCollectionAt === null ||
+    scheduledCollectionAt: snapshot.scheduledCollectionAt === null ||
         snapshot.scheduledCollectionAt === undefined
-        ? null
-        : String(snapshot.scheduledCollectionAt),
+      ? null
+      : String(snapshot.scheduledCollectionAt),
     scheduledCollectionTimezone:
       snapshot.scheduledCollectionTimezone === null ||
         snapshot.scheduledCollectionTimezone === undefined
         ? null
         : String(snapshot.scheduledCollectionTimezone),
-    scheduledCollectionLabel:
-      snapshot.scheduledCollectionLabel === null ||
+    scheduledCollectionLabel: snapshot.scheduledCollectionLabel === null ||
         snapshot.scheduledCollectionLabel === undefined
-        ? null
-        : String(snapshot.scheduledCollectionLabel),
+      ? null
+      : String(snapshot.scheduledCollectionLabel),
     status: String(snapshot.status || ""),
     whatsappOptIn: snapshot.whatsappOptIn === true,
-    storeName:
-      snapshot.storeName === null || snapshot.storeName === undefined
-        ? null
-        : String(snapshot.storeName),
+    storeName: snapshot.storeName === null || snapshot.storeName === undefined
+      ? null
+      : String(snapshot.storeName),
     pickupLocation:
       snapshot.pickupLocation === null || snapshot.pickupLocation === undefined
         ? null
@@ -216,7 +220,9 @@ async function fetchOrderForNotifications(supabase: any, orderId: string) {
 
   if (error || !order) {
     throw new Error(
-      `Order lookup failed for notifications: ${error?.message || "missing order"}`,
+      `Order lookup failed for notifications: ${
+        error?.message || "missing order"
+      }`,
     );
   }
 
@@ -333,7 +339,8 @@ async function markNotificationSent(
       message_sid: result.messageSid || notification.message_sid,
       metadata,
       error_message: null,
-      sent_at: notification.sent_at || result.sentAt || new Date().toISOString(),
+      sent_at: notification.sent_at || result.sentAt ||
+        new Date().toISOString(),
       processing_started_at: null,
       next_attempt_at: null,
     })
@@ -342,6 +349,43 @@ async function markNotificationSent(
   if (error) {
     throw new Error(`Failed to mark notification as sent: ${error.message}`);
   }
+}
+
+async function markWhatsAppProviderAttempt(
+  supabase: any,
+  notification: NotificationLogRecord,
+  {
+    normalizedRecipient,
+    metadata: guardMetadata,
+  }: {
+    normalizedRecipient: string;
+    metadata: Record<string, unknown>;
+  },
+) {
+  const attemptedAt = new Date().toISOString();
+  const metadata = mergeMetadata(notification.metadata, guardMetadata, {
+    whatsapp_provider_attempted_at: attemptedAt,
+  });
+
+  const { error } = await supabase
+    .from("notification_logs")
+    .update({
+      recipient: normalizedRecipient,
+      metadata,
+    })
+    .eq("id", notification.id);
+
+  if (error) {
+    throw new Error(
+      `Failed to record WhatsApp provider attempt: ${error.message}`,
+    );
+  }
+
+  return {
+    ...notification,
+    recipient: normalizedRecipient,
+    metadata,
+  };
 }
 
 function toDispatchError(error: unknown) {
@@ -369,12 +413,28 @@ async function markNotificationFailed(
       Date.now() + (getRetryDelaySeconds(attemptNumber) * 1000),
     ).toISOString()
     : null;
+  const guardBlockReason =
+    typeof dispatchError.metadata?.whatsapp_guard_block_reason === "string"
+      ? dispatchError.metadata.whatsapp_guard_block_reason
+      : null;
 
-  const metadata = mergeMetadata(notification.metadata, {
-    last_dispatch_error: dispatchError.message,
-    last_dispatch_error_at: new Date().toISOString(),
-    last_dispatch_error_metadata: dispatchError.metadata || {},
-  });
+  const metadata = mergeMetadata(
+    notification.metadata,
+    guardBlockReason
+      ? {
+        whatsapp_guard_block_reason: guardBlockReason,
+        whatsapp_guard_blocked_at:
+          dispatchError.metadata?.whatsapp_guard_blocked_at ||
+          new Date().toISOString(),
+        whatsapp_guard_block_metadata: dispatchError.metadata || {},
+      }
+      : null,
+    {
+      last_dispatch_error: dispatchError.message,
+      last_dispatch_error_at: new Date().toISOString(),
+      last_dispatch_error_metadata: dispatchError.metadata || {},
+    },
+  );
 
   const { error: updateError } = await supabase
     .from("notification_logs")
@@ -408,6 +468,7 @@ async function markNotificationFailed(
 async function dispatchNotificationLog(
   supabase: any,
   notification: NotificationLogRecord,
+  runState: DispatchRunState,
 ) {
   const payload = coercePayloadSnapshot(notification.payload_snapshot);
   if (!payload) {
@@ -421,11 +482,45 @@ async function dispatchNotificationLog(
     return;
   }
 
-  const sender = getProviderSender(notification);
+  let dispatchNotification = notification;
+
+  if (notification.channel === "whatsapp") {
+    const guardResult = await checkWhatsAppDispatchGuard({
+      supabase,
+      notification,
+      payload,
+      eventType: notification.event_type,
+      runState: runState.whatsapp,
+    });
+
+    if (!guardResult.allowed) {
+      await markNotificationFailed(
+        supabase,
+        notification,
+        new ProviderDispatchError(
+          `WhatsApp dispatch blocked: ${guardResult.reason}`,
+          {
+            retryable: false,
+            metadata: guardResult.metadata,
+          },
+        ),
+      );
+      return;
+    }
+
+    dispatchNotification = await markWhatsAppProviderAttempt(
+      supabase,
+      notification,
+      guardResult,
+    );
+    runState.whatsapp.whatsappProviderAttempts += 1;
+  }
+
+  const sender = getProviderSender(dispatchNotification);
   if (!sender) {
     await markNotificationFailed(
       supabase,
-      notification,
+      dispatchNotification,
       new ProviderDispatchError("Notification provider is unavailable", {
         retryable: false,
       }),
@@ -435,14 +530,14 @@ async function dispatchNotificationLog(
 
   try {
     const result = await sender({
-      notification,
+      notification: dispatchNotification,
       payload,
-      eventType: notification.event_type,
+      eventType: dispatchNotification.event_type,
     });
 
-    await markNotificationSent(supabase, notification, result);
+    await markNotificationSent(supabase, dispatchNotification, result);
   } catch (error: unknown) {
-    await markNotificationFailed(supabase, notification, error);
+    await markNotificationFailed(supabase, dispatchNotification, error);
   }
 }
 
@@ -460,6 +555,11 @@ export async function dispatchPendingNotifications(
   },
 ) {
   let processed = 0;
+  const runState: DispatchRunState = {
+    whatsapp: {
+      whatsappProviderAttempts: 0,
+    },
+  };
 
   for (let batchIndex = 0; batchIndex < maxBatches; batchIndex += 1) {
     const { data, error } = await supabase.rpc("claim_notification_logs", {
@@ -477,7 +577,7 @@ export async function dispatchPendingNotifications(
     }
 
     for (const notification of notifications) {
-      await dispatchNotificationLog(supabase, notification);
+      await dispatchNotificationLog(supabase, notification, runState);
       processed += 1;
     }
 
@@ -503,10 +603,11 @@ export async function sendTransactionalNotifications({
   sourceEventId,
 }: NotificationContext) {
   const order = await fetchOrderForNotifications(supabase, orderId);
-  const resolvedCorrelationId =
-    correlationId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(correlationId)
-      ? correlationId
-      : crypto.randomUUID();
+  const resolvedCorrelationId = correlationId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        .test(correlationId)
+    ? correlationId
+    : crypto.randomUUID();
   const queuedRows = buildQueuedNotificationRows(
     order,
     eventType,
@@ -626,7 +727,9 @@ export async function applyWebhookStatusToNotification(
   const updates: Record<string, unknown> = {
     status,
     provider,
-    error_message: status === "failed" ? errorMessage || "Delivery failed" : null,
+    error_message: status === "failed"
+      ? errorMessage || "Delivery failed"
+      : null,
     metadata: mergedMetadata,
   };
 

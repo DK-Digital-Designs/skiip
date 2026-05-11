@@ -19,6 +19,7 @@ Do not commit real secrets. Use [`supabase/.env.functions.example`](../../supaba
 | Local operator scripts | `SUPABASE_URL` | Optional | Used by local scripts; set explicitly to avoid pointing at the wrong project. |
 | Local operator scripts | `VITE_SUPABASE_URL` | Legacy compatibility only | Some local scripts still accept this older name. |
 | Supabase functions | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Required for privileged writes, refunds, webhook processing, and admin flows. |
+| Supabase functions | `SKIIP_ENVIRONMENT` | Recommended | Set to `staging`, `production`, or the active environment name. WhatsApp live mode is treated as non-production unless this resolves to `production` or `prod`. |
 | Supabase functions | `STRIPE_SECRET_KEY` | Yes | Required anywhere checkout, onboarding, refunds, or webhooks run. |
 | Supabase functions | `STRIPE_WEBHOOK_SECRET` | Yes | Must come from the exact hosted Stripe webhook endpoint in use. |
 | Supabase functions | `ALLOWED_ORIGINS` | Yes in hosted envs | Should always be set explicitly in staging and production. |
@@ -29,12 +30,19 @@ Do not commit real secrets. Use [`supabase/.env.functions.example`](../../supaba
 | Supabase functions | `EMAIL_PROVIDER` | Optional | Defaults to `resend`. |
 | Supabase functions | `EMAIL_NOTIFICATION_EVENTS` | Optional | Defaults to all transactional events. |
 | Supabase functions | `TWILIO_ACCOUNT_SID` | Required for WhatsApp | Required for WhatsApp delivery via Twilio. |
-| Supabase functions | `TWILIO_AUTH_TOKEN` | Required for WhatsApp | Required for WhatsApp delivery and callback auth. |
+| Supabase functions | `TWILIO_AUTH_TOKEN` | Required unless API key auth is used | Twilio account auth token. Prefer API key auth for hosted environments when available. |
+| Supabase functions | `TWILIO_API_KEY_SID` | Optional | Twilio API Key SID beginning with `SK`. Used as the Basic Auth username when paired with `TWILIO_API_KEY_SECRET`. |
+| Supabase functions | `TWILIO_API_KEY_SECRET` | Optional | Twilio API Key secret. Used instead of `TWILIO_AUTH_TOKEN` when `TWILIO_API_KEY_SID` is set. |
 | Supabase functions | `TWILIO_WHATSAPP_FROM` | Required for WhatsApp | Twilio sender address for outbound WhatsApp, for example `whatsapp:+14155238886`. |
 | Supabase functions | `TWILIO_WHATSAPP_NUMBER` | Legacy compatibility only | Older alias accepted by code. Prefer `TWILIO_WHATSAPP_FROM`. |
 | Supabase functions | `TWILIO_WEBHOOK_TOKEN` | Recommended | Added to the status callback URL and checked by `whatsapp-status-webhook`. |
 | Supabase functions | `WHATSAPP_PROVIDER` | Optional | Defaults to `twilio`. |
 | Supabase functions | `WHATSAPP_NOTIFICATION_EVENTS` | Optional | Defaults to `order_ready`. |
+| Supabase functions | `WHATSAPP_SEND_MODE` | Yes for WhatsApp | Defaults to `disabled`. Use `allowlist` for staging smoke tests and `live` only after production sign-off. |
+| Supabase functions | `WHATSAPP_ALLOWED_RECIPIENTS` | Required for `allowlist` | Comma-separated E.164 numbers allowed to receive WhatsApp in `allowlist` mode. |
+| Supabase functions | `WHATSAPP_DAILY_SEND_LIMIT` | Recommended | Local safety cap for WhatsApp provider attempts per UTC day. Defaults to `10`. |
+| Supabase functions | `WHATSAPP_PER_DISPATCH_LIMIT` | Recommended | Local safety cap for WhatsApp provider attempts in one dispatch sweep. Defaults to `2`. |
+| Supabase functions | `WHATSAPP_ALLOW_LIVE_NON_PROD` | Optional | Defaults to `false`. Keep false unless intentionally testing unrestricted WhatsApp in a non-production environment. |
 | Supabase functions | `WHATSAPP_DEFAULT_COUNTRY_CODE` | Recommended | Defaults to `44`. |
 | Supabase functions | `TWILIO_TEMPLATE_ORDER_READY` | Required when WhatsApp is enabled | Template SID for the ready-for-pickup message. |
 | Supabase functions | `TWILIO_TEMPLATE_READY_FOR_COLLECTION` | Legacy compatibility only | Older alias accepted for `order_ready`. |

@@ -31,6 +31,15 @@ const mapStatus = (providerStatus: string | null) => {
   }
 };
 
+function formParamsToObject(params: URLSearchParams) {
+  const payload: Record<string, string> = {};
+  for (const [key, value] of params.entries()) {
+    payload[key] = value;
+  }
+
+  return payload;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -95,16 +104,53 @@ serve(async (req) => {
 
     const supabase = createServiceClient();
 
+    const { data: existingNotification, error: lookupError } = await supabase
+      .from("notification_logs")
+      .select("id")
+      .eq("message_sid", messageSid)
+      .eq("channel", "whatsapp")
+      .maybeSingle();
+
+    if (lookupError) {
+      throw new Error(
+        `Failed to look up WhatsApp notification log: ${lookupError.message}`,
+      );
+    }
+
+    const deliveryId = `${messageSid}:${providerStatus.toLowerCase()}`;
+    const { error: insertError } = await supabase
+      .from("notification_webhook_events")
+      .insert({
+        provider: "twilio",
+        delivery_id: deliveryId,
+        event_type: providerStatus,
+        notification_log_id: existingNotification?.id || null,
+        payload: formParamsToObject(params),
+      });
+
+    if (insertError) {
+      if (insertError.code === "23505") {
+        log.info("Duplicate Twilio WhatsApp webhook delivery ignored", {
+          deliveryId,
+          messageSid,
+          providerStatus,
+        });
+      } else {
+        throw new Error(
+          `Failed to persist WhatsApp webhook delivery: ${insertError.message}`,
+        );
+      }
+    }
+
     await applyWebhookStatusToNotification({
       supabase,
       channel: "whatsapp",
       messageSid,
       status,
       provider: "twilio",
-      errorMessage:
-        status === "failed"
-          ? errorMessage || "Unknown delivery failure"
-          : null,
+      errorMessage: status === "failed"
+        ? errorMessage || "Unknown delivery failure"
+        : null,
       metadata: {
         twilio_status: providerStatus,
         twilio_error_message: errorMessage,
@@ -120,13 +166,12 @@ serve(async (req) => {
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    log.error("Failed to process webhook", {
-      error: error.message,
-      stack: error.stack,
-    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    log.error("Failed to process webhook", { error: message, stack });
 
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
