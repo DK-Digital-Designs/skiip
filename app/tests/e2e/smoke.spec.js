@@ -8,14 +8,14 @@ const authScenarios = [
     emailEnv: 'PLAYWRIGHT_BUYER_EMAIL',
     passwordEnv: 'PLAYWRIGHT_BUYER_PASSWORD',
     expectedUrl: /#\/order(?:\?.*)?$/,
-    readyLocator: (page) => page.getByRole('heading', { name: /choose a vendor/i }),
+    readyLocator: (page) => page.getByRole('heading', { name: /choose your stall/i }),
   },
   {
     label: 'seller',
     emailEnv: 'PLAYWRIGHT_SELLER_EMAIL',
     passwordEnv: 'PLAYWRIGHT_SELLER_PASSWORD',
     expectedUrl: /#\/vendor\/dashboard$/,
-    readyLocator: (page) => page.getByText(/vendor dashboard/i),
+    readyLocator: (page) => page.getByText(/vendor portal/i),
   },
   {
     label: 'admin',
@@ -55,7 +55,7 @@ test.describe('public smoke', () => {
 
   test('buyer entry point renders the vendor chooser', async ({ page }) => {
     await page.goto(appPath('/order'));
-    await expect(page.getByRole('heading', { name: /choose a vendor/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /choose your stall/i })).toBeVisible();
   });
 
   test('protected routes redirect unauthenticated users to login', async ({ page }) => {

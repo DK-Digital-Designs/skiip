@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../ui/Toast';
+import Icon from '../ui/Icon';
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = {
@@ -11,16 +13,17 @@ const ALLOWED_IMAGE_TYPES = {
 export default function ProductImageUpload({ onUpload, currentImageUrl, storeId }) {
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(currentImageUrl);
+    const { addToast } = useToast();
 
-    async function handleUpload(e) {
+    async function handleUpload(event) {
         try {
             setUploading(true);
 
-            if (!e.target.files || e.target.files.length === 0) {
+            if (!event.target.files || event.target.files.length === 0) {
                 throw new Error('You must select an image to upload.');
             }
 
-            const file = e.target.files[0];
+            const file = event.target.files[0];
             const fileExt = ALLOWED_IMAGE_TYPES[file.type];
 
             if (!fileExt) {
@@ -37,23 +40,21 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
 
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
             const filePath = `products/${storeId}/${fileName}`;
-
-            // Upload the file to Supabase Storage
             const { error: uploadError } = await supabase.storage
                 .from('product-images')
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
-            // Get the public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('product-images')
                 .getPublicUrl(filePath);
 
             setPreview(publicUrl);
             onUpload(publicUrl);
+            addToast('Product image uploaded.', 'success');
         } catch (error) {
-            alert(error.message);
+            addToast(error.message, 'error');
         } finally {
             setUploading(false);
         }
@@ -61,23 +62,24 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
 
     return (
         <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px' }}>Product Image</label>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <label htmlFor="product-image-input">Product image</label>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '8px',
-                    background: 'var(--stroke)',
+                    width: '104px',
+                    height: '104px',
+                    borderRadius: '22px',
+                    background: 'var(--surface-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     overflow: 'hidden',
-                    border: '1px solid var(--stroke)'
+                    border: '1px solid var(--stroke)',
+                    color: 'var(--ink)',
                 }}>
                     {preview ? (
                         <img src={preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                        <span style={{ fontSize: '24px' }}>🖼️</span>
+                        <Icon name="bag" size={28} />
                     )}
                 </div>
                 <div>
@@ -92,11 +94,11 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
                     <label
                         htmlFor="product-image-input"
                         className="btn btn-ghost"
-                        style={{ cursor: 'pointer', marginBottom: '4px', display: 'inline-block' }}
+                        style={{ cursor: 'pointer', marginBottom: '6px' }}
                     >
-                        {uploading ? 'Uploading...' : 'Upload Image'}
+                        {uploading ? 'Uploading...' : 'Upload image'}
                     </label>
-                    <p className="text-muted" style={{ fontSize: '12px' }}>PNG, JPG up to 5MB</p>
+                    <p className="text-muted" style={{ fontSize: '12px' }}>PNG, JPG, or WebP up to 5MB.</p>
                 </div>
             </div>
         </div>

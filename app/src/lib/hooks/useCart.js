@@ -10,14 +10,8 @@ export const useCart = create(
             addItem: (product) => {
                 const { items, vendorId } = get();
 
-                // Check if adding item from different vendor
                 if (vendorId && vendorId !== product.store_id) {
-                    if (!window.confirm('Adding items from a different vendor will clear your current cart. Continue?')) {
-                        return;
-                    }
-                    // Clear cart if switching vendors
-                    set({ items: [{ ...product, quantity: 1 }], vendorId: product.store_id });
-                    return;
+                    return false;
                 }
 
                 const existingItem = items.find((item) => item.id === product.id);
@@ -34,6 +28,7 @@ export const useCart = create(
                 } else {
                     set({ items: [...items, { ...product, quantity: 1 }], vendorId: product.store_id });
                 }
+                return true;
             },
 
             removeItem: (productId) => {

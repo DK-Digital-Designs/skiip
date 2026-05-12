@@ -15,7 +15,6 @@ export default function LoadingSkeleton({ width = '100%', height = '20px', borde
                 width,
                 height,
                 borderRadius,
-                background: 'rgba(255, 255, 255, 0.05)',
                 ...style
             }}
         />

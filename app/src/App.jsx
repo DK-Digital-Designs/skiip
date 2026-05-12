@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Page imports
 import LandingPage from './pages/LandingPage';
@@ -25,9 +25,12 @@ import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
+    const location = useLocation();
+    const isBuyerFlow = location.pathname.startsWith('/order');
+
     return (
         <>
-            <GlobalHeader />
+            {!isBuyerFlow && <GlobalHeader />}
             <Routes>
                 {/* Landing Page */}
                 <Route path="/" element={<LandingPage />} />
