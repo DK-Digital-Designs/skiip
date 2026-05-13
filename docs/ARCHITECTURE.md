@@ -2,16 +2,15 @@
 
 ## Overview
 
-SKIIP is a monorepo with three distinct surfaces:
+SKIIP is a monorepo with two active surfaces:
 
 - [`app`](../app): the product application for buyers, sellers, and admins
 - [`supabase`](../supabase): Postgres schema and migrations, RLS, auth integration, and edge functions
-- [`site`](../site): a separate static marketing site
 
 Current deployment split:
 
-- the product app is built from `app/` and deployed separately from the site
-- the marketing site is published from `site/` to GitHub Pages
+- the product app is built from `app/`
+- the marketing site is maintained outside this repository in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
 - Supabase is the system of record for auth, data, realtime, and server-side business logic
 
 ## Frontend
@@ -168,8 +167,18 @@ Current runtime flow:
 
 1. Business mutation succeeds first.
 2. Shared notification helpers queue rows into `notification_logs`.
-3. Background dispatch runs through edge-runtime `waitUntil()` and sends through the configured provider adapter.
-4. Provider webhooks update delivery state back onto the same notification rows.
+3. Background dispatch runs through edge-runtime `waitUntil()`.
+4. WhatsApp rows pass through the shared cost/eligibility guard before Twilio can be called.
+5. Provider adapters send allowed messages and record provider attempt metadata.
+6. Provider webhooks update delivery state back onto the same notification rows.
+
+WhatsApp guard behavior:
+
+- default mode is `WHATSAPP_SEND_MODE=disabled`
+- staging verification should use `allowlist` mode with E.164 test recipients
+- `live` mode is blocked outside production unless `WHATSAPP_ALLOW_LIVE_NON_PROD=true`
+- daily and per-dispatch caps are enforced locally before Twilio API calls
+- duplicate WhatsApp provider attempts are blocked per `(order_id, event_type, recipient)`
 
 Important current limitations:
 
@@ -251,13 +260,10 @@ Also note:
 
 ## Marketing Site
 
-The `site/` directory is not the product app. It is a separate static marketing site.
+The marketing site is no longer part of this repository.
 
-Current reality for the marketing site:
+Current reality:
 
-- it is deployed independently from the product app
-- waitlist and contact forms open email drafts for launch rather than writing browser-only leads
-- [`analytics.js`](../site/assets/js/analytics.js) is a stub, not a live analytics integration
-- several links and claims remain marketing/demo oriented and should not be treated as operational product behavior
-
-That means the marketing site is currently presentation-only, not an operational source of leads, support tickets, or runtime product truth.
+- the product app in this repo remains the operational source of truth
+- the marketing surface now lives in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)
+- marketing content, lead capture, analytics, and deployment behavior for that surface should be maintained in that external repo

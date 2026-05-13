@@ -60,12 +60,6 @@ These items most directly affect launch safety, payment correctness, security, a
 - Add a repeatable local reset/seed baseline that actually works with the checked-in repo state.
 - Ensure shared test sellers used for payment-path testing are Stripe-onboarded in the relevant environments.
 
-### Product and Operations Gaps
-
-- Fix the static marketing site's operational drift:
-  - broken or stale links
-  - placeholder contact details
-
 ## Priority 2: Next
 
 These items matter, but they do not block a safe first launch if Priority 1 is complete.
@@ -110,7 +104,6 @@ These are worthwhile improvements, but they should not distract from launch safe
 - Better mobile-first polish for high-traffic buyer flows.
 - Improved loading, empty, and error states throughout the app.
 - Accessibility pass across forms, dashboards, and order tracking.
-- Cleanup and redesign of the static marketing site.
 
 ### Product Expansion
 

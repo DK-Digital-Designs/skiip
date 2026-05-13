@@ -200,6 +200,76 @@ async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event
 
   const paymentIntent = await retrievePaymentIntentWithCharge(stripe, paymentIntentId)
   const reconciliation = buildPaymentReconciliation(paymentIntent, Number(order.total || 0))
+
+  if (order.status === 'cancelled') {
+    log.warn('Checkout completed after order was cancelled; refunding payment', {
+      orderId,
+      eventId: event.id,
+      paymentIntentId: reconciliation.paymentIntentId,
+    })
+
+    const refund = await stripe.refunds.create(
+      {
+        payment_intent: reconciliation.paymentIntentId,
+        reason: 'requested_by_customer',
+        metadata: {
+          order_id: orderId,
+          auto_refund_reason: 'completed_after_order_cancelled',
+        },
+      },
+      {
+        idempotencyKey: `cancelled-order-auto-refund-${orderId}-${reconciliation.paymentIntentId}`,
+      },
+    )
+
+    const { error: refundUpdateError } = await supabase
+      .from('orders')
+      .update({
+        status: 'refunded',
+        payment_status: 'refunded',
+        payment_intent_id: reconciliation.paymentIntentId,
+        charge_id: reconciliation.chargeId,
+        refund_id: refund.id,
+        refund_amount: Number(order.total || 0),
+        refund_reason: 'Automatic refund: payment completed after order was cancelled',
+        refunded_at: new Date().toISOString(),
+      })
+      .eq('id', orderId)
+
+    if (refundUpdateError) {
+      throw refundUpdateError
+    }
+
+    await runBestEffort('Cancelled-order refund audit log', () => recordAuditLog(supabase, {
+      event_type: 'order_refunded',
+      entity_type: 'order',
+      entity_id: orderId,
+      actor_role: 'system',
+      payload: {
+        reason: 'completed_after_order_cancelled',
+        refund_id: refund.id,
+        stripe_event_id: event.id,
+      },
+    }))
+
+    await sendTransactionalNotificationsBestEffort({
+      supabase,
+      orderId,
+      eventType: 'order_refunded',
+      sourceEventId: event.id,
+      functionName: 'stripe-webhook',
+      operation: 'completed_after_order_cancelled_auto_refund',
+      metadata: {
+        stripeEventId: event.id,
+        stripeEventType: event.type,
+        refundId: refund.id,
+        paymentIntentId: reconciliation.paymentIntentId,
+      },
+    })
+
+    return
+  }
+
   const paidOrderUpdates = {
     ...buildPaidOrderUpdates(reconciliation),
     paid_at: order.paid_at || reconciliation.paidAt,

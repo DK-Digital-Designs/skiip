@@ -72,6 +72,7 @@ CREATE TABLE public.stores (
     slug TEXT UNIQUE NOT NULL,
     description TEXT,
     logo_url TEXT,
+    tags TEXT [] DEFAULT '{}'::TEXT[],
     pickup_location TEXT,
     status TEXT CHECK (
         status IN (
@@ -103,6 +104,52 @@ FOR UPDATE
 CREATE POLICY "Sellers can insert own store" ON public.stores FOR INSERT
 WITH
     CHECK (auth.uid () = user_id);
+
+CREATE INDEX idx_stores_tags_gin ON public.stores USING GIN (tags);
+
+-- APP SETTINGS
+CREATE TABLE public.app_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Launch event settings are public" ON public.app_settings FOR
+SELECT USING (key = 'launch_event');
+
+CREATE POLICY "Admins can manage app settings" ON public.app_settings FOR ALL
+USING (
+    EXISTS (
+        SELECT 1
+        FROM public.user_profiles
+        WHERE id = auth.uid()
+          AND role = 'admin'
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1
+        FROM public.user_profiles
+        WHERE id = auth.uid()
+          AND role = 'admin'
+    )
+);
+
+INSERT INTO public.app_settings (key, value)
+VALUES (
+    'launch_event',
+    '{
+        "label": "Live now",
+        "title": "Summer Beats 2026",
+        "subtitle": "Skip the lines, enjoy the vibes. Browse vendors and order ahead from your phone.",
+        "landingTitle": "Order ahead at Summer Beats",
+        "landingSubtitle": "Find the right stall, pay in seconds, and collect when your order is ready."
+    }'::JSONB
+)
+ON CONFLICT (key) DO NOTHING;
 
 -- PRODUCTS
 CREATE TABLE public.products (

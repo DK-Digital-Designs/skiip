@@ -5,18 +5,14 @@ import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
+import {
+  getAllowedOrderTransitions,
+  isBuyerOwnedUnpaidCancellation,
+  isIdempotentUnpaidCancellation,
+  isPendingUnpaidCancellation,
+} from "../_shared/order-transitions.ts"
 
 const log = logger('order-transition')
-
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: [],
-  paid: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
-  ready: ['collected', 'cancelled'],
-  collected: [],
-  cancelled: [],
-  refunded: [],
-}
 
 const EVENT_MAP: Record<string, 'order_preparing' | 'order_ready' | 'order_cancelled' | undefined> = {
   preparing: 'order_preparing',
@@ -57,7 +53,7 @@ serve(async (req: Request) => {
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, store_id, status, payment_status, inventory_committed_at, inventory_restocked_at')
+      .select('id, user_id, store_id, status, payment_status, inventory_committed_at, inventory_restocked_at')
       .eq('id', body.orderId)
       .single()
 
@@ -65,7 +61,11 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order not found' }, 404, origin)
     }
 
-    if (user.role !== 'admin') {
+    const isUnpaidPendingCancellation = isPendingUnpaidCancellation(order, body.status)
+    const isIdempotentCancellation = isIdempotentUnpaidCancellation(order, body.status)
+    const isBuyerOwnedCancellation = isBuyerOwnedUnpaidCancellation(order, body.status, user.id)
+
+    if (user.role !== 'admin' && !isBuyerOwnedCancellation) {
       const { data: store, error: storeError } = await supabase
         .from('stores')
         .select('id')
@@ -82,10 +82,26 @@ serve(async (req: Request) => {
       }
     }
 
-    const allowedNextStatuses = ALLOWED_TRANSITIONS[order.status] || []
+    if (isIdempotentCancellation) {
+      return jsonResponse(
+        { order: { id: order.id, status: order.status } },
+        200,
+        origin,
+      )
+    }
+
+    const allowedNextStatuses = getAllowedOrderTransitions(order.status)
     if (!allowedNextStatuses.includes(body.status)) {
       return jsonResponse(
         { error: `Invalid status transition: ${order.status} -> ${body.status}` },
+        409,
+        origin,
+      )
+    }
+
+    if (order.status === 'pending' && body.status === 'cancelled' && !isUnpaidPendingCancellation) {
+      return jsonResponse(
+        { error: 'Only unpaid pending orders can be cancelled through this path' },
         409,
         origin,
       )
@@ -107,11 +123,13 @@ serve(async (req: Request) => {
       .from('orders')
       .update(updates)
       .eq('id', order.id)
+      .eq('status', order.status)
+      .eq('payment_status', order.payment_status)
       .select('id, status')
-      .single()
+      .maybeSingle()
 
     if (updateError || !updatedOrder) {
-      throw updateError || new Error('Failed to update order')
+      throw updateError || new Error('Order state changed before transition could be applied')
     }
 
     await supabase.from('audit_logs').insert({

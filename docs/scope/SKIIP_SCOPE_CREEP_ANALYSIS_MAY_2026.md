@@ -38,7 +38,7 @@ This is a factual scope analysis, not legal advice.
 | `app/src/App.jsx` | Current routed app surfaces. |
 | `app/package.json` | Current frontend stack and test scripts. |
 | `supabase/functions/` and `supabase/migrations/` | Backend functions, schema evolution, and hardening evidence. |
-| `site/` | Separate static marketing surface. |
+| External marketing repo | Separate marketing surface maintained outside this repository. |
 
 ## Original Scope Baseline
 
@@ -98,7 +98,7 @@ As of this review, the product is best described as a strong closed-pilot MVP / 
 Current implemented surfaces include:
 
 - Product app in `app/`, built with React 19, Vite 7, React Router, Supabase JS, TanStack Query, and Zustand.
-- Separate static marketing site in `site/`.
+- Separate marketing site maintained outside this repository.
 - Supabase backend with 24 timestamped migrations.
 - 12 deployable edge-function directories plus shared backend helpers.
 - Buyer routes for signup/login, vendor browsing, menu, cart/checkout, order tracking, and profile/history.
@@ -130,8 +130,8 @@ This goes beyond a simple frontend/admin build because the money path now has se
 | Auth and access control | Role-based auth for admins/vendors; standard security practices. Revised adds role-based access control and Supabase Auth. | Supabase Auth, user profile reconciliation, ProtectedRoute, launch RLS matrix, manual bearer validation in protected edge functions, 401/403 behavior documented. | Expanded | This is more robust than basic login pages. Final auth posture still requires launch sign-off. |
 | Backend/database | Structured database for customers, vendors, menus, orders/status. | 24 migrations, RLS, RPCs, audit logs, payment/event logs, notification outbox tables, Stripe processed events, storage policies. | Major expansion | Backend has become an operational platform foundation rather than a basic database. |
 | QA/testing | Functional testing, responsiveness, performance, basic security checks. | 35 unit tests passed in this review. Docs record previous build/lint/e2e passing, with authenticated e2e skipped without credentials. | Partially delivered | Live provider, Stripe payout, RLS, full auth e2e, and payment-path rehearsals still need completion before launch-ready status. |
-| SEO/accessibility/performance | Foundational SEO, WCAG-aligned basics, optimization. | Static site and app exist, but current repo docs treat marketing site as presentation-only and operationally drifting. Accessibility/performance are not evidenced as complete launch checks. | Partial / unclear | This should not be oversold as fully complete without a separate audit. |
-| Marketing site/content | Original scope references content and SEO, not a separate full marketing surface. | Separate static marketing site with multiple pages and email-draft contact/waitlist behavior. | Additional surface | Useful, but not an operational lead-capture system. |
+| SEO/accessibility/performance | Foundational SEO, WCAG-aligned basics, optimization. | Product app and separate marketing surface exist, but accessibility/performance are not evidenced as complete launch checks. | Partial / unclear | This should not be oversold as fully complete without a separate audit. |
+| Marketing site/content | Original scope references content and SEO, not a separate full marketing surface. | Separate marketing site maintained in an external repo. | Additional surface | Useful, but not an operational lead-capture system. |
 | Documentation/handover | Revised agreement asks for technical documentation, deployment/setup instructions, and training materials. | Extensive docs source of truth: architecture, current state, roadmap, deployment, secrets, launch checklist, operations, notifications, testing data, delivery workflow, release docs. | Expanded | Documentation is materially stronger than a minimal handover pack. |
 | Event management | Original mentions event organisers; revised explicitly includes event creation/configuration. | Event management is deferred; admin event page is not routed for launch. | Not delivered / future scope | Should be treated as separate phase unless re-scoped. |
 | QR collection | Revised agreement includes QR generation and validation/scanning. | No active QR generation or scanning evidence found in app/functions/migrations. | Not delivered / future scope | This should be clearly excluded from current acceptance unless separately implemented. |
@@ -150,7 +150,7 @@ This goes beyond a simple frontend/admin build because the money path now has se
 | Admin-created vendor operations | Admin vendor creation, role promotion, activation/suspension/archive, and audit records exceed basic vendor management. | `admin-store`, `AdminVendors.jsx`, `20260428000003_admin_vendor_operations.sql`. |
 | Product image storage hardening | Revised scope mentions images, but storage bucket policy repair and MIME/size controls are additional backend/storage work. | `20260504120822_repair_product_images_storage_policies.sql`, `ProductImageUpload.jsx`. |
 | Delivery and release governance | GitHub workflow, release rules, launch runbooks, docs audit, progress logs, and issue tracking are beyond a normal MVP build. | `docs/delivery/*`, `docs/launch/*`, `PROGRESS-2.md`. |
-| Separate marketing site | Multiple static pages, pricing/contact/vendor/organiser pages, and GitHub Pages deployment are a separate surface. | `site/`. |
+| Separate marketing site | Marketing ownership now sits outside this repository. | [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing). |
 
 ## Revised-Scope Items Still Missing or Deferred
 
@@ -196,7 +196,7 @@ Remaining launch gates include:
 - provider setup and verification for notifications
 - notification retry/backlog process decision
 - authenticated Playwright smoke tests with stable role credentials
-- marketing site drift decision if the static site is part of launch
+- marketing-site ownership decision if the external marketing repo is part of launch
 - event support and escalation process confirmation
 
 ## Commercial Interpretation

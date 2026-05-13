@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Page imports
 import LandingPage from './pages/LandingPage';
@@ -14,6 +14,7 @@ import UnifiedSignup from './pages/shared/Signup';
 
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
+import VendorProfile from './pages/vendor/Profile';
 
 import AdminDashboard from './pages/admin/DashboardV2';
 import AdminVendors from './pages/admin/Vendors';
@@ -25,9 +26,12 @@ import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
 
 function App() {
+    const location = useLocation();
+    const isBuyerFlow = location.pathname.startsWith('/order');
+
     return (
         <>
-            <GlobalHeader />
+            {!isBuyerFlow && <GlobalHeader />}
             <Routes>
                 {/* Landing Page */}
                 <Route path="/" element={<LandingPage />} />
@@ -62,6 +66,14 @@ function App() {
                     element={
                         <ProtectedRoute roles={['seller']}>
                             <VendorProducts />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendor/profile"
+                    element={
+                        <ProtectedRoute roles={['seller']}>
+                            <VendorProfile />
                         </ProtectedRoute>
                     }
                 />

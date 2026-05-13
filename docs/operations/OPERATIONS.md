@@ -240,9 +240,9 @@ Important test-fixture note:
 
 ## Marketing Site Operational Note
 
-The static marketing site is not part of day-to-day order operations.
+The marketing site is not part of day-to-day order operations in this repository.
 
 Current reality:
 
-- contact and waitlist forms open an email draft for launch
-- do not rely on browser localStorage for operational lead intake or support workflow
+- the product app in this repo is the operational surface
+- any marketing lead capture or contact flow belongs in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing)

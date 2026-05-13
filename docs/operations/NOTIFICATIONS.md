@@ -26,12 +26,65 @@ Config levers:
 - `EMAIL_NOTIFICATION_EVENTS`
 - `WHATSAPP_PROVIDER`
 - `WHATSAPP_NOTIFICATION_EVENTS`
+- `WHATSAPP_SEND_MODE`
+- `WHATSAPP_ALLOWED_RECIPIENTS`
+- `WHATSAPP_DAILY_SEND_LIMIT`
+- `WHATSAPP_PER_DISPATCH_LIMIT`
+- `WHATSAPP_ALLOW_LIVE_NON_PROD`
 
 Current non-scope:
 
 - there is no active SMS sender path even though `sms` exists in shared notification types and database constraints
 
 Do not widen WhatsApp scope casually. The current launch-safe default is intentionally narrow.
+
+## WhatsApp Cost Gate
+
+WhatsApp has one authoritative guard before Twilio can be called.
+
+Guard stages:
+
+1. Eligibility: event must be enabled, event must be `order_ready`, buyer must have opted in, and the recipient phone must normalize to E.164.
+2. Mode: `disabled` blocks all sends, `allowlist` permits only configured test numbers, and `live` permits opted-in traffic.
+3. Limits: non-production live mode, daily cap, per-dispatch cap, and duplicate logical sends are checked before provider dispatch.
+
+Required safety defaults:
+
+- `WHATSAPP_SEND_MODE=disabled` until testing starts
+- staging smoke tests use `WHATSAPP_SEND_MODE=allowlist`
+- `WHATSAPP_ALLOWED_RECIPIENTS` must contain normalized E.164 numbers only, for example `+447123456789`
+- `WHATSAPP_DAILY_SEND_LIMIT` defaults to `10`
+- `WHATSAPP_PER_DISPATCH_LIMIT` defaults to `2`
+- `WHATSAPP_ALLOW_LIVE_NON_PROD=false`
+
+`live` mode is treated as production-only. In staging, preview, local, or any environment without `SKIIP_ENVIRONMENT=production` or `prod`, `live` is blocked unless `WHATSAPP_ALLOW_LIVE_NON_PROD=true`.
+
+Guard blocks are terminal local failures. They do not call Twilio, do not record a message SID, and do not schedule another retry. Operators should inspect `notification_logs.metadata.whatsapp_guard_block_reason`.
+
+Guard reason codes:
+
+- `guard_disabled`
+- `guard_not_allowlisted`
+- `guard_daily_cap_reached`
+- `guard_dispatch_cap_reached`
+- `guard_duplicate_logical_event`
+- `guard_ineligible_event`
+- `guard_missing_opt_in`
+- `guard_invalid_recipient`
+- `guard_live_blocked_non_prod`
+
+Provider attempt counting:
+
+- `whatsapp_provider_attempted_at` is written immediately before Twilio is called
+- daily caps count attempted WhatsApp provider rows for the current UTC day
+- per-dispatch caps count attempted WhatsApp provider rows in one dispatch sweep
+- duplicate protection blocks a later provider attempt for the same `(order_id, event_type, recipient)`
+
+Operator requeue:
+
+- do not manually requeue WhatsApp rows unless the Twilio dashboard and `notification_logs` show that no chargeable provider attempt should be retried
+- if a deliberate reattempt is approved, record operator evidence in metadata using `whatsapp_operator_requeue_approved=true` or `whatsapp_operator_requeue_approved_at`
+- keep the daily cap low while requeueing so a bad retry cannot drain credit
 
 ## Notification Architecture
 
@@ -101,8 +154,12 @@ Create and configure:
 4. Create a webhook pointing to:
 
 ```text
-https://<project-ref>.supabase.co/functions/v1/resend-email-webhook
+https://jmqjuvfjthwbsbelgccs.supabase.co/functions/v1/resend-email-webhook
 ```
+
+Current hosted project reference for this environment:
+
+- `jmqjuvfjthwbsbelgccs`
 
 5. Subscribe the webhook to at least:
 
@@ -149,10 +206,14 @@ Backward-compatible aliases still accepted by code:
 Values still needed from you:
 
 - `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
+- `TWILIO_AUTH_TOKEN`, or the preferred `TWILIO_API_KEY_SID` plus `TWILIO_API_KEY_SECRET`
 - `TWILIO_WHATSAPP_FROM`
 - `TWILIO_WEBHOOK_TOKEN` if callback protection should be enabled
 - `WHATSAPP_DEFAULT_COUNTRY_CODE` if the default should not remain `44`
+- `WHATSAPP_SEND_MODE`, initially `allowlist` for staging testing
+- `WHATSAPP_ALLOWED_RECIPIENTS`, using E.164 test numbers only
+- `WHATSAPP_DAILY_SEND_LIMIT`, recommended `3` for staging smoke tests
+- `WHATSAPP_PER_DISPATCH_LIMIT`, recommended `1` for staging smoke tests
 - the enabled Twilio template SIDs
 
 ## Secrets To Provide Back
@@ -176,9 +237,16 @@ Twilio:
 
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
+- `TWILIO_API_KEY_SID`
+- `TWILIO_API_KEY_SECRET`
 - `TWILIO_WHATSAPP_FROM`
 - `TWILIO_WEBHOOK_TOKEN`
 - `WHATSAPP_DEFAULT_COUNTRY_CODE`
+- `WHATSAPP_SEND_MODE`
+- `WHATSAPP_ALLOWED_RECIPIENTS`
+- `WHATSAPP_DAILY_SEND_LIMIT`
+- `WHATSAPP_PER_DISPATCH_LIMIT`
+- `WHATSAPP_ALLOW_LIVE_NON_PROD`
 - relevant `TWILIO_TEMPLATE_*` values
 
 Outbox / dispatch:
@@ -201,16 +269,21 @@ After the real provider values exist:
 
 Run this after the real provider setup is complete:
 
-1. Place a test order without WhatsApp opt-in.
-2. Confirm checkout succeeds and the order still progresses normally.
-3. Confirm email notifications are queued and delivered for the applicable event.
-4. Place a second test order with WhatsApp opt-in and a valid number.
-5. Move that order to `ready`.
-6. Confirm Twilio sends the WhatsApp message.
-7. Confirm Twilio delivery callbacks update `notification_logs`.
-8. Confirm Resend webhook events update `notification_logs`.
-9. Confirm failed sends, if forced, record `failed_at`, error message, and retry metadata.
-10. If retry sweeps are part of the environment, trigger `notification-dispatch` and confirm backlog rows are reclaimed correctly.
+1. Set staging to `WHATSAPP_SEND_MODE=allowlist`.
+2. Set `WHATSAPP_ALLOWED_RECIPIENTS` to the operator test numbers in E.164 format.
+3. Set `WHATSAPP_DAILY_SEND_LIMIT=3` and `WHATSAPP_PER_DISPATCH_LIMIT=1`.
+4. Place a test order without WhatsApp opt-in.
+5. Confirm checkout succeeds and the order still progresses normally.
+6. Confirm email notifications are queued and delivered for the applicable event.
+7. Place a second test order with WhatsApp opt-in and an allow-listed number.
+8. Move that order to `ready`.
+9. Confirm Twilio sends one WhatsApp message and the row records `whatsapp_provider_attempted_at`.
+10. Confirm Twilio delivery callbacks update `notification_logs`.
+11. Confirm Twilio and Resend webhook events are persisted in `notification_webhook_events`.
+12. Place a third test order with WhatsApp opt-in and a non-allow-listed number.
+13. Confirm no Twilio message SID is recorded and metadata contains `guard_not_allowlisted`.
+14. Lower `WHATSAPP_DAILY_SEND_LIMIT=1`, run a second eligible same-day send, and confirm metadata contains `guard_daily_cap_reached`.
+15. If retry sweeps are part of the environment, trigger `notification-dispatch` and confirm backlog rows are reclaimed correctly without exceeding the configured WhatsApp caps.
 
 ## Forced Queue Failure Check
 

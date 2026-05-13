@@ -23,6 +23,12 @@ export function ToastContainer() {
 
     if (toasts.length === 0) return null;
 
+    const tone = {
+        error: { background: 'var(--red)', color: '#fff' },
+        success: { background: 'var(--green)', color: '#fff' },
+        info: { background: 'var(--ink)', color: '#fff' },
+    };
+
     return (
         <div style={{
             position: 'fixed',
@@ -31,14 +37,15 @@ export function ToastContainer() {
             zIndex: 9999,
             display: 'grid',
             gap: '12px',
-            maxWidth: '320px'
+            width: 'min(calc(100vw - 32px), 360px)'
         }}>
             {toasts.map((toast) => (
-                <div key={toast.id} className="card" style={{
-                    padding: '12px 16px',
-                    background: toast.type === 'error' ? '#ef4444' : 'var(--card)',
-                    color: toast.type === 'error' ? 'white' : 'var(--text)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                <div key={toast.id} style={{
+                    padding: '14px 16px',
+                    borderRadius: '18px',
+                    background: tone[toast.type]?.background || tone.info.background,
+                    color: tone[toast.type]?.color || tone.info.color,
+                    boxShadow: 'var(--shadow)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -58,7 +65,7 @@ export function ToastContainer() {
             ))}
             <style>{`
                 @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
+                    from { transform: translateY(14px); opacity: 0; }
                     to { transform: translateX(0); opacity: 1; }
                 }
             `}</style>

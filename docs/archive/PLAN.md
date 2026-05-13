@@ -21,7 +21,7 @@
   - #22: buyer signup should match disabled email confirmations; vendor self-signup should be hidden because launch vendor onboarding is admin-created.
   - #23: move admin-created vendor/store operations behind audited server-side operations, at minimum create/update/suspend.
   - #25: hide `/admin/events` from normal admin navigation.
-  - #26: retire or disable localStorage-only marketing capture for launch.
+  - #26: move marketing capture ownership to the external marketing repo and remove it from this repository.
   - #27: verify `product-images` setup if vendors will upload product images before Launch 1.
   - #28: use only as a follow-up audit unless it reveals a concrete launch blocker.
 

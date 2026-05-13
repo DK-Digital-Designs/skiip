@@ -2,41 +2,39 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { AuthService } from '../../lib/services/auth.service';
+import SkiipLogo from '../ui/SkiipLogo';
 
-export default function AttendeeHeader({ backTo, backLabel = '← Back' }) {
+export default function AttendeeHeader({ backTo, backLabel = 'Back' }) {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const handleSignOut = async () => {
+    async function handleSignOut() {
         await AuthService.signOut();
         navigate('/');
-    };
+    }
 
     return (
-        <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
-            <div className="container flex justify-between items-center">
+        <header className="app-header" style={{ marginBottom: 0 }}>
+            <div className="container app-header__inner">
                 {backTo ? (
-                    <Link to={backTo} style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)', textDecoration: 'none' }}>
+                    <Link to={backTo} className="btn btn-ghost" style={{ minHeight: '38px' }}>
                         {backLabel}
                     </Link>
                 ) : (
-                    <Link to="/" className="text-accent" style={{ fontSize: '24px', fontWeight: '800', textDecoration: 'none' }}>
-                        SKIIP
-                    </Link>
+                    <SkiipLogo />
                 )}
-
-                <div className="flex gap-16 items-center">
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     {user ? (
                         <>
-                            <Link to="/order/profile" className="text-muted" style={{ fontSize: '14px', textDecoration: 'none' }}>
-                                My Profile
+                            <Link to="/order/profile" className="btn btn-ghost" style={{ minHeight: '38px' }}>
+                                My Orders
                             </Link>
-                            <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                            <button type="button" onClick={handleSignOut} className="btn btn-ghost" style={{ minHeight: '38px' }}>
                                 Sign Out
                             </button>
                         </>
                     ) : (
-                        <Link to="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                        <Link to="/login" className="btn btn-purple" style={{ minHeight: '38px' }}>
                             Sign In
                         </Link>
                     )}

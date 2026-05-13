@@ -17,7 +17,7 @@ export function calculateOrderSummary(items, tipAmount = 0) {
 
 export function getAllowedOrderTransitions(status) {
   const transitions = {
-    pending: [],
+    pending: ['cancelled'],
     paid: ['preparing', 'cancelled'],
     preparing: ['ready', 'cancelled'],
     ready: ['collected', 'cancelled'],
@@ -27,6 +27,21 @@ export function getAllowedOrderTransitions(status) {
   };
 
   return transitions[status] || [];
+}
+
+export function isUnpaidPendingOrder(order) {
+  return (
+    order?.status === 'pending'
+    && ['pending', 'failed'].includes(order?.payment_status || 'pending')
+  );
+}
+
+export function canContinuePendingPayment(order) {
+  return isUnpaidPendingOrder(order);
+}
+
+export function canCancelUnpaidOrder(order) {
+  return isUnpaidPendingOrder(order);
 }
 
 export const VENDOR_ORDER_LANE_DEFINITIONS = [
@@ -189,6 +204,32 @@ export function getVendorOrderActionHint(order) {
   }
 
   return 'Review order state before taking action.';
+}
+
+export function getBuyerOrderStatusLabel(order) {
+  if (isUnpaidPendingOrder(order)) {
+    return order?.payment_status === 'failed' ? 'Payment failed' : 'Payment pending';
+  }
+
+  return getOrderStatusLabel(order);
+}
+
+export function getBuyerOrderStatusDescription(order) {
+  if (isUnpaidPendingOrder(order)) {
+    return order?.payment_status === 'failed'
+      ? 'Payment did not complete. You can try again or cancel this order.'
+      : 'Your order is waiting for payment. The vendor will not start preparing it yet.';
+  }
+
+  if (order?.status === 'paid') {
+    return 'Payment is complete. The vendor can start preparing your order.';
+  }
+
+  if (order?.status === 'cancelled') {
+    return 'This order has been cancelled.';
+  }
+
+  return null;
 }
 
 export function isRefundableOrder(order) {
