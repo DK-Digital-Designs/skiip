@@ -17,10 +17,94 @@ if (!supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
-async function createAccount(email, password, role, fullName) {
-  console.log(`Creating ${role} account: ${email}...`);
+const password = process.env.SEED_TEST_USER_PASSWORD || 'password2026';
+
+const accounts = [
+  {
+    role: 'admin',
+    email: process.env.SEED_ADMIN_EMAIL || 'admin2026@example.com',
+    fullName: 'Super Admin 2026',
+  },
+  {
+    role: 'seller',
+    email: process.env.SEED_SELLER_EMAIL || 'vendor2026@example.com',
+    fullName: 'Vendor 2026',
+  },
+  {
+    role: 'buyer',
+    email: process.env.SEED_BUYER_EMAIL || 'buyer2026@example.com',
+    fullName: 'Buyer 2026',
+  },
+];
+
+const storeFixture = {
+  name: 'Skiip Test Kitchen',
+  slug: 'skiip-test-kitchen',
+  description: 'Stable smoke-test vendor fixture for staging role checks',
+  status: 'active',
+};
+
+const productFixture = {
+  name: 'Smoke Test Burger',
+  slug: 'smoke-test-burger',
+  description: 'Stable smoke-test product fixture',
+  price: 8.5,
+  category: 'Burgers',
+  inventory_quantity: 25,
+  status: 'active',
+  images: [],
+};
+
+async function failOnError(label, error) {
+  if (!error) return;
+  throw new Error(`${label}: ${error.message}`);
+}
+
+async function findUserByEmail(email) {
+  const perPage = 100;
+
+  for (let page = 1; page <= 100; page += 1) {
+    const {
+      data: { users = [] } = {},
+      error,
+    } = await supabase.auth.admin.listUsers({ page, perPage });
+
+    await failOnError(`Failed to list auth users while looking for ${email}`, error);
+
+    const user = users.find((item) => item.email?.toLowerCase() === email.toLowerCase());
+    if (user) return user;
+    if (users.length < perPage) return null;
+  }
+
+  throw new Error(`Could not find ${email}; auth user pagination exceeded 100 pages.`);
+}
+
+async function ensureAccount({ email, role, fullName }) {
+  const existingUser = await findUserByEmail(email);
+
+  if (existingUser) {
+    console.log(`Updating ${role} account: ${email}`);
+    const { data, error } = await supabase.auth.admin.updateUserById(existingUser.id, {
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        role,
+      },
+    });
+    await failOnError(`Failed to update auth user ${email}`, error);
+    await ensureProfile(data.user || existingUser, { email, role, fullName });
+    return data.user || existingUser;
+  }
+
+  console.log(`Creating ${role} account: ${email}`);
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -31,62 +115,95 @@ async function createAccount(email, password, role, fullName) {
     },
   });
 
-  if (error) {
-    if (error.message.includes('already registered')) {
-      console.log(`=> Skipping: ${email} already exists.`);
-      const {
-        data: { users },
-      } = await supabase.auth.admin.listUsers();
-      return users.find((user) => user.email === email);
-    }
-
-    console.error(`=> Error creating ${email}:`, error.message);
-    return null;
-  }
-
-  console.log(`=> Success: ${email} created (ID: ${data.user?.id})`);
+  await failOnError(`Failed to create auth user ${email}`, error);
+  await ensureProfile(data.user, { email, role, fullName });
   return data.user;
 }
 
-async function createStore(userId, email) {
-  console.log(`Creating store for vendor ${email}...`);
+async function ensureProfile(user, { email, role, fullName }) {
   const { error } = await supabase
-    .from('stores')
-    .insert([
+    .from('user_profiles')
+    .upsert(
       {
-        user_id: userId,
-        name: 'Skiip Test Kitchen',
-        slug: 'skiip-test-kitchen',
-        description: 'Premium testing store for Stripe Connect integration',
-        status: 'active',
+        id: user.id,
+        email,
+        role,
+        full_name: fullName,
+        updated_at: new Date().toISOString(),
       },
-    ])
-    .select()
+      { onConflict: 'id' },
+    );
+
+  await failOnError(`Failed to upsert profile for ${email}`, error);
+}
+
+async function ensureStore(userId) {
+  console.log(`Upserting store fixture: ${storeFixture.slug}`);
+  const { data, error } = await supabase
+    .from('stores')
+    .upsert(
+      {
+        ...storeFixture,
+        user_id: userId,
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'slug' },
+    )
+    .select('id, name, slug')
     .single();
 
-  if (error) {
-    console.error('=> Error creating store:', error.message);
-  } else {
-    console.log("=> Success: Store 'Skiip Test Kitchen' created for vendor.");
+  await failOnError(`Failed to upsert store ${storeFixture.slug}`, error);
+  return data;
+}
+
+async function ensureProduct(storeId) {
+  const { data: existing, error: selectError } = await supabase
+    .from('products')
+    .select('id')
+    .eq('store_id', storeId)
+    .eq('slug', productFixture.slug)
+    .maybeSingle();
+
+  await failOnError(`Failed to inspect product ${productFixture.slug}`, selectError);
+
+  const payload = {
+    ...productFixture,
+    store_id: storeId,
+    deleted_at: null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing?.id) {
+    console.log(`Updating product fixture: ${productFixture.slug}`);
+    const { error } = await supabase.from('products').update(payload).eq('id', existing.id);
+    await failOnError(`Failed to update product ${productFixture.slug}`, error);
+    return;
   }
+
+  console.log(`Creating product fixture: ${productFixture.slug}`);
+  const { error } = await supabase.from('products').insert(payload);
+  await failOnError(`Failed to create product ${productFixture.slug}`, error);
 }
 
 async function run() {
-  const password = 'password2026';
+  const users = {};
 
-  await createAccount('admin2026@example.com', password, 'admin', 'Super Admin 2026');
-  const vendor = await createAccount('vendor2026@example.com', password, 'seller', 'Vendor 2026');
-  await createAccount('buyer2026@example.com', password, 'buyer', 'Buyer 2026');
-
-  if (vendor?.id) {
-    // Give the user-profile trigger time to finish before inserting the store row.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await createStore(vendor.id, 'vendor2026@example.com');
+  for (const account of accounts) {
+    users[account.role] = await ensureAccount(account);
   }
 
-  console.log(
-    'Seeding complete. Check your Supabase Authentication dashboard to ensure they are confirmed.',
-  );
+  const store = await ensureStore(users.seller.id);
+  await ensureProduct(store.id);
+
+  console.log('Seeding complete. Stable smoke credentials:');
+  for (const account of accounts) {
+    console.log(`- ${account.role}: ${account.email}`);
+  }
+  console.log('Set PLAYWRIGHT_* credentials to these values for authenticated smoke checks.');
 }
 
-run();
+run().catch((error) => {
+  console.error('Seed failed:', error.message);
+  process.exit(1);
+});
