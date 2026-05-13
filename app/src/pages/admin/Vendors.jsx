@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/ui/Toast';
 import AttendeeHeader from '../../components/shared/AttendeeHeader';
 import { AdminStoreService } from '../../lib/services/adminStore.service';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Icon from '../../components/ui/Icon';
 
 export default function AdminVendors() {
     const [stores, setStores] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const { addToast } = useToast();
-
-    // New Store Form State
     const [showNewStoreForm, setShowNewStoreForm] = useState(false);
+    const [archiveTarget, setArchiveTarget] = useState(null);
     const [newStore, setNewStore] = useState({ name: '', slug: '', user_id: '' });
 
     useEffect(() => {
         fetchData();
     }, []);
 
-    const fetchData = async () => {
+    async function fetchData() {
         setLoading(true);
         try {
-            // Fetch stores without relational join
             const { data: storesData, error: storesError } = await supabase
                 .from('stores')
                 .select('id, name, slug, status, created_at, user_id, deleted_at')
@@ -30,7 +30,6 @@ export default function AdminVendors() {
 
             if (storesError) throw storesError;
 
-            // Fetch users (potential owners)
             const { data: usersData, error: usersError } = await supabase
                 .from('user_profiles')
                 .select('id, email, full_name, role')
@@ -39,13 +38,9 @@ export default function AdminVendors() {
 
             if (usersError) throw usersError;
 
-            // Manual Join in javascript
-            const enrichedStores = (storesData || []).map(store => {
-                const ownerInfo = (usersData || []).find(u => u.id === store.user_id);
-                return {
-                    ...store,
-                    user_profiles: ownerInfo || null
-                };
+            const enrichedStores = (storesData || []).map((store) => {
+                const ownerInfo = (usersData || []).find((user) => user.id === store.user_id);
+                return { ...store, user_profiles: ownerInfo || null };
             });
 
             setStores(enrichedStores);
@@ -56,9 +51,9 @@ export default function AdminVendors() {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
-    const handleUpdateStatus = async (storeId, newStatus) => {
+    async function handleUpdateStatus(storeId, newStatus) {
         try {
             await AdminStoreService.updateStoreStatus(storeId, newStatus);
             addToast(`Store marked as ${newStatus}`, 'success');
@@ -66,164 +61,133 @@ export default function AdminVendors() {
         } catch (error) {
             addToast(error.message, 'error');
         }
-    };
+    }
 
-    const handleArchiveStore = async (storeId) => {
-        if (!window.confirm('Archive this store for launch? It will be hidden from buyer and seller operational views.')) return;
-        
+    async function handleArchiveStore() {
+        if (!archiveTarget) return;
+
         try {
-            await AdminStoreService.archiveStore(storeId);
+            await AdminStoreService.archiveStore(archiveTarget.id);
             addToast('Store archived', 'success');
+            setArchiveTarget(null);
             fetchData();
         } catch (error) {
             addToast(error.message, 'error');
         }
-    };
+    }
 
-    const handleCreateStore = async (e) => {
-        e.preventDefault();
+    async function handleCreateStore(event) {
+        event.preventDefault();
         try {
             await AdminStoreService.createVendorStore({
                 userId: newStore.user_id,
                 name: newStore.name,
                 slug: newStore.slug,
             });
-            
-            addToast('Store created successfully!', 'success');
+
+            addToast('Store created successfully.', 'success');
             setShowNewStoreForm(false);
             setNewStore({ name: '', slug: '', user_id: '' });
             fetchData();
         } catch (error) {
             addToast(error.message, 'error');
         }
-    };
+    }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-            <AttendeeHeader backTo="/admin/dashboard" backLabel="← Back to Dashboard" />
-            
-            <div className="container" style={{ paddingBottom: '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800' }}>Manage Vendors</h1>
-                    <button 
-                        className="btn btn-primary"
-                        onClick={() => setShowNewStoreForm(!showNewStoreForm)}
-                    >
-                        {showNewStoreForm ? 'Cancel' : '+ Add Vendor Store'}
+        <main className="app-page">
+            <AttendeeHeader backTo="/admin/dashboard" backLabel="Back to dashboard" />
+            <div className="container" style={{ display: 'grid', gap: '22px', paddingTop: '28px' }}>
+                <section style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div>
+                        <p className="page-kicker">Admin vendors</p>
+                        <h1 className="page-title" style={{ fontSize: 'clamp(30px, 4vw, 42px)' }}>Manage Vendors</h1>
+                        <p className="page-subtitle">Create, approve, suspend, and archive vendor stores.</p>
+                    </div>
+                    <button type="button" className={showNewStoreForm ? 'btn btn-ghost' : 'btn btn-primary'} onClick={() => setShowNewStoreForm((value) => !value)}>
+                        <Icon name={showNewStoreForm ? 'close' : 'plus'} size={17} />
+                        {showNewStoreForm ? 'Cancel' : 'Add Vendor Store'}
                     </button>
-                </div>
+                </section>
 
                 {showNewStoreForm && (
-                    <div className="card" style={{ marginBottom: '32px', padding: '24px' }}>
-                        <h2 style={{ marginBottom: '16px' }}>Create New Vendor Store</h2>
-                        <form onSubmit={handleCreateStore} style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'end' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label>Store Name</label>
-                                <input 
-                                    required 
-                                    type="text" 
-                                    value={newStore.name} 
-                                    onChange={e => setNewStore({...newStore, name: e.target.value})} 
-                                    placeholder="Food Truck 1" 
-                                />
+                    <section className="card">
+                        <h2 style={{ color: 'var(--ink)', marginBottom: '16px' }}>Create vendor store</h2>
+                        <form onSubmit={handleCreateStore} style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'end' }}>
+                            <div>
+                                <label htmlFor="store-name">Store name</label>
+                                <input id="store-name" required type="text" value={newStore.name} onChange={(event) => setNewStore({ ...newStore, name: event.target.value })} placeholder="Food Truck 1" />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label>Store Slug (Optional)</label>
-                                <input 
-                                    type="text" 
-                                    value={newStore.slug} 
-                                    onChange={e => setNewStore({...newStore, slug: e.target.value})} 
-                                    placeholder="food-truck-1" 
-                                />
+                            <div>
+                                <label htmlFor="store-slug">Store slug</label>
+                                <input id="store-slug" type="text" value={newStore.slug} onChange={(event) => setNewStore({ ...newStore, slug: event.target.value })} placeholder="food-truck-1" />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label>Assign Owner</label>
-                                <select 
-                                    required
-                                    value={newStore.user_id}
-                                    onChange={e => setNewStore({...newStore, user_id: e.target.value})}
-                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--stroke)', color: 'var(--text)' }}
-                                >
+                            <div>
+                                <label htmlFor="store-owner">Assign owner</label>
+                                <select id="store-owner" required value={newStore.user_id} onChange={(event) => setNewStore({ ...newStore, user_id: event.target.value })}>
                                     <option value="">Select a user account...</option>
-                                    {users.map(u => (
-                                        <option key={u.id} value={u.id}>
-                                            {u.email} ({u.full_name || 'No name'}) - {u.role}
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.email} ({user.full_name || 'No name'}) - {user.role}
                                         </option>
                                     ))}
                                 </select>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                <button type="submit" className="btn btn-primary" style={{ width: '100%', height: '48px' }}>Create Store</button>
-                            </div>
+                            <button type="submit" className="btn btn-primary">Create Store</button>
                         </form>
-                    </div>
+                    </section>
                 )}
 
                 {loading ? (
-                    <p>Loading vendors...</p>
+                    <div className="surface empty-state">
+                        <div className="spinner" />
+                        <p>Loading vendors</p>
+                    </div>
                 ) : (
-                    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <section className="data-table-wrap">
                         {stores.length === 0 ? (
-                            <div style={{ padding: '60px', textAlign: 'center' }}>
-                                <p className="text-muted">No vendors found.</p>
+                            <div className="empty-state">
+                                <p>No vendors found.</p>
                             </div>
                         ) : (
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                <thead style={{ background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid var(--stroke)' }}>
+                            <table className="data-table">
+                                <thead>
                                     <tr>
-                                        <th style={{ padding: '16px' }}>Store Info</th>
-                                        <th style={{ padding: '16px' }}>Owner</th>
-                                        <th style={{ padding: '16px' }}>Status</th>
-                                        <th style={{ padding: '16px', textAlign: 'right' }}>Actions</th>
+                                        <th>Store Info</th>
+                                        <th>Owner</th>
+                                        <th>Status</th>
+                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {stores.map(store => (
-                                        <tr key={store.id} style={{ borderBottom: '1px solid var(--stroke)' }}>
-                                            <td style={{ padding: '16px' }}>
-                                                <strong>{store.name}</strong><br/>
+                                    {stores.map((store) => (
+                                        <tr key={store.id}>
+                                            <td>
+                                                <strong style={{ color: 'var(--ink)' }}>{store.name}</strong><br />
                                                 <span className="text-muted" style={{ fontSize: '13px' }}>/{store.slug}</span>
                                             </td>
-                                            <td style={{ padding: '16px' }}>
-                                                {store.user_profiles?.full_name || 'N/A'}<br/>
+                                            <td>
+                                                {store.user_profiles?.full_name || 'N/A'}<br />
                                                 <span className="text-muted" style={{ fontSize: '13px' }}>{store.user_profiles?.email}</span>
                                             </td>
-                                            <td style={{ padding: '16px' }}>
-                                                <span style={{ 
-                                                    padding: '4px 8px', 
-                                                    borderRadius: '4px', 
-                                                    fontSize: '12px',
-                                                    background: store.status === 'active' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                                    color: store.status === 'active' ? '#4ade80' : '#fbbf24'
-                                                }}>
+                                            <td>
+                                                <span className={store.status === 'active' ? 'chip chip--green' : 'chip'}>
                                                     {store.status.toUpperCase()}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '16px', textAlign: 'right' }}>
-                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                                     {store.status !== 'active' && (
-                                                        <button 
-                                                            className="btn btn-ghost" 
-                                                            style={{ padding: '6px 12px', fontSize: '12px', color: '#4ade80' }}
-                                                            onClick={() => handleUpdateStatus(store.id, 'active')}
-                                                        >
+                                                        <button type="button" className="btn btn-ghost" style={{ color: 'var(--green)' }} onClick={() => handleUpdateStatus(store.id, 'active')}>
                                                             Approve
                                                         </button>
                                                     )}
                                                     {store.status === 'active' && (
-                                                        <button 
-                                                            className="btn btn-ghost" 
-                                                            style={{ padding: '6px 12px', fontSize: '12px', color: '#fbbf24' }}
-                                                            onClick={() => handleUpdateStatus(store.id, 'suspended')}
-                                                        >
+                                                        <button type="button" className="btn btn-ghost" style={{ color: 'var(--orange)' }} onClick={() => handleUpdateStatus(store.id, 'suspended')}>
                                                             Suspend
                                                         </button>
                                                     )}
-                                                    <button 
-                                                        className="btn btn-ghost" 
-                                                        style={{ padding: '6px 12px', fontSize: '12px', color: '#f87171' }}
-                                                        onClick={() => handleArchiveStore(store.id)}
-                                                    >
+                                                    <button type="button" className="btn btn-ghost" style={{ color: 'var(--red)' }} onClick={() => setArchiveTarget(store)}>
                                                         Archive
                                                     </button>
                                                 </div>
@@ -233,9 +197,18 @@ export default function AdminVendors() {
                                 </tbody>
                             </table>
                         )}
-                    </div>
+                    </section>
                 )}
             </div>
-        </div>
+
+            <ConfirmDialog
+                open={Boolean(archiveTarget)}
+                title="Archive store?"
+                description={archiveTarget ? `${archiveTarget.name} will be hidden from buyer and seller operational views.` : ''}
+                confirmLabel="Archive"
+                onConfirm={handleArchiveStore}
+                onCancel={() => setArchiveTarget(null)}
+            />
+        </main>
     );
 }

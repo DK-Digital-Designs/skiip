@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../lib/hooks/useCart';
 import { useAuth } from '../../lib/context/AuthContext';
@@ -8,6 +8,10 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { StripeService } from '../../lib/services/stripe.service';
 import { GENERIC_CHECKOUT_ERROR_MESSAGE } from '../../lib/services/function-error';
 import { useToast } from '../../components/ui/Toast';
+import BottomNav from '../../components/ui/BottomNav';
+import QuantityControl from '../../components/ui/QuantityControl';
+import Icon from '../../components/ui/Icon';
+import { formatCurrency } from '../../lib/ui-format';
 import {
     collectionInputToIso,
     getMinimumScheduledCollectionInputValue,
@@ -18,10 +22,9 @@ import {
 export default function Checkout() {
     const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
-    const { items, getCartTotal, vendorId } = useCart();
+    const { items, addItem, removeItem, getCartTotal, vendorId } = useCart();
     const { addToast } = useToast();
 
-    // Missing state variables
     const [vendor, setVendor] = useState(null);
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -30,7 +33,6 @@ export default function Checkout() {
     const [processing, setProcessing] = useState(false);
     const [collectionMode, setCollectionMode] = useState('immediate');
     const [scheduledCollection, setScheduledCollection] = useState('');
-
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
     const [selectedTipPercent, setSelectedTipPercent] = useState(0);
@@ -44,12 +46,11 @@ export default function Checkout() {
             return;
         }
 
-        // Pre-fill from profile if available (priority) or user object
         if (profile) {
             if (profile.email && !email) setEmail(profile.email);
             if (profile.phone && !phone) setPhone(profile.phone);
-        } else if (user) {
-            if (user.email && !email) setEmail(user.email);
+        } else if (user?.email && !email) {
+            setEmail(user.email);
         }
 
         if (vendorId) {
@@ -57,23 +58,21 @@ export default function Checkout() {
         }
     }, [user, profile, authLoading, vendorId, navigate]);
 
-    const handleTipSelect = (percent) => {
+    function handleTipSelect(percent) {
         setSelectedTipPercent(percent);
-        const amount = subtotal * (percent / 100);
-        setTipAmount(amount);
+        setTipAmount(subtotal * (percent / 100));
         setCustomTip('');
-    };
+    }
 
-    const handleCustomTipChange = (e) => {
-        const val = e.target.value;
-        setCustomTip(val);
+    function handleCustomTipChange(event) {
+        const value = event.target.value;
+        setCustomTip(value);
         setSelectedTipPercent(null);
-        const amount = parseFloat(val) || 0;
-        setTipAmount(amount);
-    };
+        setTipAmount(parseFloat(value) || 0);
+    }
 
     async function fetchVendor() {
-        if (!isSupabaseConfigured()) return; // Handle demo mode if needed, but OrderService requires Supabase
+        if (!isSupabaseConfigured()) return;
         try {
             const data = await StoreService.getStoreById(vendorId);
             setVendor(data);
@@ -82,8 +81,8 @@ export default function Checkout() {
         }
     }
 
-    async function handleCheckout(e) {
-        e.preventDefault();
+    async function handleCheckout(event) {
+        event.preventDefault();
         setProcessing(true);
 
         try {
@@ -100,7 +99,6 @@ export default function Checkout() {
                 return;
             }
 
-            // 1. Validation
             const trimmedEmail = email.trim();
             const trimmedPhone = phone.trim();
 
@@ -133,39 +131,37 @@ export default function Checkout() {
                 return;
             }
 
-            // 2. Pre-check Vendor Payment Readiness
             const vendorStripeStatus = vendor?.stripe_connect_status
                 || (vendor?.stripe_onboarding_complete ? 'ready' : 'onboarding');
             if (vendor && vendorStripeStatus !== 'ready') {
-                addToast('This vendor is not yet set up to receive payments. Their bank account is still being connected.', 'error');
+                addToast('This vendor is not yet set up to receive payments.', 'error');
                 setProcessing(false);
                 return;
             }
 
             const order = await OrderService.createOrder({
-                items: items,
+                items,
                 customer_email: trimmedEmail || user?.email,
                 customer_phone: trimmedPhone || null,
                 whatsapp_opt_in: whatsappOptIn,
-                notes: notes,
+                notes,
                 tip_amount: tipAmount,
                 ...scheduledPayload,
             });
 
-            // 3. Process Payment via Stripe
             addToast('Redirecting to secure payment...', 'info');
 
             const session = await StripeService.createCheckoutSession({
                 orderId: order.id,
-                returnUrl: window.location.origin + '/#/order/track'
+                returnUrl: window.location.origin + '/#/order/track',
             });
 
             if (session?.url) {
-                // Redirect to Stripe Checkout
                 window.location.href = session.url;
-            } else {
-                throw new Error('Failed to generate payment link');
+                return;
             }
+
+            throw new Error('Failed to generate payment link');
         } catch (error) {
             console.error('Checkout error:', error);
             addToast(error.buyerMessage || GENERIC_CHECKOUT_ERROR_MESSAGE, 'error');
@@ -174,16 +170,30 @@ export default function Checkout() {
         }
     }
 
-    if (authLoading) return <div>Loading...</div>;
+    if (authLoading) {
+        return (
+            <main className="app-page">
+                <div className="narrow-container surface empty-state">
+                    <div className="spinner" />
+                    <p>Loading checkout</p>
+                </div>
+            </main>
+        );
+    }
+
     if (!user) return null;
+
     if (!items.length) {
         return (
-            <div className="container" style={{ padding: '60px', textAlign: 'center' }}>
-                <h2>Your cart is empty</h2>
-                <button onClick={() => navigate('/order')} className="btn btn-primary" style={{ marginTop: '20px' }}>
-                    Browse Vendors
-                </button>
-            </div>
+            <main className="app-page app-page--buyer">
+                <div className="narrow-container surface empty-state">
+                    <h2>Your cart is empty</h2>
+                    <button type="button" onClick={() => navigate('/order')} className="btn btn-primary">
+                        Browse Vendors
+                    </button>
+                </div>
+                <BottomNav />
+            </main>
         );
     }
 
@@ -198,180 +208,190 @@ export default function Checkout() {
         : '';
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
-            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
-                <div className="container">
-                    <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: '16px', cursor: 'pointer', fontWeight: '600' }}>
-                        ← Back
-                    </button>
-                </div>
-            </header>
-
-            <div className="container" style={{ maxWidth: '600px' }}>
-                <h1 style={{ fontSize: '40px', fontWeight: '800', marginBottom: '40px' }}>Checkout</h1>
-
-                {/* Order Summary */}
-                <div className="card" style={{ marginBottom: '24px' }}>
-                    <h3 style={{ marginBottom: '16px' }}>Order Summary</h3>
-                    {vendor && <p className="text-accent" style={{ marginBottom: '16px' }}>📍 {vendor.name}</p>}
-                    {items.map((item, index) => (
-                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: index < items.length - 1 ? '1px solid var(--stroke)' : 'none' }}>
-                            <span>{item.quantity}× {item.name}</span>
-                            <span>£{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                    ))}
-                    
-                    {tipAmount > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px' }}>
-                            <span>Tip</span>
-                            <span>£{tipAmount.toFixed(2)}</span>
-                        </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '2px solid var(--stroke)', fontSize: '20px', fontWeight: '700' }}>
-                        <span>Total</span>
-                        <span className="text-accent">£{total.toFixed(2)}</span>
-                    </div>
+        <main className="app-page app-page--buyer">
+            <div className="container" style={{ display: 'grid', gap: '22px' }}>
+                <button type="button" onClick={() => navigate(-1)} className="btn btn-ghost" style={{ width: 'fit-content' }}>
+                    Back
+                </button>
+                <div>
+                    <p className="page-kicker">Checkout</p>
+                    <h1 className="page-title">Review and pay</h1>
+                    <p className="page-subtitle" style={{ marginTop: '10px' }}>
+                        Confirm your order details before secure payment.
+                    </p>
                 </div>
 
-                {/* Collection Time */}
-                <div className="card" style={{ marginBottom: '24px' }}>
-                    <h3 style={{ marginBottom: '16px' }}>Collection Time</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                        <button
-                            type="button"
-                            onClick={() => setCollectionMode('immediate')}
-                            className={collectionMode === 'immediate' ? 'btn btn-primary' : 'btn btn-ghost'}
-                        >
-                            As soon as ready
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setCollectionMode('scheduled')}
-                            className={collectionMode === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
-                        >
-                            Scheduled
-                        </button>
-                    </div>
-
-                    {collectionMode === 'scheduled' && (
-                        <>
-                            <label>Collection date and time</label>
-                            <input
-                                type="datetime-local"
-                                value={scheduledCollection}
-                                min={getMinimumScheduledCollectionInputValue()}
-                                onChange={(e) => setScheduledCollection(e.target.value)}
-                                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
-                            />
-                            {scheduledPreview && (
-                                <p className="text-accent" style={{ fontSize: '14px', marginTop: '12px' }}>
-                                    Scheduled for {scheduledPreview}
-                                </p>
+                <form onSubmit={handleCheckout} className="two-column">
+                    <div style={{ display: 'grid', gap: '18px' }}>
+                        <section className="card">
+                            <h2 style={{ color: 'var(--ink)', marginBottom: '14px' }}>Collection time</h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setCollectionMode('immediate')}
+                                    className={collectionMode === 'immediate' ? 'btn btn-primary' : 'btn btn-ghost'}
+                                >
+                                    As soon as ready
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCollectionMode('scheduled')}
+                                    className={collectionMode === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
+                                >
+                                    Scheduled
+                                </button>
+                            </div>
+                            {collectionMode === 'scheduled' && (
+                                <>
+                                    <label htmlFor="collection-time">Collection date and time</label>
+                                    <input
+                                        id="collection-time"
+                                        type="datetime-local"
+                                        value={scheduledCollection}
+                                        min={getMinimumScheduledCollectionInputValue()}
+                                        onChange={(event) => setScheduledCollection(event.target.value)}
+                                    />
+                                    {scheduledPreview && (
+                                        <p className="chip chip--cyan" style={{ marginTop: '12px', width: 'fit-content' }}>
+                                            {scheduledPreview}
+                                        </p>
+                                    )}
+                                </>
                             )}
-                        </>
-                    )}
-                </div>
+                        </section>
 
-                {/* Tip Selection */}
-                <div className="card" style={{ marginBottom: '24px' }}>
-                    <h3 style={{ marginBottom: '8px' }}>Add a Tip</h3>
-                    <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>100% of tips go to the vendor staff</p>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
-                        {[0, 5, 10, 15].map((percent) => (
-                            <button
-                                key={percent}
-                                type="button"
-                                onClick={() => handleTipSelect(percent)}
-                                className={selectedTipPercent === percent ? 'btn btn-primary' : 'btn btn-ghost'}
-                                style={{ padding: '10px' }}
-                            >
-                                {percent === 0 ? 'None' : `${percent}%`}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }}>£</span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={customTip}
-                            onChange={handleCustomTipChange}
-                            placeholder="Custom amount"
-                            style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
-                        />
-                    </div>
-                </div>
-
-                {/* Contact Form */}
-                <form onSubmit={handleCheckout}>
-                    <div className="card" style={{ marginBottom: '24px' }}>
-                        <h3 style={{ marginBottom: '16px' }}>Contact Information</h3>
-
-                        <label>Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="name@example.com"
-                            required
-                            style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
-                        />
-
-                        <label>WhatsApp Number (Optional)</label>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="+44 XX XXX XXXX"
-                            style={{ marginBottom: '16px', width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)' }}
-                        />
-                        <p className="text-muted" style={{ fontSize: '13px', marginTop: '-4px', marginBottom: '16px' }}>
-                            Only needed if you want transactional WhatsApp updates, such as when your order is ready.
-                        </p>
-
-                        <label>Notes (Optional)</label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Allergies, instructions, etc."
-                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--stroke)', background: 'var(--card)', minHeight: '80px' }}
-                        />
-                    </div>
-
-                    <div className="card" style={{ marginBottom: '24px' }}>
-                        <h3 style={{ marginBottom: '8px' }}>WhatsApp Updates</h3>
-                        <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
-                            Optional and purely transactional. No marketing. Standard rates may apply.
-                        </p>
-
-                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                        <section className="card">
+                            <h2 style={{ color: 'var(--ink)', marginBottom: '14px' }}>Contact details</h2>
+                            <label htmlFor="checkout-email">Email</label>
                             <input
-                                type="checkbox"
-                                checked={whatsappOptIn}
-                                onChange={(e) => setWhatsappOptIn(e.target.checked)}
-                                style={{ marginTop: '2px' }}
+                                id="checkout-email"
+                                type="email"
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                placeholder="name@example.com"
+                                required
+                                style={{ marginBottom: '16px' }}
                             />
-                            <span>Send me WhatsApp updates for my order.</span>
-                        </label>
+
+                            <label htmlFor="checkout-phone">WhatsApp number</label>
+                            <input
+                                id="checkout-phone"
+                                type="tel"
+                                value={phone}
+                                onChange={(event) => setPhone(event.target.value)}
+                                placeholder="+44 XX XXX XXXX"
+                                style={{ marginBottom: '8px' }}
+                            />
+                            <p className="text-muted" style={{ fontSize: '13px', marginBottom: '16px' }}>
+                                Only needed if you want transactional WhatsApp updates when your order changes.
+                            </p>
+
+                            <label htmlFor="checkout-notes">Notes</label>
+                            <textarea
+                                id="checkout-notes"
+                                value={notes}
+                                onChange={(event) => setNotes(event.target.value)}
+                                placeholder="Allergies, pickup notes, or instructions"
+                                style={{ minHeight: '88px' }}
+                            />
+                        </section>
+
+                        <section className="card">
+                            <h2 style={{ color: 'var(--ink)', marginBottom: '8px' }}>WhatsApp updates</h2>
+                            <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
+                                Optional and purely transactional. No marketing.
+                            </p>
+                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={whatsappOptIn}
+                                    onChange={(event) => setWhatsappOptIn(event.target.checked)}
+                                    style={{ width: '20px', marginTop: '2px' }}
+                                />
+                                <span>Send me WhatsApp updates for my order.</span>
+                            </label>
+                        </section>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                        style={{ width: '100%', fontSize: '18px', padding: '16px' }}
-                        disabled={processing}
-                    >
-                        {processing ? 'Processing...' : `Pay £${total.toFixed(2)}`}
-                    </button>
-                </form>
+                    <aside className="card" style={{ position: 'sticky', top: '94px' }}>
+                        <h2 style={{ color: 'var(--ink)', marginBottom: '6px' }}>Order summary</h2>
+                        {vendor && <p className="text-accent" style={{ fontWeight: 800, marginBottom: '16px' }}>{vendor.name}</p>}
+                        <div style={{ display: 'grid', gap: '14px', marginBottom: '18px' }}>
+                            {items.map((item) => (
+                                <div key={item.id} style={{ display: 'grid', gap: '10px', paddingBottom: '14px', borderBottom: '1px solid var(--stroke)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                                        <div>
+                                            <strong style={{ color: 'var(--ink)' }}>{item.name}</strong>
+                                            <p className="text-muted" style={{ fontSize: '13px' }}>
+                                                {formatCurrency(item.price)} each
+                                            </p>
+                                        </div>
+                                        <strong>{formatCurrency(item.price * item.quantity)}</strong>
+                                    </div>
+                                    <QuantityControl
+                                        value={item.quantity}
+                                        min={1}
+                                        onIncrement={() => addItem(item)}
+                                        onDecrement={() => removeItem(item.id)}
+                                        label={`${item.name} checkout quantity`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
 
-                <p className="text-muted" style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px' }}>
-                    🔒 Powered by Stripe. Your payment information is secure.
-                </p>
+                        <section style={{ marginBottom: '18px' }}>
+                            <h3 style={{ color: 'var(--ink)', fontSize: '16px', marginBottom: '8px' }}>Add a tip</h3>
+                            <p className="text-muted" style={{ fontSize: '13px', marginBottom: '12px' }}>100% of tips go to the vendor staff.</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '12px' }}>
+                                {[0, 5, 10, 15].map((percent) => (
+                                    <button
+                                        key={percent}
+                                        type="button"
+                                        onClick={() => handleTipSelect(percent)}
+                                        className={selectedTipPercent === percent ? 'btn btn-primary' : 'btn btn-ghost'}
+                                        style={{ minHeight: '38px', padding: '8px' }}
+                                    >
+                                        {percent === 0 ? 'None' : `${percent}%`}
+                                    </button>
+                                ))}
+                            </div>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={customTip}
+                                onChange={handleCustomTipChange}
+                                placeholder="Custom tip"
+                            />
+                        </section>
+
+                        <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span className="text-muted">Subtotal</span>
+                                <strong>{formatCurrency(subtotal)}</strong>
+                            </div>
+                            {tipAmount > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span className="text-muted">Tip</span>
+                                    <strong>{formatCurrency(tipAmount)}</strong>
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--stroke)', paddingTop: '14px', fontSize: '20px' }}>
+                                <strong>Total</strong>
+                                <strong className="text-accent">{formatCurrency(total)}</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%', minHeight: '52px' }} disabled={processing}>
+                            <Icon name="cart" size={18} />
+                            {processing ? 'Processing...' : `Pay ${formatCurrency(total)}`}
+                        </button>
+                        <p className="text-muted" style={{ textAlign: 'center', marginTop: '14px', fontSize: '12px' }}>
+                            Secure payment powered by Stripe.
+                        </p>
+                    </aside>
+                </form>
             </div>
-        </div>
+            <BottomNav />
+        </main>
     );
 }

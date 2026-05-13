@@ -3,18 +3,49 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStores } from '../../lib/hooks/useMenu';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
+import BottomNav from '../../components/ui/BottomNav';
+import Icon from '../../components/ui/Icon';
+import SkiipLogo from '../../components/ui/SkiipLogo';
+import { getInitials, getVendorImage } from '../../lib/ui-format';
 
 const MOCK_VENDORS = [
-    { id: '1', name: 'Burger Bliss', description: 'Gourmet burgers and loaded fries', pickup_location: 'Food Court A, Stall 3' },
-    { id: '2', name: 'Pizza Paradise', description: 'Wood-fired artisan pizzas', pickup_location: 'Food Court B, Stall 1' },
-    { id: '3', name: 'Drinks & Co', description: 'Craft cocktails and refreshments', pickup_location: 'Bar Area 2' },
+    {
+        id: '1',
+        name: 'Burger Bliss',
+        description: 'Gourmet burgers and loaded fries',
+        pickup_location: 'Food Court A, Stall 3',
+    },
+    {
+        id: '2',
+        name: 'Taco Town',
+        description: 'Street tacos, nachos, and fresh salsa',
+        pickup_location: 'Food Court B, Stall 1',
+    },
+    {
+        id: '3',
+        name: 'Drinks & Co',
+        description: 'Cocktails, mocktails, and cold soft drinks',
+        pickup_location: 'Bar Area 2',
+    },
 ];
+
+function VendorMedia({ vendor }) {
+    const image = getVendorImage(vendor);
+
+    return (
+        <div className="vendor-card__media">
+            {image ? (
+                <img src={image} alt={vendor.name} />
+            ) : (
+                <span className="vendor-card__initials">{getInitials(vendor.name)}</span>
+            )}
+        </div>
+    );
+}
 
 export default function VendorList() {
     const [searchParams] = useSearchParams();
-    const eventId = searchParams.get('event') || 1; // Default event
-
-    // React Query Hook (only run if Supabase is configured)
+    const eventId = searchParams.get('event') || 1;
     const { data: qStores = [], isLoading: isStoresLoading } = useStores(isSupabaseConfigured() ? eventId : null);
 
     const isDemo = !isSupabaseConfigured();
@@ -22,61 +53,115 @@ export default function VendorList() {
     const loading = isDemo ? false : isStoresLoading;
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
-            <div className="container" style={{ marginTop: '40px' }}>
-                {!isSupabaseConfigured() && (
-                    <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #f59e0b', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
-                        <p style={{ color: '#f59e0b', margin: 0 }}>
-                            ⚠️ <strong>Demo Mode:</strong> Supabase not configured. Using mock data. See SETUP.md to connect your database.
+        <main className="app-page app-page--buyer">
+            <div className="container" style={{ display: 'grid', gap: '26px' }}>
+                <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                    <SkiipLogo />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button type="button" className="btn btn-ghost icon-button" aria-label="Notifications">
+                            <Icon name="bell" size={19} />
+                        </button>
+                        <Link to="/order/profile" className="btn btn-accent icon-button" aria-label="Profile">
+                            <Icon name="user" size={18} />
+                        </Link>
+                    </div>
+                </section>
+
+                <section className="hero-panel">
+                    <div className="hero-panel__content">
+                        <span className="chip chip--cyan" style={{ width: 'fit-content', color: '#fff', background: 'rgba(34,211,238,0.22)' }}>
+                            Live now
+                        </span>
+                        <h1>Summer Beats 2026</h1>
+                        <p>Skip the lines, enjoy the vibes. Browse vendors and order ahead from your phone.</p>
+                    </div>
+                </section>
+
+                <section className="surface" style={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr) auto', alignItems: 'center', gap: '16px', padding: '18px', borderRadius: '28px' }}>
+                    <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(34,211,238,0.16)', display: 'grid', placeItems: 'center', color: 'var(--ink)' }}>
+                        <Icon name="map" size={28} />
+                    </div>
+                    <div>
+                        <h2 style={{ color: 'var(--ink)', fontSize: '20px', lineHeight: 1.15 }}>Find your nearest stall</h2>
+                        <p className="text-muted" style={{ fontSize: '14px' }}>
+                            View {vendors.length || 0} vendors across the park.
                         </p>
                     </div>
+                    <Link to="/order" className="btn btn-ghost icon-button" aria-label="Open stall map">
+                        <Icon name="map" size={20} />
+                    </Link>
+                </section>
+
+                {isDemo && (
+                    <div className="chip chip--accent" style={{ width: 'fit-content' }}>
+                        Demo mode: using sample vendor data
+                    </div>
                 )}
 
-                <h1 style={{ fontSize: '40px', fontWeight: '800', marginBottom: '16px' }}>Choose a Vendor</h1>
-                <p className="text-muted" style={{ marginBottom: '40px' }}>Select from the vendors below to view their menu.</p>
+                <section style={{ display: 'grid', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: '16px' }}>
+                        <div>
+                            <p className="page-kicker">Browse vendors</p>
+                            <h2 style={{ color: 'var(--ink)', fontSize: '28px', lineHeight: 1.1 }}>Choose your stall</h2>
+                        </div>
+                        <span className="text-accent" style={{ fontSize: '13px', fontWeight: 900 }}>See all</span>
+                    </div>
 
-                {loading ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="card">
-                                <LoadingSkeleton height="160px" marginBottom="16px" />
-                                <LoadingSkeleton width="60%" height="24px" marginBottom="12px" />
-                                <LoadingSkeleton width="90%" height="16px" marginBottom="8px" />
-                                <LoadingSkeleton width="40%" height="16px" />
-                            </div>
-                        ))}
-                    </div>
-                ) : vendors.length === 0 ? (
-                    <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-                        <h3>No vendors available</h3>
-                        <p className="text-muted">Please check back later or contact the event organizer.</p>
-                    </div>
-                ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-                        {vendors.map((vendor) => (
-                            <Link
-                                key={vendor.id}
-                                to={`/order/vendor/${vendor.id}`}
-                                className="card"
-                                style={{ textDecoration: 'none', transition: 'transform 0.2s', cursor: 'pointer' }}
-                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                            >
-                                {vendor.logo_url && (
-                                    <div style={{ width: '100%', height: '160px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <img src={vendor.logo_url} alt={vendor.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    {loading ? (
+                        <div className="vendor-grid">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="vendor-card">
+                                    <div>
+                                        <LoadingSkeleton width="80px" height="14px" borderRadius="999px" style={{ marginBottom: '14px' }} />
+                                        <LoadingSkeleton width="72%" height="25px" borderRadius="10px" style={{ marginBottom: '10px' }} />
+                                        <LoadingSkeleton width="92%" height="16px" borderRadius="8px" />
                                     </div>
-                                )}
-                                <h3 style={{ marginBottom: '8px' }}>{vendor.name}</h3>
-                                {vendor.description && <p className="text-muted" style={{ fontSize: '14px' }}>{vendor.description}</p>}
-                                {vendor.pickup_location && (
-                                    <p className="text-accent" style={{ fontSize: '13px', marginTop: '12px' }}>📍 {vendor.pickup_location}</p>
-                                )}
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                                    <LoadingSkeleton height="116px" borderRadius="999px" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : vendors.length === 0 ? (
+                        <div className="surface empty-state">
+                            <h3>No vendors available</h3>
+                            <p>Check back later or ask the event team which stalls are open.</p>
+                        </div>
+                    ) : (
+                        <div className="vendor-grid">
+                            {vendors.map((vendor, index) => (
+                                <Link key={vendor.id} to={`/order/vendor/${vendor.id}`} className="vendor-card">
+                                    <div style={{ display: 'grid', alignContent: 'center', gap: '10px' }}>
+                                        <span className={index === 0 ? 'chip chip--accent' : 'chip'}>
+                                            {index === 0 ? 'Trending' : 'Popular'}
+                                        </span>
+                                        <div>
+                                            <h3 style={{ color: 'var(--ink)', fontSize: '22px', lineHeight: 1.05 }}>
+                                                {vendor.name}
+                                            </h3>
+                                            {vendor.description && (
+                                                <p className="text-muted" style={{ fontSize: '14px', marginTop: '6px' }}>
+                                                    {vendor.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                            <span className="btn btn-primary" style={{ minHeight: '34px', padding: '9px 16px', fontSize: '12px' }}>
+                                                View Menu
+                                            </span>
+                                            {vendor.pickup_location && (
+                                                <span className="text-muted" style={{ fontSize: '12px', fontWeight: 800 }}>
+                                                    {vendor.pickup_location}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <VendorMedia vendor={vendor} />
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
-        </div>
+            <BottomNav />
+        </main>
     );
 }

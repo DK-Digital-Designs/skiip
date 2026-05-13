@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
+import SkiipLogo from '../../components/ui/SkiipLogo';
+import Icon from '../../components/ui/Icon';
 
-// Role-based route mapping
 function getDashboardRoute(role) {
     switch (role) {
-        case 'admin':   return '/admin/dashboard';
-        case 'seller':  return '/vendor/dashboard';
-        default:        return '/order';
+        case 'admin': return '/admin/dashboard';
+        case 'seller': return '/vendor/dashboard';
+        default: return '/order';
     }
 }
 
@@ -18,31 +19,24 @@ export default function UnifiedLogin() {
     const location = useLocation();
     const { signIn, user, profile } = useAuth();
     const { addToast } = useToast();
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const from = location.state?.from?.pathname || null;
 
-    // If user is already logged in (e.g., navigated back to /login), auto-redirect
     useEffect(() => {
         if (user && profile) {
             navigate(getDashboardRoute(profile.role), { replace: true });
         }
     }, [user, profile, navigate]);
 
-    // Redirect to original intended page after login, falling back to role-based route
-    const from = location.state?.from?.pathname || null;
-
-    async function handleLogin(e) {
-        e.preventDefault();
+    async function handleLogin(event) {
+        event.preventDefault();
         setLoading(true);
         try {
             const { user: authUser } = await signIn(email, password);
-            
-            // Fetch profile directly so we can route immediately without waiting
-            // for the AuthContext async state update cycle
-            let role = 'buyer'; // safe default
+            let role = 'buyer';
             try {
                 const { data: profileData } = await supabase
                     .from('user_profiles')
@@ -51,11 +45,10 @@ export default function UnifiedLogin() {
                     .single();
                 if (profileData?.role) role = profileData.role;
             } catch {
-                // If profile fetch fails, default to buyer flow
+                role = 'buyer';
             }
 
-            addToast('Welcome back!', 'success');
-            // Use `from` if coming from a protected route, otherwise role-route
+            addToast('Welcome back.', 'success');
             navigate(from || getDashboardRoute(role), { replace: true });
         } catch (error) {
             addToast(error.message || 'Login failed. Please check your credentials.', 'error');
@@ -65,25 +58,19 @@ export default function UnifiedLogin() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div style={{ maxWidth: '400px', width: '100%' }}>
-                {/* Logo */}
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="var(--accent)" />
-                        </svg>
-                        <span style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text)' }}>SKIIP</span>
-                    </Link>
+        <main className="app-page" style={{ display: 'grid', placeItems: 'center', padding: '32px 16px' }}>
+            <div style={{ maxWidth: '430px', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
+                    <SkiipLogo />
                 </div>
 
-                <div className="card" style={{ padding: '40px' }}>
-                    <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>Sign In</h1>
-                    <p className="text-muted" style={{ marginBottom: '32px' }}>
+                <div className="card" style={{ padding: '32px' }}>
+                    <h1 style={{ fontSize: '30px', fontWeight: 950, marginBottom: '8px', color: 'var(--ink)' }}>Sign In</h1>
+                    <p className="text-muted" style={{ marginBottom: '30px' }}>
                         Access your orders, or manage your store.
                     </p>
 
-                    <form onSubmit={handleLogin} className="flex flex-col gap-24">
+                    <form onSubmit={handleLogin} style={{ display: 'grid', gap: '20px' }}>
                         <div>
                             <label htmlFor="login-email">Email Address</label>
                             <input
@@ -91,7 +78,7 @@ export default function UnifiedLogin() {
                                 type="email"
                                 autoComplete="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(event) => setEmail(event.target.value)}
                                 placeholder="you@example.com"
                                 required
                             />
@@ -105,47 +92,43 @@ export default function UnifiedLogin() {
                                     type={showPassword ? 'text' : 'password'}
                                     autoComplete="current-password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
+                                    onChange={(event) => setPassword(event.target.value)}
+                                    placeholder="Password"
                                     required
-                                    style={{ paddingRight: '40px', width: '100%' }}
+                                    style={{ paddingRight: '46px' }}
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() => setShowPassword((value) => !value)}
                                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     style={{
-                                        position: 'absolute', right: '12px', top: '50%',
-                                        transform: 'translateY(-50%)', background: 'none',
-                                        border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
-                                        padding: 0, display: 'flex', alignItems: 'center'
+                                        position: 'absolute',
+                                        right: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        display: 'grid',
+                                        placeItems: 'center',
                                     }}
                                 >
-                                    {showPassword ? (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                                    ) : (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                    )}
+                                    <Icon name={showPassword ? 'close' : 'user'} size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            id="login-submit"
-                            className="btn btn-primary"
-                            style={{ width: '100%' }}
-                            disabled={loading}
-                        >
+                        <button type="submit" id="login-submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
                             {loading ? 'Signing in...' : 'Sign In'}
                         </button>
 
-                        <p className="text-center text-muted" style={{ fontSize: '14px', marginTop: '8px' }}>
+                        <p className="text-center text-muted" style={{ fontSize: '14px' }}>
                             New to Skiip? <Link to="/signup" className="text-accent">Create an account</Link>
                         </p>
                     </form>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }

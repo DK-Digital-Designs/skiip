@@ -5,11 +5,14 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { OrderService } from '../../lib/services/order.service';
 import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
+import BottomNav from '../../components/ui/BottomNav';
+import HoldToConfirmButton from '../../components/ui/HoldToConfirmButton';
 import {
     canCancelUnpaidOrder,
     canContinuePendingPayment,
     getBuyerOrderStatusLabel,
 } from '../../lib/orders';
+import { formatCurrency, formatOrderCode, getInitials } from '../../lib/ui-format';
 
 export default function BuyerProfile() {
     const { user, profile, loading: authLoading } = useAuth();
@@ -80,9 +83,7 @@ export default function BuyerProfile() {
         }
     }
 
-    async function handleCancelOrder(event, order) {
-        event.stopPropagation();
-
+    async function handleCancelOrder(order) {
         if (!isSupabaseConfigured()) {
             setOrders((current) => current.map((item) => (
                 item.id === order.id ? { ...item, status: 'cancelled' } : item
@@ -108,35 +109,50 @@ export default function BuyerProfile() {
         }
     }
 
-    if (authLoading) return <div className="container" style={{ paddingTop: '60px' }}>Loading profile...</div>;
+    if (authLoading) {
+        return (
+            <main className="app-page app-page--buyer">
+                <div className="surface empty-state">
+                    <div className="spinner" />
+                    <p>Loading profile</p>
+                </div>
+            </main>
+        );
+    }
     if (!user) return null;
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="container" style={{ paddingBottom: '40px', marginTop: '40px' }}>
-                <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>My Profile</h1>
+        <main className="app-page app-page--buyer">
+            <div className="container" style={{ display: 'grid', gap: '22px' }}>
+                <section>
+                    <p className="page-kicker">Account</p>
+                    <h1 className="page-title" style={{ fontSize: 'clamp(30px, 4vw, 42px)' }}>My Orders</h1>
+                </section>
 
-                <div className="card mb-40">
+                <section className="card">
                     <div className="flex gap-16 items-center">
-                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--accent)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-                            {profile?.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
+                        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '24px', fontWeight: 950 }}>
+                            {getInitials(profile?.full_name || user.email)}
                         </div>
                         <div>
-                            <h3 style={{ marginBottom: '4px' }}>{profile?.full_name || 'Guest User'}</h3>
+                            <h2 style={{ color: 'var(--ink)', fontSize: '22px' }}>{profile?.full_name || 'Guest User'}</h2>
                             <p className="text-muted">{user.email}</p>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>Recent Orders</h2>
                 {loading ? (
-                    <p className="text-muted">Loading history...</p>
+                    <div className="surface empty-state">
+                        <div className="spinner" />
+                        <p>Loading history</p>
+                    </div>
                 ) : orders.length === 0 ? (
-                    <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-                        <p className="text-muted">You haven't placed any orders yet.</p>
+                    <div className="surface empty-state">
+                        <h3>No orders yet</h3>
+                        <p>Your recent SKIIP orders will appear here.</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-16">
+                    <div style={{ display: 'grid', gap: '14px' }}>
                         {orders.map((order) => {
                             const canContinuePayment = canContinuePendingPayment(order);
                             const canCancelOrder = canCancelUnpaidOrder(order);
@@ -145,70 +161,57 @@ export default function BuyerProfile() {
                             const statusLabel = getBuyerOrderStatusLabel(order);
 
                             return (
-                                <div
+                                <article
                                     key={order.id}
                                     className="card"
                                     onClick={() => navigate(`/order/track/${order.id}`)}
-                                    style={{ cursor: 'pointer', transition: 'transform 0.2s', display: 'grid', gap: '14px' }}
-                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                    style={{ cursor: 'pointer', display: 'grid', gap: '14px' }}
                                 >
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-center gap-16" style={{ flexWrap: 'wrap' }}>
                                         <div className="flex gap-16 items-center">
                                             {order.stores?.logo_url ? (
-                                                <img src={order.stores.logo_url} alt={order.stores.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
+                                                <img src={order.stores.logo_url} alt={order.stores.name} style={{ width: '56px', height: '56px', borderRadius: '18px', objectFit: 'cover' }} />
                                             ) : (
-                                                <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    🍽️
+                                                <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'var(--surface-muted)', display: 'grid', placeItems: 'center', color: 'var(--ink)', fontWeight: 950 }}>
+                                                    {getInitials(order.stores?.name || 'SKIIP')}
                                                 </div>
                                             )}
                                             <div>
-                                                <h4 style={{ marginBottom: '4px' }}>{order.stores?.name || 'Unknown Store'}</h4>
+                                                <h3 style={{ color: 'var(--ink)', fontSize: '19px' }}>{order.stores?.name || 'Unknown Store'}</h3>
                                                 <p className="text-muted" style={{ fontSize: '13px' }}>
-                                                    {new Date(order.created_at).toLocaleDateString()} • {order.order_number}
+                                                    {new Date(order.created_at).toLocaleDateString()} - {formatOrderCode(order)}
                                                 </p>
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <h4 style={{ marginBottom: '4px' }}>£{parseFloat(order.total).toFixed(2)}</h4>
-                                            <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: order.status === 'collected' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: order.status === 'collected' ? '#10b981' : '#f59e0b' }}>
+                                            <h4 style={{ color: 'var(--ink)', fontSize: '20px' }}>{formatCurrency(order.total)}</h4>
+                                            <span className={order.status === 'collected' ? 'chip chip--green' : 'chip chip--accent'}>
                                                 {statusLabel}
                                             </span>
                                         </div>
                                     </div>
 
                                     {(canContinuePayment || canCancelOrder) && (
-                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} onClick={(event) => event.stopPropagation()}>
                                             {canContinuePayment && (
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-primary"
-                                                    disabled={Boolean(actionBusy)}
-                                                    onClick={(event) => handleContinuePayment(event, order)}
-                                                    style={{ minHeight: '38px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
-                                                >
+                                                <button type="button" className="btn btn-primary" disabled={Boolean(actionBusy)} onClick={(event) => handleContinuePayment(event, order)}>
                                                     {paymentBusy ? 'Opening payment...' : 'Continue payment'}
                                                 </button>
                                             )}
                                             {canCancelOrder && (
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-ghost"
-                                                    disabled={Boolean(actionBusy)}
-                                                    onClick={(event) => handleCancelOrder(event, order)}
-                                                    style={{ minHeight: '38px', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', color: '#f87171' }}
-                                                >
-                                                    {cancelBusy ? 'Cancelling...' : 'Cancel order'}
-                                                </button>
+                                                <HoldToConfirmButton disabled={Boolean(actionBusy)} onConfirm={() => handleCancelOrder(order)}>
+                                                    {cancelBusy ? 'Cancelling...' : 'Cancel'}
+                                                </HoldToConfirmButton>
                                             )}
                                         </div>
                                     )}
-                                </div>
+                                </article>
                             );
                         })}
                     </div>
                 )}
             </div>
-        </div>
+            <BottomNav />
+        </main>
     );
 }

@@ -8,19 +8,19 @@ const authScenarios = [
     emailEnv: 'PLAYWRIGHT_BUYER_EMAIL',
     passwordEnv: 'PLAYWRIGHT_BUYER_PASSWORD',
     expectedUrl: /#\/order(?:\?.*)?$/,
-    readyLocator: (page) => page.getByRole('heading', { name: /choose a vendor/i }),
+    readyLocator: (page) => page.getByRole('heading', { name: /choose your stall/i }),
     checks: [
       {
         label: 'buyer profile and order history shell renders',
         path: '/order/profile',
         assert: async (page) => {
           await expect(
-            page.getByRole('heading', { name: /my profile/i }),
-            'business-surface: buyer profile should render after sign-in',
+            page.getByRole('heading', { name: /my orders/i }),
+            'business-surface: buyer order history should render after sign-in',
           ).toBeVisible();
           await expect(
-            page.getByRole('heading', { name: /recent orders/i }),
-            'business-surface: buyer order history shell should render after sign-in',
+            page.getByText(/^account$/i),
+            'business-surface: buyer account shell should render after sign-in',
           ).toBeVisible();
         },
       },
@@ -31,7 +31,7 @@ const authScenarios = [
     emailEnv: 'PLAYWRIGHT_SELLER_EMAIL',
     passwordEnv: 'PLAYWRIGHT_SELLER_PASSWORD',
     expectedUrl: /#\/vendor\/dashboard$/,
-    readyLocator: (page) => page.getByText(/vendor dashboard/i),
+    readyLocator: (page) => page.getByText(/vendor portal/i),
     checks: [
       {
         label: 'seller inventory shell renders',
@@ -115,7 +115,7 @@ test.describe('public smoke', () => {
   test('buyer entry point renders the vendor chooser', async ({ page }) => {
     await page.goto(appPath('/order'));
     await expect(
-      page.getByRole('heading', { name: /choose a vendor/i }),
+      page.getByRole('heading', { name: /choose your stall/i }),
       'business-surface: public buyer vendor chooser should render',
     ).toBeVisible();
   });

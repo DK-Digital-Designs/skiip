@@ -5,6 +5,9 @@ import { AuthService } from '../../lib/services/auth.service';
 import { StoreService } from '../../lib/services/store.service';
 import { ProductService } from '../../lib/services/product.service';
 import ProductImageUpload from '../../components/vendor/ProductImageUpload';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Icon from '../../components/ui/Icon';
+import { formatCurrency, getInitials } from '../../lib/ui-format';
 
 export default function VendorProducts() {
     const navigate = useNavigate();
@@ -13,15 +16,15 @@ export default function VendorProducts() {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
-    // Form state
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         price: '',
-        category: 'Burgers', // Default
+        category: 'Burgers',
         images: [],
-        inventory_quantity: 0
+        inventory_quantity: 0,
     });
 
     useEffect(() => {
@@ -31,10 +34,9 @@ export default function VendorProducts() {
     async function checkAuthAndFetch() {
         try {
             if (!isSupabaseConfigured()) {
-                // Demo mode
-                setStore({ id: '1', name: 'Demo Store' });
+                setStore({ id: '1', name: 'Burger Bliss (Demo)' });
                 setProducts([
-                    { id: '1', name: 'Demo Burger', price: 90, category: 'Burgers', description: 'tasty' }
+                    { id: '1', name: 'Classic Burger', price: 8.5, category: 'Burgers', description: 'Beef patty, lettuce, tomato, cheese', inventory_quantity: 18 },
                 ]);
                 setLoading(false);
                 return;
@@ -70,7 +72,7 @@ export default function VendorProducts() {
             price: product.price,
             category: product.category,
             images: product.images || [],
-            inventory_quantity: product.inventory_quantity || 0
+            inventory_quantity: product.inventory_quantity || 0,
         });
         setIsEditing(true);
     }
@@ -83,28 +85,26 @@ export default function VendorProducts() {
             price: '',
             category: 'Burgers',
             images: [],
-            inventory_quantity: 0
+            inventory_quantity: 0,
         });
         setIsEditing(true);
     }
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(event) {
+        event.preventDefault();
         try {
             if (!isSupabaseConfigured()) {
-                alert('Demo mode: Changes not saved.');
                 setIsEditing(false);
                 return;
             }
 
             const slug = formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(2, 7);
-
             const payload = {
                 ...formData,
                 price: parseFloat(formData.price),
                 store_id: store.id,
                 status: 'active',
-                slug: currentProduct ? currentProduct.slug : slug
+                slug: currentProduct ? currentProduct.slug : slug,
             };
 
             if (currentProduct) {
@@ -113,67 +113,78 @@ export default function VendorProducts() {
                 await ProductService.createProduct(payload);
             }
 
-            // Refresh
             const { data } = await ProductService.getProducts({ storeId: store.id, limit: 100 });
             setProducts(data || []);
             setIsEditing(false);
         } catch (error) {
             console.error('Error saving product:', error);
-            alert('Failed to save product');
         }
     }
 
-    async function handleDelete(id) {
-        if (!window.confirm('Are you sure you want to delete this product?')) return;
+    async function handleDeleteConfirmed() {
+        if (!deleteTarget) return;
 
         try {
-            if (!isSupabaseConfigured()) return;
-            await ProductService.deleteProduct(id);
-            setProducts(products.filter(p => p.id !== id));
+            if (isSupabaseConfigured()) {
+                await ProductService.deleteProduct(deleteTarget.id);
+            }
+            setProducts((current) => current.filter((product) => product.id !== deleteTarget.id));
+            setDeleteTarget(null);
         } catch (error) {
             console.error('Error deleting:', error);
         }
     }
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return (
+            <main className="app-page">
+                <div className="surface empty-state">
+                    <div className="spinner" />
+                    <p>Loading products</p>
+                </div>
+            </main>
+        );
+    }
 
     return (
-        <div style={{ minHeight: '100vh', paddingBottom: '40px' }}>
-            <header style={{ padding: '20px 0', borderBottom: '1px solid var(--stroke)', marginBottom: '40px' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <main className="app-page">
+            <div className="container" style={{ display: 'grid', gap: '22px' }}>
+                <section style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div>
-                        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Inventory</h1>
-                        <p className="text-muted">{store?.name}</p>
+                        <p className="page-kicker">Vendor products</p>
+                        <h1 className="page-title" style={{ fontSize: 'clamp(30px, 4vw, 42px)' }}>Inventory</h1>
+                        <p className="page-subtitle">{store?.name}</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button onClick={() => navigate('/vendor/dashboard')} className="btn btn-ghost">Back to Dashboard</button>
-                        <button onClick={handleAddNew} className="btn btn-primary">+ Add Product</button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button type="button" onClick={() => navigate('/vendor/dashboard')} className="btn btn-ghost">Back to Dashboard</button>
+                        <button type="button" onClick={handleAddNew} className="btn btn-primary">
+                            <Icon name="plus" size={17} />
+                            Add Product
+                        </button>
                     </div>
-                </div>
-            </header>
+                </section>
 
-            <div className="container">
                 {isEditing && (
-                    <div className="card" style={{ marginBottom: '40px', background: 'var(--card-hover)' }}>
-                        <h2 style={{ marginBottom: '20px' }}>{currentProduct ? 'Edit Product' : 'New Product'}</h2>
-                        <form onSubmit={handleSubmit}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
+                    <section className="card">
+                        <h2 style={{ color: 'var(--ink)', marginBottom: '18px' }}>{currentProduct ? 'Edit product' : 'New product'}</h2>
+                        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
                                 <div>
-                                    <label>Name</label>
-                                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', padding: '8px' }} />
+                                    <label htmlFor="product-name">Name</label>
+                                    <input id="product-name" required value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} />
                                 </div>
                                 <div>
-                                    <label>Price (£)</label>
-                                    <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} style={{ width: '100%', padding: '8px' }} />
+                                    <label htmlFor="product-price">Price</label>
+                                    <input id="product-price" type="number" step="0.01" required value={formData.price} onChange={(event) => setFormData({ ...formData, price: event.target.value })} />
                                 </div>
                                 <div>
-                                    <label>Stock Quantity</label>
-                                    <input type="number" required value={formData.inventory_quantity} onChange={e => setFormData({ ...formData, inventory_quantity: parseInt(e.target.value) || 0 })} style={{ width: '100%', padding: '8px' }} />
+                                    <label htmlFor="product-stock">Stock quantity</label>
+                                    <input id="product-stock" type="number" required value={formData.inventory_quantity} onChange={(event) => setFormData({ ...formData, inventory_quantity: parseInt(event.target.value, 10) || 0 })} />
                                 </div>
                             </div>
-                            <div style={{ marginBottom: '16px' }}>
-                                <label>Category</label>
-                                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '8px' }}>
+                            <div>
+                                <label htmlFor="product-category">Category</label>
+                                <select id="product-category" value={formData.category} onChange={(event) => setFormData({ ...formData, category: event.target.value })}>
                                     <option>Burgers</option>
                                     <option>Pizza</option>
                                     <option>Sides</option>
@@ -181,9 +192,9 @@ export default function VendorProducts() {
                                     <option>Desserts</option>
                                 </select>
                             </div>
-                            <div style={{ marginBottom: '16px' }}>
-                                <label>Description</label>
-                                <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} style={{ width: '100%', padding: '8px', minHeight: '80px' }} />
+                            <div>
+                                <label htmlFor="product-description">Description</label>
+                                <textarea id="product-description" value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} style={{ minHeight: '88px' }} />
                             </div>
 
                             <ProductImageUpload
@@ -191,48 +202,54 @@ export default function VendorProducts() {
                                 currentImageUrl={formData.images?.[0]}
                                 storeId={store?.id}
                             />
-                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                 <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost">Cancel</button>
                                 <button type="submit" className="btn btn-primary">Save Product</button>
                             </div>
                         </form>
-                    </div>
+                    </section>
                 )}
 
-                <div style={{ display: 'grid', gap: '16px' }}>
-                    {products.map(product => (
-                        <div key={product.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                <div style={{ width: '50px', height: '50px', borderRadius: '4px', background: 'var(--stroke)', overflow: 'hidden' }}>
-                                    {product.images?.[0] ? (
-                                        <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🍔</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <h3 style={{ marginBottom: '4px' }}>{product.name}</h3>
-                                    <p className="text-muted">{product.category} • £{product.price}</p>
-                                    <p style={{
-                                        fontSize: '12px',
-                                        color: product.inventory_quantity > 0 ? '#22c55e' : '#ef4444',
-                                        fontWeight: '600'
-                                    }}>
-                                        {product.inventory_quantity > 0 ? `${product.inventory_quantity} in stock` : 'SOLD OUT'}
-                                    </p>
-                                </div>
+                <section style={{ display: 'grid', gap: '14px' }}>
+                    {products.map((product) => (
+                        <article key={product.id} className="menu-row" style={{ gridTemplateColumns: '72px minmax(0, 1fr) auto' }}>
+                            <div className="menu-row__image" style={{ width: 72, height: 72 }}>
+                                {product.images?.[0] ? (
+                                    <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    getInitials(product.name)
+                                )}
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => handleEdit(product)} className="btn btn-ghost">Edit</button>
-                                <button onClick={() => handleDelete(product.id)} className="btn btn-ghost" style={{ color: '#ef4444' }}>Delete</button>
+                            <div>
+                                <h3 style={{ color: 'var(--ink)', fontSize: '19px' }}>{product.name}</h3>
+                                <p className="text-muted">{product.category} - {formatCurrency(product.price)}</p>
+                                <span className={product.inventory_quantity > 0 ? 'chip chip--green' : 'chip'} style={{ marginTop: '8px' }}>
+                                    {product.inventory_quantity > 0 ? `${product.inventory_quantity} in stock` : 'Sold out'}
+                                </span>
                             </div>
-                        </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => handleEdit(product)} className="btn btn-ghost">Edit</button>
+                                <button type="button" onClick={() => setDeleteTarget(product)} className="btn btn-ghost" style={{ color: 'var(--red)' }}>Delete</button>
+                            </div>
+                        </article>
                     ))}
                     {products.length === 0 && !isEditing && (
-                        <p className="text-muted" style={{ textAlign: 'center', padding: '40px' }}>No products found.</p>
+                        <div className="surface empty-state">
+                            <h3>No products found</h3>
+                            <p>Add your first product to start building the menu.</p>
+                        </div>
                     )}
-                </div>
+                </section>
             </div>
-        </div>
+
+            <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title="Delete product?"
+                description={deleteTarget ? `${deleteTarget.name} will be removed from this menu.` : ''}
+                confirmLabel="Delete"
+                onConfirm={handleDeleteConfirmed}
+                onCancel={() => setDeleteTarget(null)}
+            />
+        </main>
     );
 }
