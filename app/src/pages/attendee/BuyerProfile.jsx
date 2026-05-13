@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
@@ -7,6 +7,7 @@ import { StripeService } from '../../lib/services/stripe.service';
 import { useToast } from '../../components/ui/Toast';
 import BottomNav from '../../components/ui/BottomNav';
 import HoldToConfirmButton from '../../components/ui/HoldToConfirmButton';
+import BackButton from '../../components/ui/BackButton';
 import {
     canCancelUnpaidOrder,
     canContinuePendingPayment,
@@ -20,6 +21,8 @@ export default function BuyerProfile() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionBusy, setActionBusy] = useState(null);
+    const [orderFilter, setOrderFilter] = useState('active');
+    const [sortMode, setSortMode] = useState('newest');
     const { addToast } = useToast();
 
     useEffect(() => {
@@ -53,6 +56,28 @@ export default function BuyerProfile() {
 
         fetchHistory();
     }, [authLoading, user, navigate]);
+
+    const filteredOrders = useMemo(() => {
+        const sorted = [...orders].sort((a, b) => {
+            const aTime = new Date(a.created_at || 0).getTime();
+            const bTime = new Date(b.created_at || 0).getTime();
+            return sortMode === 'oldest' ? aTime - bTime : bTime - aTime;
+        });
+
+        if (orderFilter === 'all') return sorted;
+        if (orderFilter === 'payment') return sorted.filter((order) => canContinuePendingPayment(order));
+        if (orderFilter === 'complete') {
+            return sorted.filter((order) => ['collected', 'cancelled', 'refunded'].includes(order.status));
+        }
+        return sorted.filter((order) => !['collected', 'cancelled', 'refunded'].includes(order.status));
+    }, [orders, orderFilter, sortMode]);
+
+    const filterOptions = [
+        { id: 'active', label: 'Active' },
+        { id: 'payment', label: 'Needs payment' },
+        { id: 'complete', label: 'Complete' },
+        { id: 'all', label: 'All' },
+    ];
 
     async function handleContinuePayment(event, order) {
         event.stopPropagation();
@@ -124,9 +149,12 @@ export default function BuyerProfile() {
     return (
         <main className="app-page app-page--buyer">
             <div className="container" style={{ display: 'grid', gap: '22px' }}>
-                <section>
-                    <p className="page-kicker">Account</p>
-                    <h1 className="page-title" style={{ fontSize: 'clamp(30px, 4vw, 42px)' }}>My Orders</h1>
+                <section style={{ display: 'grid', gap: '14px' }}>
+                    <BackButton to="/order" label="Back to vendors" style={{ width: 'fit-content' }} />
+                    <div>
+                        <p className="page-kicker">Account</p>
+                        <h1 className="page-title" style={{ fontSize: 'clamp(30px, 4vw, 42px)' }}>My Orders</h1>
+                    </div>
                 </section>
 
                 <section className="card">
@@ -138,6 +166,31 @@ export default function BuyerProfile() {
                             <h2 style={{ color: 'var(--ink)', fontSize: '22px' }}>{profile?.full_name || 'Guest User'}</h2>
                             <p className="text-muted">{user.email}</p>
                         </div>
+                    </div>
+                </section>
+
+                <section className="surface" style={{ display: 'grid', gap: '14px', padding: '16px', borderRadius: '24px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {filterOptions.map((option) => (
+                            <button
+                                key={option.id}
+                                type="button"
+                                className={orderFilter === option.id ? 'btn btn-purple' : 'btn btn-ghost'}
+                                onClick={() => setOrderFilter(option.id)}
+                                style={{ minHeight: '34px', padding: '8px 12px', fontSize: '12px' }}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <p className="text-muted" style={{ fontSize: '13px' }}>
+                            {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'} shown
+                        </p>
+                        <select aria-label="Sort orders" value={sortMode} onChange={(event) => setSortMode(event.target.value)} style={{ maxWidth: '180px' }}>
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                        </select>
                     </div>
                 </section>
 
@@ -153,7 +206,13 @@ export default function BuyerProfile() {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gap: '14px' }}>
-                        {orders.map((order) => {
+                        {filteredOrders.length === 0 && (
+                            <div className="surface empty-state">
+                                <h3>No orders in this view</h3>
+                                <p>Try another filter to see more of your order history.</p>
+                            </div>
+                        )}
+                        {filteredOrders.map((order) => {
                             const canContinuePayment = canContinuePendingPayment(order);
                             const canCancelOrder = canCancelUnpaidOrder(order);
                             const paymentBusy = actionBusy === `${order.id}:payment`;

@@ -4,8 +4,10 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { AuthService } from '../../lib/services/auth.service';
 import { AdminService } from '../../lib/services/admin.service';
 import { RefundService } from '../../lib/services/refund.service';
+import { SettingsService } from '../../lib/services/settings.service';
 import { useToast } from '../../components/ui/Toast';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { DEFAULT_LAUNCH_EVENT } from '../../lib/launch-event';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 import {
     getOrderStateSummary,
@@ -43,6 +45,9 @@ export default function AdminDashboard() {
     const [refundTarget, setRefundTarget] = useState(null);
     const [refundReason, setRefundReason] = useState('Pilot support refund');
     const [reconcilingOrderId, setReconcilingOrderId] = useState(null);
+    const [launchEvent, setLaunchEvent] = useState(DEFAULT_LAUNCH_EVENT);
+    const [launchEventDraft, setLaunchEventDraft] = useState(DEFAULT_LAUNCH_EVENT);
+    const [savingLaunchEvent, setSavingLaunchEvent] = useState(false);
     const [stats, setStats] = useState({
         totalOrders: 0,
         activeOrders: 0,
@@ -82,9 +87,10 @@ export default function AdminDashboard() {
     }
 
     async function refreshDashboard() {
-        const [metrics, orders] = await Promise.all([
+        const [metrics, orders, eventSettings] = await Promise.all([
             AdminService.getDashboardMetrics(),
             AdminService.getRecentOrders(20),
+            SettingsService.getLaunchEvent(),
         ]);
 
         setStats({
@@ -98,6 +104,28 @@ export default function AdminDashboard() {
             notifications: metrics?.notifications || { total: 0, failed: 0, whatsapp_failed: 0, email_failed: 0 },
         });
         setRecentOrders(orders || []);
+        setLaunchEvent(eventSettings);
+        setLaunchEventDraft(eventSettings);
+    }
+
+    function updateLaunchEventField(field, value) {
+        setLaunchEventDraft((current) => ({ ...current, [field]: value }));
+    }
+
+    async function handleSaveLaunchEvent(event) {
+        event.preventDefault();
+        setSavingLaunchEvent(true);
+        try {
+            const saved = await SettingsService.saveLaunchEvent(launchEventDraft);
+            setLaunchEvent(saved);
+            setLaunchEventDraft(saved);
+            addToast('Launch event copy updated.', 'success');
+        } catch (error) {
+            console.error('Launch event save failed:', error);
+            addToast(error.message || 'Could not save launch event copy.', 'error');
+        } finally {
+            setSavingLaunchEvent(false);
+        }
     }
 
     async function handleLogout() {
@@ -171,6 +199,55 @@ export default function AdminDashboard() {
                         <Link to="/admin/vendors" className="btn btn-purple">Manage Vendors</Link>
                         <button type="button" onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>
+                </section>
+
+                <section className="two-column">
+                    <form className="card" onSubmit={handleSaveLaunchEvent} style={{ display: 'grid', gap: '14px' }}>
+                        <div>
+                            <p className="page-kicker">Launch event</p>
+                            <h2 style={{ color: 'var(--ink)', fontSize: '24px' }}>Buyer home hero</h2>
+                            <p className="text-muted" style={{ marginTop: '6px' }}>
+                                Update the event text shown on the public landing page and buyer vendor selection page.
+                            </p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                            <div>
+                                <label htmlFor="launch-label">Status label</label>
+                                <input id="launch-label" value={launchEventDraft.label} onChange={(event) => updateLaunchEventField('label', event.target.value)} />
+                            </div>
+                            <div>
+                                <label htmlFor="launch-title">Buyer page title</label>
+                                <input id="launch-title" value={launchEventDraft.title} onChange={(event) => updateLaunchEventField('title', event.target.value)} />
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="launch-subtitle">Buyer page subtitle</label>
+                            <textarea id="launch-subtitle" value={launchEventDraft.subtitle} onChange={(event) => updateLaunchEventField('subtitle', event.target.value)} style={{ minHeight: '80px' }} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                            <div>
+                                <label htmlFor="launch-landing-title">Landing page title</label>
+                                <input id="launch-landing-title" value={launchEventDraft.landingTitle} onChange={(event) => updateLaunchEventField('landingTitle', event.target.value)} />
+                            </div>
+                            <div>
+                                <label htmlFor="launch-landing-subtitle">Landing page subtitle</label>
+                                <input id="launch-landing-subtitle" value={launchEventDraft.landingSubtitle} onChange={(event) => updateLaunchEventField('landingSubtitle', event.target.value)} />
+                            </div>
+                        </div>
+                        <button type="submit" className="btn btn-primary" disabled={savingLaunchEvent}>
+                            {savingLaunchEvent ? 'Saving...' : 'Save event copy'}
+                        </button>
+                    </form>
+
+                    <article className="hero-panel" style={{ minHeight: 'auto' }}>
+                        <div className="hero-panel__content" style={{ minHeight: '220px' }}>
+                            <span className="chip chip--cyan" style={{ width: 'fit-content', color: '#fff', background: 'rgba(34,211,238,0.22)' }}>
+                                {launchEvent.label}
+                            </span>
+                            <h2>{launchEvent.title}</h2>
+                            <p>{launchEvent.subtitle}</p>
+                        </div>
+                    </article>
                 </section>
 
                 <section className="dashboard-grid">

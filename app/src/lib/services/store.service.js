@@ -1,4 +1,6 @@
 import { supabase } from '../supabase';
+import { normalizeVendorTags } from '../vendor-tags';
+import { getFunctionAuthHeaders } from './function-auth';
 
 export const StoreService = {
     /**
@@ -80,5 +82,24 @@ export const StoreService = {
             throw error;
         }
         return data;
+    },
+
+    async updateMyStoreProfile({ name, description, logoUrl, pickupLocation, tags }) {
+        if (!supabase) throw new Error('Supabase not configured');
+
+        const headers = await getFunctionAuthHeaders();
+        const { data, error } = await supabase.functions.invoke('vendor-store-profile', {
+            headers,
+            body: {
+                name,
+                description,
+                logoUrl,
+                pickupLocation,
+                tags: normalizeVendorTags(tags),
+            },
+        });
+
+        if (error) throw error;
+        return data?.store;
     }
 };

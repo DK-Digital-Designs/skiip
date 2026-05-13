@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
+import { DEFAULT_LAUNCH_EVENT } from '../lib/launch-event';
+import { SettingsService } from '../lib/services/settings.service';
 
 export default function LandingPage() {
+    const [launchEvent, setLaunchEvent] = useState(DEFAULT_LAUNCH_EVENT);
+
+    useEffect(() => {
+        let active = true;
+        SettingsService.getLaunchEvent().then((settings) => {
+            if (active) setLaunchEvent(settings);
+        });
+        return () => {
+            active = false;
+        };
+    }, []);
+
     return (
         <main className="app-page">
             <div className="container two-column" style={{ alignItems: 'center', minHeight: 'calc(100vh - 170px)' }}>
@@ -27,10 +41,10 @@ export default function LandingPage() {
                 <section className="hero-panel" aria-label="SKIIP event preview">
                     <div className="hero-panel__content">
                         <span className="chip chip--cyan" style={{ width: 'fit-content', color: '#fff', background: 'rgba(34,211,238,0.22)' }}>
-                            Live now
+                            {launchEvent.label}
                         </span>
-                        <h2>Order ahead at Summer Beats</h2>
-                        <p>Find the right stall, pay in seconds, and collect when your order is ready.</p>
+                        <h2>{launchEvent.landingTitle}</h2>
+                        <p>{launchEvent.landingSubtitle}</p>
                     </div>
                 </section>
             </div>

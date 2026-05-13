@@ -372,6 +372,7 @@ export default function VendorDashboard() {
                         <p className="page-subtitle">Live order queue with realtime updates.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button type="button" onClick={() => navigate('/vendor/profile')} className="btn btn-ghost">Profile</button>
                         <button type="button" onClick={() => navigate('/vendor/products')} className="btn btn-purple">Products</button>
                         <button type="button" onClick={handleLogout} className="btn btn-ghost">Logout</button>
                     </div>

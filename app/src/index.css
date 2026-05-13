@@ -301,7 +301,7 @@ img {
   color: var(--ink);
   font-weight: 950;
   text-decoration: none;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .brand-mark__icon {
@@ -311,12 +311,15 @@ img {
   display: grid;
   place-items: center;
   background: var(--ink);
-  color: var(--cyan);
+  color: #ffffff;
+  border: 2px solid rgba(34, 211, 238, 0.7);
   box-shadow: 0 10px 24px rgba(42, 10, 74, 0.2);
 }
 
 .brand-mark__text {
-  font-size: 22px;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1;
 }
 
 .top-nav {
@@ -443,6 +446,16 @@ img {
 .vendor-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
+}
+
+.vendor-card--muted {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.vendor-card--muted .vendor-card__media {
+  opacity: 0.72;
+  filter: saturate(0.82);
 }
 
 .vendor-card__media {

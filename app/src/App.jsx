@@ -14,6 +14,7 @@ import UnifiedSignup from './pages/shared/Signup';
 
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
+import VendorProfile from './pages/vendor/Profile';
 
 import AdminDashboard from './pages/admin/DashboardV2';
 import AdminVendors from './pages/admin/Vendors';
@@ -65,6 +66,14 @@ function App() {
                     element={
                         <ProtectedRoute roles={['seller']}>
                             <VendorProducts />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/vendor/profile"
+                    element={
+                        <ProtectedRoute roles={['seller']}>
+                            <VendorProfile />
                         </ProtectedRoute>
                     }
                 />

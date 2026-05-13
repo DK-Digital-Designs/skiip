@@ -1,6 +1,12 @@
 import React from 'react';
 
 const paths = {
+    arrowLeft: (
+        <>
+            <path d="M19 12H5" />
+            <path d="m12 19-7-7 7-7" />
+        </>
+    ),
     bag: (
         <>
             <path d="M6 8h12l-1 11H7L6 8Z" />
@@ -71,6 +77,12 @@ const paths = {
     spark: (
         <>
             <path d="M13 2 5 13h7l-1 9 8-12h-7l1-8Z" />
+        </>
+    ),
+    tag: (
+        <>
+            <path d="M20 13 13 20 4 11V4h7l9 9Z" />
+            <path d="M7.5 7.5h.01" />
         </>
     ),
     user: (

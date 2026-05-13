@@ -9,6 +9,7 @@ import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import StatusTimeline from '../../components/ui/StatusTimeline';
 import BottomNav from '../../components/ui/BottomNav';
 import Icon from '../../components/ui/Icon';
+import BackButton from '../../components/ui/BackButton';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 import {
     canCancelUnpaidOrder,
@@ -234,6 +235,7 @@ export default function OrderTracker() {
             )}
 
             <div className="narrow-container" style={{ display: 'grid', gap: '20px' }}>
+                <BackButton to="/order/profile" label="Back to my orders" style={{ width: 'fit-content' }} />
                 <section className="surface" style={{ padding: '24px', borderRadius: '30px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'start', flexWrap: 'wrap' }}>
                         <div style={{ flex: '1 1 220px', minWidth: 0 }}>
