@@ -1,9 +1,10 @@
 import { logger } from "../logger.ts";
 import { getConfiguredEnv } from "../notification-config.ts";
 import { getWhatsAppAmount } from "../notification-content.ts";
+import { normalizeWhatsAppPhone } from "../whatsapp-guard.ts";
 import {
-  ProviderDispatchError,
   type NotificationEvent,
+  ProviderDispatchError,
   type ProviderDispatchInput,
   type ProviderDispatchResult,
 } from "../notification-types.ts";
@@ -28,61 +29,6 @@ function getTemplateSid(eventType: NotificationEvent) {
   return getConfiguredEnv(...TEMPLATE_ENV_KEYS[eventType]);
 }
 
-function getDefaultCountryCode() {
-  const configuredCountryCode = (
-    getConfiguredEnv("WHATSAPP_DEFAULT_COUNTRY_CODE") || "44"
-  )
-    .trim()
-    .replace(/^\+/, "");
-
-  if (!/^\d{1,3}$/.test(configuredCountryCode)) {
-    log.error("Invalid WhatsApp default country code", {
-      configuredCountryCode,
-      reason: "invalid_default_country_code",
-    });
-    return null;
-  }
-
-  return configuredCountryCode;
-}
-
-function normalizePhone(customerPhone: string) {
-  const stripped = customerPhone.trim().replace(/[\s\-()]/g, "");
-  const hasExplicitCountryCode =
-    stripped.startsWith("+") || stripped.startsWith("00");
-  const defaultCountryCode = getDefaultCountryCode();
-
-  if (!defaultCountryCode) {
-    return null;
-  }
-
-  let normalized = stripped;
-
-  if (stripped.startsWith("+")) {
-    normalized = stripped.slice(1);
-  } else if (stripped.startsWith("00")) {
-    normalized = stripped.slice(2);
-  }
-
-  if (!normalized) {
-    return null;
-  }
-
-  if (!hasExplicitCountryCode) {
-    if (normalized.startsWith("0")) {
-      normalized = `${defaultCountryCode}${normalized.slice(1)}`;
-    } else if (!normalized.startsWith(defaultCountryCode)) {
-      return null;
-    }
-  }
-
-  if (/\D/.test(normalized) || normalized.length < 8 || normalized.length > 15) {
-    return null;
-  }
-
-  return `+${normalized}`;
-}
-
 function formatTwilioWhatsappAddress(sender: string) {
   return sender.startsWith("whatsapp:") ? sender : `whatsapp:${sender}`;
 }
@@ -95,7 +41,9 @@ function buildTwilioStatusCallbackUrl(
     return null;
   }
 
-  const callbackBase = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/whatsapp-status-webhook`;
+  const callbackBase = `${
+    supabaseUrl.replace(/\/+$/, "")
+  }/functions/v1/whatsapp-status-webhook`;
   return webhookToken
     ? `${callbackBase}?token=${encodeURIComponent(webhookToken)}`
     : callbackBase;
@@ -106,6 +54,8 @@ export async function sendTwilioWhatsAppMessage(
 ): Promise<ProviderDispatchResult> {
   const twilioAccountSid = getConfiguredEnv("TWILIO_ACCOUNT_SID");
   const twilioAuthToken = getConfiguredEnv("TWILIO_AUTH_TOKEN");
+  const twilioApiKeySid = getConfiguredEnv("TWILIO_API_KEY_SID");
+  const twilioApiKeySecret = getConfiguredEnv("TWILIO_API_KEY_SECRET");
   const twilioWhatsappFrom = getConfiguredEnv(
     "TWILIO_WHATSAPP_FROM",
     "TWILIO_WHATSAPP_NUMBER",
@@ -113,8 +63,13 @@ export async function sendTwilioWhatsAppMessage(
   const twilioWebhookToken = getConfiguredEnv("TWILIO_WEBHOOK_TOKEN");
   const supabaseUrl = getConfiguredEnv("SUPABASE_URL");
   const templateSid = getTemplateSid(eventType);
+  const authUsername = twilioApiKeySid || twilioAccountSid;
+  const authPassword = twilioApiKeySid ? twilioApiKeySecret : twilioAuthToken;
 
-  if (!twilioAccountSid || !twilioAuthToken || !twilioWhatsappFrom || !templateSid) {
+  if (
+    !twilioAccountSid || !authUsername || !authPassword ||
+    !twilioWhatsappFrom || !templateSid
+  ) {
     throw new ProviderDispatchError(
       "Twilio WhatsApp provider is not fully configured",
       {
@@ -125,10 +80,13 @@ export async function sendTwilioWhatsAppMessage(
   }
 
   if (!payload.whatsappOptIn) {
-    throw new ProviderDispatchError("WhatsApp opt-in is disabled for this order", {
-      retryable: false,
-      metadata: { reason: "whatsapp_not_opted_in" },
-    });
+    throw new ProviderDispatchError(
+      "WhatsApp opt-in is disabled for this order",
+      {
+        retryable: false,
+        metadata: { reason: "whatsapp_not_opted_in" },
+      },
+    );
   }
 
   if (!payload.customerPhone) {
@@ -138,8 +96,11 @@ export async function sendTwilioWhatsAppMessage(
     });
   }
 
-  const normalizedPhone = normalizePhone(payload.customerPhone);
+  const normalizedPhone = normalizeWhatsAppPhone(payload.customerPhone);
   if (!normalizedPhone) {
+    log.error("Invalid WhatsApp recipient reached Twilio provider", {
+      reason: "invalid_phone_number",
+    });
     throw new ProviderDispatchError("Invalid WhatsApp phone number", {
       retryable: false,
       metadata: { reason: "invalid_phone_number" },
@@ -174,7 +135,7 @@ export async function sendTwilioWhatsAppMessage(
       {
         method: "POST",
         headers: {
-          Authorization: `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`,
+          Authorization: `Basic ${btoa(`${authUsername}:${authPassword}`)}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData.toString(),

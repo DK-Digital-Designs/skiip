@@ -47,6 +47,36 @@ function parsePositiveInteger(
   return parsed;
 }
 
+function parseNonNegativeInteger(
+  rawValue: string | undefined,
+  key: string,
+  fallback: number,
+) {
+  if (!rawValue) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(rawValue, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    log.warn("Invalid notification configuration value", {
+      key,
+      rawValue,
+      fallback,
+    });
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function parseBoolean(rawValue: string | undefined, fallback = false) {
+  if (!rawValue) {
+    return fallback;
+  }
+
+  return ["1", "true", "yes", "on"].includes(rawValue.trim().toLowerCase());
+}
+
 function parseEventList(key: string, defaults: NotificationEvent[]) {
   const rawValue = getConfiguredEnv(key);
   if (!rawValue) {
@@ -86,8 +116,7 @@ export function getConfiguredEnv(...keys: string[]) {
 }
 
 export function getConfiguredProvider(channel: NotificationChannel) {
-  const rawProvider =
-    getConfiguredEnv(CHANNEL_PROVIDER_KEYS[channel]) ||
+  const rawProvider = getConfiguredEnv(CHANNEL_PROVIDER_KEYS[channel]) ||
     CHANNEL_PROVIDER_DEFAULTS[channel];
   const provider = rawProvider.trim().toLowerCase();
 
@@ -121,6 +150,18 @@ export function getNotificationUserAgent() {
   return "skiip-notifications/1.0";
 }
 
+export function getRuntimeEnvironment() {
+  return (
+    getConfiguredEnv(
+      "SKIIP_ENVIRONMENT",
+      "APP_ENV",
+      "ENVIRONMENT",
+      "VERCEL_ENV",
+      "SUPABASE_ENV",
+    ) || "development"
+  ).trim().toLowerCase();
+}
+
 export function getRetryDelaySeconds(attemptNumber: number) {
   return NOTIFICATION_RETRY_BASE_DELAY_SECONDS *
     2 ** Math.max(attemptNumber - 1, 0);
@@ -135,6 +176,49 @@ export const WHATSAPP_NOTIFICATION_EVENTS = parseEventList(
   "WHATSAPP_NOTIFICATION_EVENTS",
   ["order_ready"],
 );
+
+export function getWhatsAppSendMode() {
+  const configuredMode = (
+    getConfiguredEnv("WHATSAPP_SEND_MODE") || "disabled"
+  ).trim().toLowerCase();
+
+  if (["disabled", "allowlist", "live"].includes(configuredMode)) {
+    return configuredMode as "disabled" | "allowlist" | "live";
+  }
+
+  log.warn("Invalid WhatsApp send mode; defaulting to disabled", {
+    configuredMode,
+  });
+  return "disabled";
+}
+
+export function getWhatsAppDailySendLimit() {
+  return parseNonNegativeInteger(
+    getConfiguredEnv("WHATSAPP_DAILY_SEND_LIMIT"),
+    "WHATSAPP_DAILY_SEND_LIMIT",
+    10,
+  );
+}
+
+export function getWhatsAppPerDispatchLimit() {
+  return parseNonNegativeInteger(
+    getConfiguredEnv("WHATSAPP_PER_DISPATCH_LIMIT"),
+    "WHATSAPP_PER_DISPATCH_LIMIT",
+    2,
+  );
+}
+
+export function getWhatsAppAllowLiveNonProd() {
+  return parseBoolean(
+    getConfiguredEnv("WHATSAPP_ALLOW_LIVE_NON_PROD"),
+    false,
+  );
+}
+
+export const WHATSAPP_SEND_MODE = getWhatsAppSendMode();
+export const WHATSAPP_DAILY_SEND_LIMIT = getWhatsAppDailySendLimit();
+export const WHATSAPP_PER_DISPATCH_LIMIT = getWhatsAppPerDispatchLimit();
+export const WHATSAPP_ALLOW_LIVE_NON_PROD = getWhatsAppAllowLiveNonProd();
 
 export const NOTIFICATION_DISPATCH_BATCH_SIZE = parsePositiveInteger(
   getConfiguredEnv("NOTIFICATION_DISPATCH_BATCH_SIZE"),

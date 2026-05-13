@@ -22,9 +22,12 @@ These are the current preferred repo-supported shared accounts because they matc
 Important current limitation:
 
 - the seed script creates the vendor user and store
+- the seed script creates one active product for the vendor inventory smoke path
 - it does not create a Stripe Connect account or mark `stripe_onboarding_complete = true`
+- it does not and cannot complete Stripe Connect onboarding, because that requires the vendor/client to finish the hosted Stripe account flow
 
 Do not assume the seeded seller can complete payment-path tests until onboarding is completed in the target environment.
+The authenticated seller smoke check is intentionally limited to sign-in, dashboard reachability, and inventory access; it is not proof that the vendor can accept payments.
 
 ## Legacy Accounts
 
@@ -78,9 +81,10 @@ Current staging smoke scope:
 - landing page CTA
 - buyer entry/vendor chooser
 - protected-route redirect to login
-- buyer sign-in
-- seller sign-in
-- admin sign-in
+- buyer sign-in and buyer profile/order-history shell
+- seller sign-in, vendor dashboard, and inventory shell
+- admin sign-in, admin dashboard, and vendor-management shell
+- failure output annotated as `auth`, `routing`, or `business-surface` in Playwright steps and expectation messages
 
 Current non-scope:
 
@@ -140,6 +144,8 @@ Failure artifacts:
 
 - `playwright-report`
 - `test-results`
+- failure screenshots
+- retained Playwright traces
 
 ## Fixture Strategy
 
@@ -162,9 +168,16 @@ Current environment expectations for the seeding script:
 - `SUPABASE_URL` is optional but recommended
 - legacy `VITE_SUPABASE_SERVICE_ROLE_KEY` and `VITE_SUPABASE_URL` are still accepted by some local scripts
 
+Idempotency behavior:
+
+- existing auth users are updated with the maintained password and role metadata
+- `user_profiles` rows are upserted by user ID
+- the `skiip-test-kitchen` store is upserted by slug and reattached to the maintained seller
+- the `smoke-test-burger` product is updated if it already exists for the store, otherwise it is created
+
 Important current caveats:
 
-- shared-environment seeding is additive
+- shared-environment seeding is additive for unrelated users, stores, products, orders, and operational data
 - it does not wipe orders or live operational data
 - local `supabase db reset` should not be treated as repo-guaranteed working today because `supabase/config.toml` references `supabase/seed.sql`, and that file is not committed
 

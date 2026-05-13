@@ -266,6 +266,10 @@ Important:
 - launch-safe default WhatsApp scope is `order_ready`
 - `TWILIO_TEMPLATE_*` values must match the actual enabled event scope
 - phone normalization defaults to country code `44` unless overridden
+- `WHATSAPP_SEND_MODE` defaults to `disabled`; staging provider tests should use `allowlist`
+- `WHATSAPP_ALLOWED_RECIPIENTS` must contain E.164 test numbers in `allowlist` mode
+- `WHATSAPP_DAILY_SEND_LIMIT` and `WHATSAPP_PER_DISPATCH_LIMIT` are local spend brakes before Twilio is called
+- non-production `live` mode is blocked unless `WHATSAPP_ALLOW_LIVE_NON_PROD=true`
 
 ## Resend Email
 
@@ -278,8 +282,12 @@ Important:
 Webhook endpoint:
 
 ```text
-https://<project-ref>.supabase.co/functions/v1/resend-email-webhook
+https://jmqjuvfjthwbsbelgccs.supabase.co/functions/v1/resend-email-webhook
 ```
+
+Current hosted project reference for this environment:
+
+- `jmqjuvfjthwbsbelgccs`
 
 Subscribe at least to:
 

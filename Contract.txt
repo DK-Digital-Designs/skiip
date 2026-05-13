@@ -1,0 +1,297 @@
+
+
+
+
+Web Development Agreement 
+
+
+
+Prepared for						Prepared by
+ 
+Nkosi Dladla & Nolwazi Majola [SKIIP] 									
+ 
+Khaya Majola & Dean Gibson
+ [DK Digital] 
+
+1.	Parties Involved
+●	Developer:
+●	Name/Company: DK Digital
+●	Email: [Developer email]
+●	Phone: 082 373 9907/076 806 5874
+●	Client:
+●	Name/Company: Skiip
+●	Address: 20 First Way, Wembley, England
+●	Email: [Client Email]
+●	Phone: 082 456 6428
+2.	Project Details
+●	Description:
+●	Skiip is a mobile-first web application designed to enable festival attendees to browse vendors’ menus, place orders online, and collect their purchases without waiting in queues. The platform provides a streamlined, QR-code accessible ordering experience that improves service efficiency, increases vendor sales, and enhances the attendee experience.
+●	The platform consists of three main user interfaces: 	
+Customer Ordering Interface — A responsive web interface that allows festival attendees to select a vendor, browse real-time menus, add items to a cart, submit orders, and receive updates and notifications via WhatsApp or SMS.                    Vendor Dashboard — A secure, real-time order management panel where vendors can view new orders, update order statuses (e.g., New, In Prep, Ready), and manage fulfilment for service points at events. 				                   Admin/Organiser Console — A management interface for event organisers to onboard vendors, configure menus, view orders by vendor and status, monitor transaction volume, and generate simple analytics.
+
+●	The platform will integrate online payment processing (Stripe) for secure card payments and automated revenue settlement, and WhatsApp notifications for real-time order confirmations and status updates. The system will be built using modern scalable web technologies, ensuring fast performance during high-concurrency traffic typical at live events.
+
+
+
+●	Timeline:
+●	Start Date: [01/02/2026]
+●	End Date: [01/06/2026]
+
+●	Phases:
+●	Phase 1 — Mockup & Concept
+•	The Service Provider shall establish the initial product direction, user experience, and visual concept for the platform. This phase encompasses the definition of the platform's look, feel, and intended interaction model across its primary user roles, with the objective of validating the overall product concept prior to technical development.Phase 2: MVP Feature Development & Core Functionality
+●	Phase 2 — Technical Foundation & Backend Setup
+•	The Service Provider shall transition the approved concept into a functional technical foundation. Deliverables under this phase shall include, but are not limited to, the following:
+•	Database architecture and structure;
+•	Core backend logic and system configuration;
+•	Role-based access control patterns;
+•	Initial payment integration (Stripe);
+•	Guest ordering capability;
+•	Global error handling; and
+•	Foundational structure for buyer, vendor, and administrator areas.
+
+•	Phase 3 — Core Product Flow Implementation
+•	The Service Provider shall build out the primary platform loop, constituting the central functional experience of the platform. Deliverables under this phase shall include, but are not limited to, the following:
+●	Buyer and vendor authentication;
+●	Menu browsing and product display;
+●	Cart and checkout flow;
+●	Order tracking functionality;
+●	Vendor product and inventory management;
+●	Administrator overview and controls;
+●	Product image support; and
+●	Notification and webhook foundations.
+
+
+
+
+•	Phase 4 — Pilot Readiness, Deployment & Core-Loop Polish
+•	The Service Provider shall prepare the platform for controlled pilot deployment. Deliverables under this phase shall include, but are not limited to, the following:
+•	Deployment infrastructure and configuration;
+•	Marketing and supporting pages;
+•	Vercel and GitHub Pages setup;
+•	Stripe Connect vendor onboarding;
+•	Stability and bug fixes;
+•	Localisation and currency adjustments;
+•	Checkout and routing refinements; and
+•	Vendor payment rule implementation.
+
+Phase 5 — Hardening, Security & Bug Fixes
+•	The Service Provider shall transition focus from functional delivery to platform integrity and reliability in preparation for live event use. Deliverables under this phase shall include, but are not limited to, the following:
+•	Payment recovery and refund handling;
+•	Reconciliation processes;
+•	Inventory protection mechanisms;
+•	Notification reliability improvements;
+•	Access control auditing and remediation;
+•	Technical documentation; and
+•	Operational cleanup and system stabilisation.
+
+
+
+
+3.	Technical Specifications
+●	Technical Overview:
+●	The Skiip platform will be developed as a responsive, web-based ordering system designed for high-traffic event environments. The solution will leverage modern web technologies to ensure scalability, performance, and ease of future expansion. The system will consist of a customer-facing ordering interface, a vendor management interface, and an administrative backend. Version control will be managed using GitHub, and development will follow modular, maintainable coding practices.
+●	System Design & Functionality:
+●	Frontend:
+The front-end will be built as a responsive web application optimised for mobile-first usage, designed to the client specification. It will include customer-facing views such as vendor listings, vendor menus, item selection, cart and order summary screens, and order status notifications. The vendor-facing interface will include order dashboards, order detail views, and manual order status update controls. The user interface will prioritise speed, clarity, minimal user friction, suitable for use in live event environments.
+●	Backend:
+The backend will manage all server-side logic, including user and vendor data handling, menu and item management, order creation and processing, and order status tracking. A structured database will be used to store customer details, vendor profiles, menus, orders, and order statuses. The system will be designed to support concurrent users and allow for future enhancements such as analytics, payment processing, and advanced reporting.
+●	APIs and Integrations: 
+●	The platform may integrate with third-party services to enhance functionality, including payment gateways (e.g. Stripe), messaging services (e.g. WhatsApp Business API for order confirmations and status notifications), and hosting or cloud infrastructure providers. All integrations will be implemented using secure, documented APIs and will be modular to allow replacement or upgrades as required.
+●	Security Measures:
+●	The platform will implement standard web security best practices to protect user and vendor data. These measures include secure HTTPS communication via SSL/TLS encryption, role-based authentication for administrators and vendors, secure handling of user input to prevent common vulnerabilities, and restricted access to sensitive system functions. Where third-party payment gateways are used, all payment data will be handled directly by the gateway to minimise PCI compliance exposure for the platform.
+ 
+4.	Scope of Work
+●	Overall Tasks:
+●	A general overview of tasks, activities, and responsibilities that the Developer will undertake during the project's lifecycle.
+●	Task Breakdown:
+●	Front-end Development: Design and development of the customer-facing and vendor-facing user interfaces based on the approved Skiip demo. This includes the vendor listing screen, individual vendor pages with their respective menus, product/item display, cart functionality, order summary screens, and basic order status views. The interface will be fully branded, intuitive, and responsive across desktop and mobile devices, ensuring smooth navigation and a clear ordering experience.
+●	Back-end Development: Development of the core system logic to support online ordering functionality. This includes vendor management, menu and item management, order creation and storage, order status handling (including manual order status updates by vendors), and basic customer and vendor data management. The backend will support secure interactions between users, vendors, and the system, and allow for future integration of payment gateways and messaging tools.
+●	CMS/Admin & Vendor Panel Integration: Implementation of an admin and vendor management system that allows administrators to manage vendors and platform content, and allows vendors to manage their own profiles, menus, pricing, and availability. Vendors will be able to view incoming orders and manually update order statuses (e.g. received, preparing, completed). The CMS/admin panel will also support basic content updates such as text, images, and vendor listings.
+●	SEO Optimization: Implementation of foundational SEO practices tailored to the Skiip platform, including search-engine-friendly page structures for vendor listings and menus, metadata setup for core pages, mobile optimisation, performance optimisation, and clean URLs to support discoverability and future marketing efforts.
+●	Quality Assurance: End-to-end testing of the Skiip platform to ensure that customer ordering flows, vendor dashboards, and admin controls function correctly. This includes testing across major browsers and devices, validating order placement and status updates, checking responsiveness and performance under normal usage, fixing identified bugs, and ensuring the system meets the agreed MVP requirements prior to deployment. 
+
+
+
+
+
+●	Client Responsibilities:
+●	Provision of Content & Information:
+The Client shall provide all required content, branding materials, and business information necessary for the development of the platform. This includes logos, brand guidelines (if available), colour preferences, vendor information, menu details, pricing structures, and any required legal or compliance text. Delays in providing content may impact project timelines.
+●	Timely Feedback & Approvals:
+The Client is responsible for reviewing designs, prototypes, and development Phases and providing consolidated feedback or approvals within agreed periods of time. Delayed feedback or multiple rounds of changes beyond the agreed scope may affect delivery timelines and costs.
+●	Compliance & Legal Responsibility:
+The Client is responsible for ensuring that the platform complies with applicable laws and regulations, including data protection, payment processing, consumer protection, and vendor agreements. The Developer does not provide legal or regulatory compliance services.
+
+5.	Budget and Payment
+●	Total Project Cost:
+○	Total Project Cost: R 25 000.00 upfront.
+○	Monthly cost: R 2 000.00
+●	Payment Schedule:
+○	R5,000 immediate deposit 
+○	R5,000 due 5 May 2026 
+○	R8,500 due 20 May 2026 
+○	R1,500 due 5 June 2026 
+○	R5,000 due 5 June 2026
+○	Monthly: R2 000.00 
+
+
+
+
+
+●	Accepted Payment Methods:
+○	EFT: Banking details can be found on the invoice. 
+●	Late Payment Policy:
+○	Payments overdue by 3 days will incur a 15% late fee. Further delays may result in a halt in project work until outstanding balances are settled.
+
+6.	Event Support & On-Site Availability
+•	Where the Client requires the team to be present and available during events, an hourly rate of R500.00 per hour will be required. This rate shall be in addition to any fees outlined elsewhere in this Agreement.
+•	The Client shall provide reasonable advance notice of such requirements, and the applicable hours shall be agreed upon in writing prior to the event. Invoices for event support fees shall be issued following the conclusion of each event and shall be payable within 3 days of the invoice date.
+7.	Intellectual Property and Copyright
+●	Ownership Rights:
+○	Upon full payment and completion of the project, the intellectual property rights of the developed website/software will not be transferred to the Client. The client will however have full rights in how the website is managed, designed, changed, etc.
+●	Usage Rights:
+○	Maintenance: The developer will manage all maintenance and changes as covered in the fee. A full re-design of the project post launch will not be covered in the monthly payment and therefore will result in an additional charger. 
+○	Marketing: The Developer reserves the right to display the completed project in portfolios, marketing materials, and case studies unless otherwise specified by the Client.
+●	Third-party Materials:
+○	Any third-party materials used in the project (e.g., stock photos, plugins, software) that have their licensing terms will remain under those terms and may not transfer to the Client upon project completion.
+
+8.	Client Responsibilities
+●	Provision of Materials:
+○	The Client agrees to provide all necessary materials (such as content, logos, branding guidelines, and other relevant documents) in a timely manner to aid the development process.
+•	Feedback and Approvals:
+○	The Client commits to providing feedback, revisions, and approvals within 3 Business days of receiving requests from the Developer. Delays may result in project timeline extensions.
+
+
+●	Access:
+○	The Client will grant the Developer access to necessary platforms, servers, or software when required for the completion of tasks.
+●	Point of Contact:
+○	The Client will designate a primary point of contact who will communicate with the Developer, ensuring consistency and clarity in feedback and decisions.
+
+9.	Testing and Acceptance
+●	Testing Procedures:
+○	The Developer commits to a thorough testing process, ensuring the website/software functions correctly across specified devices, browsers, and conditions. This includes, but is not limited to, functionality tests, performance tests, and security assessments.
+●	Client Review:
+○	Upon reaching a project Phase or the completion of a particular component, the Developer will provide the Client with a version for review and feedback.
+●	Acceptance Criteria:
+○	Acceptance of the project occurs when the website/software meets the agreed-upon specifications and functions without critical bugs or issues. Minor bugs or non-critical issues that do not significantly impede the operation will be addressed in subsequent updates.
+●	Revisions:
+○	After the Client's review, there will be a revision period where the Developer will address feedback.
+
+10.	Change Orders (Optional)
+●	Definition:
+○	A "Change Order" refers to any request by the Client to alter, add, or reduce the scope of work after the agreement has been signed.
+●	Procedure:
+○	Should the Client wish to implement a Change Order, a formal request must be submitted in writing to the Developer. This should detail the changes and the reason for the request.
+
+
+●	Evaluation:
+○	Upon receipt of a Change Order request, the Developer will evaluate the impact on the project, including potential delays and cost adjustments. A revised estimate and timeline will be provided to the Client.
+●	Approval & Implementation:
+○	Once both parties agree on the revised terms, the Change Order will be documented and appended to this agreement. The changes will then be implemented as per the updated plan.
+●	Additional Costs:
+○	Change Orders may result in additional charges beyond the originally agreed-upon budget. All such charges will be clearly communicated and require the Client's approval before proceeding.
+11.	Maintenance and Support (Optional)
+●	Maintenance Period:
+○	Once the project is completed and both parties are in agreement to launch, the maintenance will not have a deadline. As long as the website remains operational, the developer will be responsible for maintenance. 
+●	Scope of Maintenance:
+○	This includes, but is not limited to, bug fixes, performance optimizations, and minor updates. Any significant overhauls or additions will be considered out of scope and will require a new agreement or a Change Order. 
+●	Support Channels:
+○	The Client can reach out for support through email, WhatsApp or phone calls. The preferred modes of communication are WhatsApp and email.
+●	Response Time:
+○	For any issues raised by the Client, the Developer commits to acknowledging within 6 hours and providing a solution or update within 48 hours.
+•	Exclusions:
+○	Maintenance does not include redesigns, or adding new functionalities not originally covered in the project scope.
+12.	Cancellation and Refunds
+●	Client Initiated Cancellation:
+○	Should the Client wish to cancel the project before its completion, they must provide written notice to the Developer. Upon cancellation, the Client is responsible for any work completed up to the point of cancellation and will be billed accordingly.
+
+●	Developer Initiated Cancellation:
+○	In rare circumstances, if the Developer is unable to complete the project due to unforeseen events or challenges, they reserve the right to terminate the contract with written notice. In such cases, a prorated refund will be provided based on the work that has not been delivered.
+●	Refunds:
+○	Refunds, if applicable, will be processed based on the Phases achieved and the percentage of the project completed. Any upfront deposits are non-refundable but will be considered in the overall financial settlement.
+●	Penalties:
+○	If either party fails to fulfill their obligations as outlined in this agreement, they may be subject to penalties or compensations as detailed in the agreement or as negotiated between the parties.
+
+13.	Liability and Insurance
+●	Limitation of Liability:
+○	The Developer's total liability under this agreement, whether for breach of contract, tort (including negligence), or otherwise, shall not exceed the total amount paid by the Client to the Developer under this agreement.
+●	No Indirect Damages:
+○	Neither party will be liable for indirect, special, incidental, consequential, or punitive damages, including but not limited to loss of profits, data, or business opportunities, even if the party had been advised of the possibility of such damages.
+•	Indemnification:
+○	Both parties agree to indemnify and hold harmless each other, their respective affiliates, officers, agents, and employees from any claim, suit, or action arising from or related to the work performed under this agreement, including any liability or expense arising from all claims, losses, damages, suits, litigation costs, and attorneys’ fees.
+
+14.	Force Majeure
+●	Definition:
+○	"Force Majeure" refers to events outside the reasonable control of either party, including but not limited to acts of God, war, terrorism, riots, embargoes, acts of civil or military authorities, fire, floods, earthquakes, or accidents.
+○	
+●	Non-liability:
+○	Neither party will be held liable for any failure to fulfil its obligations if such a failure is as a result of acts of Force Majeure.
+●	Notification:
+○	If a party believes that a Force Majeure event is taking or has taken place, it should immediately notify the other, detailing the anticipated impact and duration of the Force Majeure event.
+●	Obligations:
+○	Both parties will use all reasonable endeavors to mitigate the effects of the Force Majeure event and to resume performance of the contract as soon as reasonably possible.
+●	Termination:
+○	If the Force Majeure event continues for more than 30 days either party has the right to terminate the contract without any additional liabilities, other than the obligations already accrued up to the date of termination.
+
+15.	Termination
+●	By Mutual Agreement:
+○	This contract can be terminated by mutual agreement of both parties in writing. Any obligations or duties to be fulfilled post-termination will be specified in the termination agreement.
+•	By Notice:
+○	Either party may terminate this agreement by providing 7 days written notice if the other party breaches any of its obligations and fails to remedy that breach within the specified notice period.
+●	Immediate Termination:
+○	Either party may terminate this contract with immediate effect if the other party becomes insolvent, declares bankruptcy, or is unable to pay its debts as they come due.
+●	Effects of Termination:
+○	Upon termination, the Client will pay for all services rendered up to the termination date. Any advance payment for services not yet rendered will be refunded on a prorated basis.
+
+
+
+●	Survival:
+○	Sections pertaining to confidentiality, intellectual property, indemnification, and any other clauses that by their nature should continue beyond the termination of this contract will remain in effect even after the contract ends.
+●	Return of Materials:
+○	Upon termination, both parties agree to promptly return any proprietary information, documentation, or other materials belonging to the other party.
+
+16.	Governing Law and Jurisdiction
+●	Governing Law:
+○	This agreement and any disputes or claims arising out of or in connection with its subject matter are governed by and construed in accordance with the laws of the Republic of South Africa.
+○	
+●	Jurisdiction:
+○	The parties irrevocably agree that the courts of the Republic of South Africa have exclusive jurisdiction to settle any dispute or claim that arises out of or in connection with this agreement.
+●	Dispute Resolution:
+○	Both parties commit to seeking a peaceful resolution to any disagreements or disputes related to this agreement. Before resorting to legal action, both parties agree to attempt mediation or another form of dispute resolution.
+
+17.	Confidentiality
+●	Definition of Confidential Information:
+○	For the purposes of this agreement, "Confidential Information" refers to any data or information that isn't publicly available, and that might be of use to competitors or harmful to the disclosing party if disclosed.
+●	Obligations:
+○	Both parties pledge to hold Confidential Information in strict confidence. Neither party will disclose or use such information without the other's prior written consent, except as necessary to perform their obligations under this agreement.
+
+
+
+●	Exclusions:
+○	Confidential Information does not include data that:
+■	The receiving party was already known prior to the commencement of their relationship with the disclosing party.
+■	Becomes publicly known without a breach of this clause by the receiving party;
+■	Is received rightfully by the receiving party from a third party without a duty of confidentiality.
+
+●	Duration:
+○	The obligations set forth in this section will survive the termination of this agreement for a period of 1 Year.
+●	Return or Destruction:
+○	Upon the request of the disclosing party, the receiving party will return all copies, notes, and other materials containing the Confidential Information or certify its destruction.
+18.	Signatures
+By signing below, both parties acknowledge and agree to the terms and conditions outlined in this Web Development Agreement. Each party confirms that they are authorized to enter into this agreement on behalf of their respective organizations or in their individual capacity.
+
+ 
+Client: Skiip
+Full Name: 	
+Title (if applicable): 	
+Signature: 	
+Date: 	/ 	/ 	
+
+
+Developer/Agency:
+Full Name: DK Digital
+Title (if applicable): 	
+Signature: 	
+Date: 	/ 	/ 	
+

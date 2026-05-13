@@ -11,6 +11,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 - Vercel app vars, Supabase secrets, and Stripe keys all match the same environment pair
 - `ALLOWED_ORIGINS` is explicitly set for the target environment and hosted traffic is not relying on fallback origins in code
 - notification provider accounts, webhook endpoints, and template IDs are configured for the target environment
+- WhatsApp cost gates are explicitly configured: `WHATSAPP_SEND_MODE`, E.164 allowlist if required, daily cap, per-dispatch cap, and non-production live-mode override policy
 - one full buyer -> Stripe test-mode payment -> reconciliation -> vendor -> refund rehearsal has passed with a Stripe-onboarded seller account
 - Playwright smoke checks pass for public routes and configured role credentials
 - logging is sufficient to diagnose webhook, refund, notification, and auth failures
@@ -130,11 +131,13 @@ Check:
 - `notification_webhook_events`
 - provider callbacks
 - provider credentials and account health
+- WhatsApp guard metadata such as `whatsapp_guard_block_reason`
 - whether `notification-dispatch` is being run when backlog recovery is needed
 
 Actions:
 
 - distinguish intentional optional-provider skips from actual failures
+- for WhatsApp, separate expected guard blocks from real Twilio delivery failures before retrying anything
 - if the provider is critical for launch, switch to the fallback operator process immediately
 - if retries depend on external scheduling, confirm that scheduler is still firing
 

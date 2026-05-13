@@ -167,8 +167,18 @@ Current runtime flow:
 
 1. Business mutation succeeds first.
 2. Shared notification helpers queue rows into `notification_logs`.
-3. Background dispatch runs through edge-runtime `waitUntil()` and sends through the configured provider adapter.
-4. Provider webhooks update delivery state back onto the same notification rows.
+3. Background dispatch runs through edge-runtime `waitUntil()`.
+4. WhatsApp rows pass through the shared cost/eligibility guard before Twilio can be called.
+5. Provider adapters send allowed messages and record provider attempt metadata.
+6. Provider webhooks update delivery state back onto the same notification rows.
+
+WhatsApp guard behavior:
+
+- default mode is `WHATSAPP_SEND_MODE=disabled`
+- staging verification should use `allowlist` mode with E.164 test recipients
+- `live` mode is blocked outside production unless `WHATSAPP_ALLOW_LIVE_NON_PROD=true`
+- daily and per-dispatch caps are enforced locally before Twilio API calls
+- duplicate WhatsApp provider attempts are blocked per `(order_id, event_type, recipient)`
 
 Important current limitations:
 
