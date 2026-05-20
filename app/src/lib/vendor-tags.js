@@ -21,11 +21,16 @@ export function normalizeVendorTags(tags) {
         .slice(0, 8);
 }
 
+function normalizeVendorSource(vendor) {
+    return vendor && typeof vendor === 'object' ? vendor : {};
+}
+
 export function getVendorTags(vendor = {}) {
-    const explicitTags = normalizeVendorTags(vendor.tags);
+    const source = normalizeVendorSource(vendor);
+    const explicitTags = normalizeVendorTags(source.tags);
     if (explicitTags.length > 0) return explicitTags;
 
-    const haystack = `${vendor.name || ''} ${vendor.description || ''}`.toLowerCase();
+    const haystack = `${source.name || ''} ${source.description || ''}`.toLowerCase();
     const inferred = FALLBACK_TAG_RULES
         .filter((rule) => rule.terms.some((term) => haystack.includes(term)))
         .map((rule) => rule.tag);
@@ -34,12 +39,17 @@ export function getVendorTags(vendor = {}) {
 }
 
 export function getVendorPaymentStatus(vendor = {}) {
-    return vendor.stripe_connect_status
-        || (vendor.stripe_onboarding_complete ? 'ready' : vendor.stripe_account_id ? 'onboarding' : 'not_started');
+    const source = normalizeVendorSource(vendor);
+    return source.stripe_connect_status
+        || (source.stripe_onboarding_complete ? 'ready' : source.stripe_account_id ? 'onboarding' : 'not_started');
 }
 
 export function isVendorReadyForOrders(vendor = {}) {
     return getVendorPaymentStatus(vendor) === 'ready';
+}
+
+export function getOrderableVendors(vendors = []) {
+    return (Array.isArray(vendors) ? vendors : []).filter((vendor) => isVendorReadyForOrders(vendor));
 }
 
 export function getVendorPaymentLabel(vendor = {}) {

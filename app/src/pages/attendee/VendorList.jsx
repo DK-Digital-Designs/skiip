@@ -4,16 +4,14 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStores } from '../../lib/hooks/useMenu';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import BottomNav from '../../components/ui/BottomNav';
-import Icon from '../../components/ui/Icon';
 import SkiipLogo from '../../components/ui/SkiipLogo';
 import BuyerAccountMenu from '../../components/shared/BuyerAccountMenu';
 import { SettingsService } from '../../lib/services/settings.service';
 import { DEFAULT_LAUNCH_EVENT } from '../../lib/launch-event';
 import { getInitials, getVendorImage } from '../../lib/ui-format';
 import {
-    getVendorPaymentLabel,
+    getOrderableVendors,
     getVendorTags,
-    isVendorReadyForOrders,
 } from '../../lib/vendor-tags';
 
 const MOCK_VENDORS = [
@@ -39,7 +37,7 @@ const MOCK_VENDORS = [
         description: 'Cocktails, mocktails, and cold soft drinks',
         pickup_location: 'Bar Area 2',
         tags: ['Bar'],
-        stripe_connect_status: 'pending_verification',
+        stripe_connect_status: 'ready',
     },
 ];
 
@@ -57,15 +55,15 @@ function VendorMedia({ vendor }) {
     );
 }
 
-function VendorCard({ vendor, index, setupMode = false }) {
+function VendorCard({ vendor, index }) {
     const tags = getVendorTags(vendor);
 
     return (
-        <Link key={vendor.id} to={`/order/vendor/${vendor.id}`} className={`vendor-card ${setupMode ? 'vendor-card--muted' : ''}`}>
+        <Link key={vendor.id} to={`/order/vendor/${vendor.id}`} className="vendor-card">
             <div style={{ display: 'grid', alignContent: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span className={setupMode ? 'chip' : index === 0 ? 'chip chip--accent' : 'chip'}>
-                        {setupMode ? getVendorPaymentLabel(vendor) : index === 0 ? 'Trending' : 'Open'}
+                    <span className={index === 0 ? 'chip chip--accent' : 'chip'}>
+                        {index === 0 ? 'Trending' : 'Open'}
                     </span>
                     {tags.slice(0, 2).map((tag) => (
                         <span key={tag} className="chip chip--cyan">
@@ -84,8 +82,8 @@ function VendorCard({ vendor, index, setupMode = false }) {
                     )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <span className={setupMode ? 'btn btn-ghost' : 'btn btn-primary'} style={{ minHeight: '34px', padding: '9px 16px', fontSize: '12px' }}>
-                        {setupMode ? 'Preview Menu' : 'View Menu'}
+                    <span className="btn btn-primary" style={{ minHeight: '34px', padding: '9px 16px', fontSize: '12px' }}>
+                        View Menu
                     </span>
                     {vendor.pickup_location && (
                         <span className="text-muted" style={{ fontSize: '12px', fontWeight: 800 }}>
@@ -130,15 +128,16 @@ export default function VendorList() {
     const isDemo = !isSupabaseConfigured();
     const vendors = isDemo ? MOCK_VENDORS : qStores;
     const loading = isDemo ? false : isStoresLoading;
+    const orderableVendors = useMemo(() => getOrderableVendors(vendors), [vendors]);
 
     const availableTags = useMemo(() => {
-        const tags = vendors.flatMap((vendor) => getVendorTags(vendor));
+        const tags = orderableVendors.flatMap((vendor) => getVendorTags(vendor));
         return ['all', ...new Set(tags)].slice(0, 9);
-    }, [vendors]);
+    }, [orderableVendors]);
 
     const filteredVendors = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
-        const filtered = vendors.filter((vendor) => {
+        const filtered = orderableVendors.filter((vendor) => {
             const tags = getVendorTags(vendor);
             const matchesTag = selectedTag === 'all' || tags.includes(selectedTag);
             const matchesSearch = !query
@@ -150,10 +149,12 @@ export default function VendorList() {
         });
 
         return sortVendors(filtered, sortMode);
-    }, [vendors, searchTerm, selectedTag, sortMode]);
+    }, [orderableVendors, searchTerm, selectedTag, sortMode]);
 
-    const readyVendors = filteredVendors.filter((vendor) => isVendorReadyForOrders(vendor));
-    const setupVendors = filteredVendors.filter((vendor) => !isVendorReadyForOrders(vendor));
+    const isBarMode = selectedTag.toLowerCase() === 'bar'
+        || /\b(bar|beer|cocktail|mocktail|drink|wine)\b/i.test(searchTerm);
+    const vendorKicker = isBarMode ? 'BROWSE THE BAR' : 'Browse vendors';
+    const vendorHeading = isBarMode ? 'Now pouring' : 'What do you fancy?';
 
     return (
         <main className="app-page app-page--buyer">
@@ -161,9 +162,6 @@ export default function VendorList() {
                 <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
                     <SkiipLogo />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button type="button" className="btn btn-ghost icon-button" aria-label="Notifications">
-                            <Icon name="bell" size={19} />
-                        </button>
                         <BuyerAccountMenu />
                     </div>
                 </section>
@@ -220,8 +218,8 @@ export default function VendorList() {
                 <section style={{ display: 'grid', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: '16px' }}>
                         <div>
-                            <p className="page-kicker">Browse vendors</p>
-                            <h2 style={{ color: 'var(--ink)', fontSize: '28px', lineHeight: 1.1 }}>Choose your stall</h2>
+                            <p className="page-kicker">{vendorKicker}</p>
+                            <h2 style={{ color: 'var(--ink)', fontSize: '28px', lineHeight: 1.1 }}>{vendorHeading}</h2>
                         </div>
                         <span className="text-accent" style={{ fontSize: '13px', fontWeight: 900 }}>
                             {filteredVendors.length} shown
@@ -241,6 +239,11 @@ export default function VendorList() {
                                 </div>
                             ))}
                         </div>
+                    ) : orderableVendors.length === 0 ? (
+                        <div className="surface empty-state">
+                            <h3>No live vendors yet</h3>
+                            <p>Check back once the event vendors are open for ordering.</p>
+                        </div>
                     ) : filteredVendors.length === 0 ? (
                         <div className="surface empty-state">
                             <h3>No vendors match that search</h3>
@@ -253,31 +256,10 @@ export default function VendorList() {
                             </button>
                         </div>
                     ) : (
-                        <div style={{ display: 'grid', gap: '22px' }}>
-                            {readyVendors.length > 0 && (
-                                <div className="vendor-grid">
-                                    {readyVendors.map((vendor, index) => (
-                                        <VendorCard key={vendor.id} vendor={vendor} index={index} />
-                                    ))}
-                                </div>
-                            )}
-
-                            {setupVendors.length > 0 && (
-                                <section style={{ display: 'grid', gap: '12px' }}>
-                                    <div>
-                                        <p className="page-kicker">Almost ready</p>
-                                        <h3 style={{ color: 'var(--ink)', fontSize: '22px' }}>Vendors finishing payment setup</h3>
-                                        <p className="text-muted" style={{ marginTop: '4px' }}>
-                                            These stalls are visible for discovery, but checkout opens once their payment setup is complete.
-                                        </p>
-                                    </div>
-                                    <div className="vendor-grid">
-                                        {setupVendors.map((vendor, index) => (
-                                            <VendorCard key={vendor.id} vendor={vendor} index={index} setupMode />
-                                        ))}
-                                    </div>
-                                </section>
-                            )}
+                        <div className="vendor-grid">
+                            {filteredVendors.map((vendor, index) => (
+                                <VendorCard key={vendor.id} vendor={vendor} index={index} />
+                            ))}
                         </div>
                     )}
                 </section>

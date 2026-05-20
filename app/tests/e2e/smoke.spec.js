@@ -8,7 +8,7 @@ const authScenarios = [
     emailEnv: 'PLAYWRIGHT_BUYER_EMAIL',
     passwordEnv: 'PLAYWRIGHT_BUYER_PASSWORD',
     expectedUrl: /#\/order(?:\?.*)?$/,
-    readyLocator: (page) => page.getByRole('heading', { name: /choose your stall/i }),
+    readyLocator: (page) => page.getByRole('heading', { name: /what do you fancy/i }),
     checks: [
       {
         label: 'buyer profile and order history shell renders',
@@ -115,7 +115,7 @@ test.describe('public smoke', () => {
   test('buyer entry point renders the vendor chooser', async ({ page }) => {
     await page.goto(appPath('/order'));
     await expect(
-      page.getByRole('heading', { name: /choose your stall/i }),
+      page.getByRole('heading', { name: /what do you fancy/i }),
       'business-surface: public buyer vendor chooser should render',
     ).toBeVisible();
   });

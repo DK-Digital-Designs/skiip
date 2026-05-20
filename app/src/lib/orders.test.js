@@ -5,6 +5,8 @@ import {
   getOrderStatusColor,
   getOrderStatusLabel,
   getVendorLaneEmptyMessage,
+  getVendorOrderFilterLaneIds,
+  getVendorOrderQueryFilter,
   getVendorOrderActionHint,
   getVendorOrderItemSummary,
   getVendorOrderLane,
@@ -156,5 +158,16 @@ describe('order utilities', () => {
     expect(getVendorPrimaryTransition('cancelled')).toBeNull();
     expect(getVendorTransitionSuccessMessage('ready')).toBe('Order marked Ready for collection.');
     expect(getVendorTransitionSuccessMessage('unknown')).toBe('Order updated.');
+  });
+
+  it('maps vendor queue filters to focused lanes and query scopes', () => {
+    expect(getVendorOrderFilterLaneIds('attention')).toEqual(['attention']);
+    expect(getVendorOrderFilterLaneIds('paid')).toEqual(['paid']);
+    expect(getVendorOrderFilterLaneIds('preparing')).toEqual(['preparing']);
+    expect(getVendorOrderFilterLaneIds('ready')).toEqual(['ready']);
+    expect(getVendorOrderFilterLaneIds('all')).toEqual(['attention', 'paid', 'preparing', 'ready', 'done', 'closed']);
+    expect(getVendorOrderFilterLaneIds('unknown')).toEqual(['paid']);
+    expect(getVendorOrderQueryFilter('ready')).toBe('active');
+    expect(getVendorOrderQueryFilter('all')).toBe('all');
   });
 });

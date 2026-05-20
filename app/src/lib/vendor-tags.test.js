@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    getOrderableVendors,
     getVendorPaymentLabel,
     getVendorTags,
     isVendorReadyForOrders,
@@ -18,6 +19,12 @@ describe('vendor tag helpers', () => {
     it('infers helpful fallback tags from vendor copy', () => {
         expect(getVendorTags({ name: 'Main Bar', description: 'Cocktails and cold beer' })).toContain('Bar');
     });
+
+    it('falls back safely when vendor tags are missing or null', () => {
+        expect(getVendorTags(null)).toEqual(['Food']);
+        expect(getVendorTags({ tags: null })).toEqual(['Food']);
+        expect(getVendorTags({ name: 'Chicken Shack', tags: [] })).toContain('Chicken');
+    });
 });
 
 describe('vendor payment helpers', () => {
@@ -28,5 +35,13 @@ describe('vendor payment helpers', () => {
 
     it('labels vendors that are still setting up payments', () => {
         expect(getVendorPaymentLabel({ stripe_connect_status: 'not_started' })).toBe('Setting up payments');
+    });
+
+    it('filters buyer-visible vendors to payment-ready stores', () => {
+        expect(getOrderableVendors([
+            { id: 'ready', stripe_connect_status: 'ready' },
+            { id: 'pending', stripe_connect_status: 'pending_verification' },
+            { id: 'legacy-ready', stripe_onboarding_complete: true },
+        ]).map((vendor) => vendor.id)).toEqual(['ready', 'legacy-ready']);
     });
 });
