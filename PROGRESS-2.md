@@ -346,3 +346,11 @@ bff5c00 - 2026-04-15 : Disable gateway JWT checks for protected edge functions
 9841390 - 2026-04-14 : chore(migration)
 937e459 - 2026-04-14 : chore: ignore .env.functions in git tracking
 ```
+
+## Post-v0.28.0 Release Refinements
+
+The following three points from the PR review will be addressed in a follow-up pass:
+1. **Vendor Dashboard Default**: Update `app/src/pages/vendor/Dashboard.jsx` to dynamically prepend the `attention` lane if `groupedOrders.attention.length > 0` and the selected filter is an active view (`paid`, `preparing`, `ready`). This prevents critical attention/problem orders from being hidden behind the "Needs review" tab.
+2. **`launch_event` Migration Safety**: Refine `20260520120518_backfill_store_tags.sql` to use `ON CONFLICT (key) DO NOTHING` when inserting `launch_event` settings, protecting custom landing page configurations from being reset on future migration runs.
+3. **Store Tags Backfill Efficiency**: Restrict the tags cleanup update in `20260520120518_backfill_store_tags.sql` using `tags IS DISTINCT FROM new_tags` so that it only updates rows that actually need modification, preventing unnecessary trigger fires and `updated_at` modifications for clean curated records.
+
