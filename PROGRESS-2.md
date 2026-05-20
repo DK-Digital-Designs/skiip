@@ -25,7 +25,8 @@
 | Dean Gibson | ~1.0 hour | 2026/05/19 | First-event and ticketing readiness planning. Refreshed the repository/GitHub baseline, confirmed no commits after `66880b9`, confirmed issue counts remain 37 total / 23 closed / 14 open, and captured the local first-event ticketing decision note as untracked planning material requiring a follow-up docs decision. |
 | Dean Gibson | ~1.0 hour | 2026/05/19 | Client-facing launch dependency documentation. Cross-checked launch docs, notification docs, open GitHub launch issues, the first-event planning note, and contract responsibilities, then added a client-facing missing-inputs document for the revised first-event deadline. |
 | Dean Gibson | ~0.5 hours | 2026/05/19 | Client launch dependency refinement. Updated the client-facing launch inputs document with the confirmed 30 May 2026 event date, clarified DK-owned Stripe/live environment responsibilities, kept unresolved client decisions visible, added WhatsApp compliance urgency, and added Stripe Connect verification/payout timing guidance. |
-| **TOTAL** | **~62.5 hours** | | |
+| Dean Gibson | ~0.5 hours | 2026/05/20 | Version bump and release promotion. Bumped staging version to 0.28.0, synchronized version references, and opened a PR from staging to main. |
+| **TOTAL** | **~63.0 hours** | | |
 
 ## May 19 First Event And Ticketing Status Refresh
 
@@ -269,6 +270,10 @@ Known local verification caveat:
 ## Full Commit Log (Phase 5+)
 
 ```text
+9df9afa - 2026-05-20 : chore(release): bump staging baseline to 0.28.0
+d4da18e - 2026-05-20 : fix(site): address SKIIP observation feedback
+a99472c - 2026-05-19 : feat(docs): add first event and ticketing decision note
+0d9f906 - 2026-05-19 : docs(launch): add client launch input checklist
 66880b9 - 2026-05-14 : Merge pull request #53 from DK-Digital-Designs/staging
 f456a2c - 2026-05-13 : feat(site): add launch and vendor customization controls
 a2d83f5 - 2026-05-13 : Merge pull request #61 from DK-Digital-Designs/ui-ux-overhaul
