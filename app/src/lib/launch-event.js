@@ -1,9 +1,9 @@
 export const DEFAULT_LAUNCH_EVENT = {
     label: 'Live now',
-    title: 'Summer Beats 2026',
-    subtitle: 'Skip the lines, enjoy the vibes. Browse vendors and order ahead from your phone.',
-    landingTitle: 'Order ahead at Summer Beats',
-    landingSubtitle: 'Find the right stall, pay in seconds, and collect when your order is ready.',
+    title: 'SAWFT',
+    subtitle: "Official event ordering. Your food doesn't need a queue anymore.",
+    landingTitle: 'SAWFT',
+    landingSubtitle: "Official event ordering. Your food doesn't need a queue anymore.",
 };
 
 export function normalizeLaunchEvent(value = {}) {

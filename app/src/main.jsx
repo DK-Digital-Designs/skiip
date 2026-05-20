@@ -43,7 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <App />
           </HashRouter>
         </AuthProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>

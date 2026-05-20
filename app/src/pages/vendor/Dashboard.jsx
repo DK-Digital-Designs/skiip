@@ -10,11 +10,12 @@ import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 import HoldToConfirmButton from '../../components/ui/HoldToConfirmButton';
 import Icon from '../../components/ui/Icon';
 import {
-    VENDOR_ACTIVE_ORDER_LANE_IDS,
-    VENDOR_ALL_ORDER_LANE_IDS,
+    VENDOR_ORDER_FILTERS,
     VENDOR_ORDER_LANE_DEFINITIONS,
     getAllowedOrderTransitions,
     getOrderStatusLabel,
+    getVendorOrderFilterLaneIds,
+    getVendorOrderQueryFilter,
     getVendorLaneEmptyMessage,
     getVendorOrderActionHint,
     getVendorOrderItemSummary,
@@ -23,11 +24,6 @@ import {
     groupVendorOrdersByLane,
 } from '../../lib/orders';
 import { formatCurrency, formatOrderCode, getQueueVisual, getVendorActionClass, shouldShowVendorCancel } from '../../lib/ui-format';
-
-const FILTERS = [
-    { id: 'active', label: 'Active' },
-    { id: 'all', label: 'All' },
-];
 
 function getOrderTotal(order) {
     return Number(order?.total ?? order?.total_amount ?? 0);
@@ -46,7 +42,7 @@ function getOrderContact(order) {
 }
 
 function getLaneDefinitions(filter) {
-    const laneIds = filter === 'all' ? VENDOR_ALL_ORDER_LANE_IDS : VENDOR_ACTIVE_ORDER_LANE_IDS;
+    const laneIds = getVendorOrderFilterLaneIds(filter);
     return laneIds
         .map((laneId) => VENDOR_ORDER_LANE_DEFINITIONS.find((lane) => lane.id === laneId))
         .filter(Boolean);
@@ -189,18 +185,20 @@ export default function VendorDashboard() {
     const location = useLocation();
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('active');
+    const [filter, setFilter] = useState('paid');
     const [transitioningOrderId, setTransitioningOrderId] = useState(null);
     const previousOrderIdsRef = useRef(new Set());
     const { addToast } = useToast();
 
-    const { data: orders = [], refetch: fetchOrders, isLoading: ordersLoading, isError: ordersFailed } = useStoreOrders(store?.id, filter);
+    const queryFilter = getVendorOrderQueryFilter(filter);
+    const { data: orders = [], refetch: fetchOrders, isLoading: ordersLoading, isError: ordersFailed } = useStoreOrders(store?.id, queryFilter);
     const updateOrderStatusMutation = useUpdateOrderStatus();
     const lanes = useMemo(() => getLaneDefinitions(filter), [filter]);
     const groupedOrders = useMemo(
         () => groupVendorOrdersByLane(orders, lanes.map((lane) => lane.id)),
         [orders, lanes],
     );
+    const visibleOrderCount = lanes.reduce((count, lane) => count + (groupedOrders[lane.id]?.length || 0), 0);
 
     useEffect(() => {
         checkAuth();
@@ -394,10 +392,10 @@ export default function VendorDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '16px', flexWrap: 'wrap' }}>
                         <div>
                             <h2 style={{ color: 'var(--ink)', fontSize: '24px' }}>Order Queue</h2>
-                            <p className="text-muted">{orders.length} {orders.length === 1 ? 'order' : 'orders'} shown</p>
+                            <p className="text-muted">{visibleOrderCount} {visibleOrderCount === 1 ? 'order' : 'orders'} shown</p>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {FILTERS.map((item) => (
+                            {VENDOR_ORDER_FILTERS.map((item) => (
                                 <button
                                     key={item.id}
                                     type="button"

@@ -80,6 +80,14 @@ export const VENDOR_ORDER_LANE_DEFINITIONS = [
 export const VENDOR_ACTIVE_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', 'ready'];
 export const VENDOR_ALL_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', 'ready', 'done', 'closed'];
 
+export const VENDOR_ORDER_FILTERS = [
+  { id: 'attention', label: 'Needs review', laneIds: ['attention'], queryFilter: 'active' },
+  { id: 'paid', label: 'New', laneIds: ['paid'], queryFilter: 'active' },
+  { id: 'preparing', label: 'Preparing', laneIds: ['preparing'], queryFilter: 'active' },
+  { id: 'ready', label: 'Ready', laneIds: ['ready'], queryFilter: 'active' },
+  { id: 'all', label: 'All', laneIds: VENDOR_ALL_ORDER_LANE_IDS, queryFilter: 'all' },
+];
+
 export const VENDOR_LANE_EMPTY_MESSAGES = {
   attention: 'No orders need review.',
   paid: 'No paid orders waiting to start.',
@@ -138,6 +146,18 @@ export function groupVendorOrdersByLane(orders, laneIds = VENDOR_ACTIVE_ORDER_LA
   }
 
   return grouped;
+}
+
+export function getVendorOrderFilter(filterId) {
+  return VENDOR_ORDER_FILTERS.find((filter) => filter.id === filterId) || VENDOR_ORDER_FILTERS[1];
+}
+
+export function getVendorOrderFilterLaneIds(filterId) {
+  return getVendorOrderFilter(filterId).laneIds;
+}
+
+export function getVendorOrderQueryFilter(filterId) {
+  return getVendorOrderFilter(filterId).queryFilter;
 }
 
 export function getVendorLaneEmptyMessage(laneId) {

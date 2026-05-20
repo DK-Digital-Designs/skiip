@@ -48,6 +48,7 @@ const storeFixture = {
   name: 'Skiip Test Kitchen',
   slug: 'skiip-test-kitchen',
   description: 'Stable smoke-test vendor fixture for staging role checks',
+  tags: ['Burgers', 'Food'],
   status: 'active',
 };
 

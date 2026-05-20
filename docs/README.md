@@ -23,6 +23,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
   Captures the current launch baseline posture.
 - [Launch Checklist](launch/LAUNCH_CHECKLIST.md)
   Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
+- [Client Launch Inputs Required May 2026](launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md)
+  Lists the missing client-owned launch inputs, provider setup, vendor details, and verification gates for the revised first-event deadline.
 - [Releases](launch/RELEASES.md)
   Defines pre-launch versioning, sync rules, and GitHub tag timing.
 - [Secrets and Environments](launch/SECRETS.md)

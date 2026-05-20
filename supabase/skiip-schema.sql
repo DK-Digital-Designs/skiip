@@ -36,7 +36,7 @@ CREATE TABLE public.stores (
     slug TEXT UNIQUE NOT NULL,
     description TEXT,
     logo_url TEXT,
-    tags TEXT [] DEFAULT '{}'::TEXT[],
+    tags TEXT [] NOT NULL DEFAULT ARRAY['Food']::TEXT[],
     pickup_location TEXT,
     status TEXT CHECK (
         status IN (
@@ -108,10 +108,10 @@ VALUES (
     'launch_event',
     '{
         "label": "Live now",
-        "title": "Summer Beats 2026",
-        "subtitle": "Skip the lines, enjoy the vibes. Browse vendors and order ahead from your phone.",
-        "landingTitle": "Order ahead at Summer Beats",
-        "landingSubtitle": "Find the right stall, pay in seconds, and collect when your order is ready."
+        "title": "SAWFT",
+        "subtitle": "Official event ordering. Your food doesn''t need a queue anymore.",
+        "landingTitle": "SAWFT",
+        "landingSubtitle": "Official event ordering. Your food doesn''t need a queue anymore."
     }'::JSONB
 )
 ON CONFLICT (key) DO NOTHING;
