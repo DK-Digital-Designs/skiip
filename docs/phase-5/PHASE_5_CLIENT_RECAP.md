@@ -85,4 +85,4 @@ The current platform is more than a basic MVP page build. Phase 5 added substant
 At the same time, final launch activation and future expansion should stay separate:
 
 - **Phase 6:** live provider setup, environment parity, payment/refund/payout rehearsal, auth/RLS sign-off, notification verification, authenticated smoke checks, and event support planning.
-- **Phase 7 and beyond:** QR collection/scanning, deeper event management, advanced analytics, fuller multi-event operations, production-grade marketing lead capture, and larger UI/product expansion.
+- **Phase 7 and beyond:** QR collection/scanning, deeper event management, advanced analytics beyond launch telemetry, fuller multi-event operations, production-grade marketing lead capture, and larger UI/product expansion.

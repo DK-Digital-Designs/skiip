@@ -10,6 +10,7 @@ import QuantityControl from '../../components/ui/QuantityControl';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
 import { formatCurrency, getInitials, getVendorImage } from '../../lib/ui-format';
+import { trackSkiipEvent } from '../../lib/analytics';
 
 const MOCK_MENU = {
     '1': [
@@ -44,6 +45,10 @@ function MenuImage({ item }) {
     );
 }
 
+function getMenuItemAnalyticsLabel(item) {
+    return `${item.id || 'unknown'}:${item.name || 'Unknown item'}`;
+}
+
 export default function Menu() {
     const { vendorId } = useParams();
     const navigate = useNavigate();
@@ -67,14 +72,23 @@ export default function Menu() {
             setSwitchItem(item);
             return;
         }
-        addItem({ ...item, store_id: vendorId });
+        if (addItem({ ...item, store_id: vendorId })) {
+            trackSkiipEvent('menu_item_added', { item: getMenuItemAnalyticsLabel(item) });
+        }
     }
 
     function confirmVendorSwitch() {
         if (!switchItem) return;
         clearCart();
-        addItem({ ...switchItem, store_id: vendorId });
+        if (addItem({ ...switchItem, store_id: vendorId })) {
+            trackSkiipEvent('menu_item_added', { item: getMenuItemAnalyticsLabel(switchItem) });
+        }
         setSwitchItem(null);
+    }
+
+    function handleCheckoutStart() {
+        trackSkiipEvent('checkout_started', { items: getItemCount() });
+        navigate('/order/checkout');
     }
 
     if (loading) {
@@ -183,7 +197,7 @@ export default function Menu() {
                             <p className="text-muted" style={{ fontSize: '13px', fontWeight: 800 }}>Cart ({getItemCount()} items)</p>
                             <p style={{ color: 'var(--ink)', fontSize: '22px', fontWeight: 950 }}>{formatCurrency(getCartTotal())}</p>
                         </div>
-                        <button type="button" onClick={() => navigate('/order/checkout')} className="btn btn-primary">
+                        <button type="button" onClick={handleCheckoutStart} className="btn btn-primary">
                             Checkout
                             <Icon name="cart" size={17} />
                         </button>

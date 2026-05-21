@@ -10,13 +10,13 @@ SKIIP has turned out materially larger than the original MVP scope. The original
 
 The strongest scope expansion is not cosmetic. It is in payment safety, auditability, operational recovery, admin controls, notification infrastructure, launch documentation, and release hygiene. These are valuable and appropriate for a real payments platform, but they are materially beyond a simple page-build or demo-style MVP.
 
-At the same time, some items that appear in the revised agreement are not currently delivered or are intentionally deferred: QR code generation and scanning, full event creation/configuration, deeper platform analytics, low-stock alerts, full multi-event operations, production-grade marketing lead capture, and automated notification retry scheduling.
+At the same time, some items that appear in the revised agreement are not currently delivered or are intentionally deferred: QR code generation and scanning, full event creation/configuration, deeper platform analytics beyond the current Vercel/Search Console launch telemetry, low-stock alerts, full multi-event operations, production-grade marketing lead capture, and automated notification retry scheduling.
 
 The cleanest commercial framing is:
 
 - Current state: strong closed-pilot MVP / first operational baseline.
 - Additional work already performed: launch-hardening and operational infrastructure beyond the original MVP.
-- Still not included unless separately agreed: full launch-readiness verification, live provider setup, event-day support, QR operations, event management, advanced analytics, and future platform expansion.
+- Still not included unless separately agreed: full launch-readiness verification, live provider setup, event-day support, QR operations, event management, advanced analytics beyond launch telemetry, and future platform expansion.
 
 This is a factual scope analysis, not legal advice.
 
@@ -52,7 +52,7 @@ The original core deliverables were:
 - Integrations: Stripe payment gateway and WhatsApp Business API or SMS notifications.
 - Backend: user/vendor/menu/order data management, order processing, status tracking, secure interactions, future payment/messaging expansion.
 - QA: end-to-end flow testing, browser/device responsiveness, performance, security checks, and MVP bug fixes.
-- Exclusions: advanced analytics, multi-event enterprise scaling, payout automation beyond Stripe settlement, offline-first behavior, complex refund handling, accounting integrations, native apps, and SLA guarantees.
+- Exclusions: advanced analytics beyond launch telemetry, multi-event enterprise scaling, payout automation beyond Stripe settlement, offline-first behavior, complex refund handling, accounting integrations, native apps, and SLA guarantees.
 
 The invoice screenshot also frames the project as a scoped build made up of:
 
@@ -84,12 +84,12 @@ The revised agreement expands and clarifies the MVP. It adds or makes explicit:
 - basic vendor sales reporting
 - event creation and configuration
 - transaction monitoring and reconciliation tools
-- platform analytics
+- platform analytics beyond the current launch telemetry
 - detailed acceptance testing and warranty terms
 - full IP transfer upon full payment
 - optional monthly hosting and maintenance service terms
 
-This revised scope is materially broader than the older agreement, but it still excludes advanced analytics, multi-event enterprise scaling, automated payout systems beyond Stripe settlement, complex refund/dispute systems, accounting integrations, native apps, loyalty/reviews, in-app support chat, and SLA uptime guarantees.
+This revised scope is materially broader than the older agreement, but it still excludes advanced analytics beyond launch telemetry, multi-event enterprise scaling, automated payout systems beyond Stripe settlement, complex refund/dispute systems, accounting integrations, native apps, loyalty/reviews, in-app support chat, and SLA uptime guarantees.
 
 ## Current Project Outcome
 
@@ -160,7 +160,7 @@ This goes beyond a simple frontend/admin build because the money path now has se
 | QR scanning validation for pickup | No active implementation evidence found. | Should be future scope or change order. |
 | Event creation and configuration | Stub exists but not routed; docs classify event management as deferred. | Should be future scope unless explicitly added. |
 | Full multi-event operation | Not launch-ready; current docs classify true multi-event tenancy as intentional scope limit. | Separate phase. |
-| Advanced platform analytics | Admin metrics exist, but advanced analytics/BI remains excluded/future. | Do not count as delivered advanced analytics. |
+| Advanced platform analytics | Admin metrics and launch-level Vercel/Search Console telemetry exist, but advanced analytics/BI remains excluded/future. | Do not count as delivered advanced analytics. |
 | Low-stock alerts | Inventory count and sold-out handling exist; no clear low-stock alert workflow found. | Future polish/operations feature. |
 | Production-grade lead capture | Static marketing forms open email drafts. | Future marketing-site integration. |
 | Automated notification retry scheduler | `notification-dispatch` exists, but no in-repo scheduler calls it. | Launch operations decision or separate setup task. |
@@ -210,7 +210,7 @@ Suggested commercial framing:
 | Original MVP | Customer ordering, vendor dashboard, basic admin console, Stripe checkout, basic notifications, responsive UI, basic QA. |
 | Already-performed added value | Payment hardening, webhook recovery, admin reconciliation/refunds, audit logs, RLS/auth hardening, durable notifications, vendor ops hardening, product image storage, launch docs. |
 | Launch-hardening still needed | Live provider setup, Stripe payout/refund rehearsal, RLS sign-off, environment parity, notification retry decision, authenticated e2e, operator runbooks. |
-| Future roadmap / change orders | QR pickup, event management, multi-event operations, advanced analytics, lead capture, broader buyer account tools, mobile polish, design-system overhaul. |
+| Future roadmap / change orders | QR pickup, event management, multi-event operations, advanced analytics beyond launch telemetry, lead capture, broader buyer account tools, mobile polish, design-system overhaul. |
 | Ongoing support | Maintenance, event-day standby, incident response, provider monitoring, and hosting coordination should remain separate from one-off development. |
 
 If the discussion is about scope creep, the most defensible position is that the build has already moved beyond a conventional MVP into launch-hardening work. That extra work should be recognized commercially, even though several revised-agreement product features remain unbuilt.
@@ -219,14 +219,14 @@ If the discussion is about scope creep, the most defensible position is that the
 
 Use this wording or similar in a scope discussion:
 
-> The original MVP was a customer/vendor/admin ordering platform with Stripe and notifications. The current build now includes that core loop plus substantial production safety work: server-side order authority, Stripe webhook recovery, audit logs, refunds, payment reconciliation, notification delivery tracking, vendor operations hardening, and launch documentation. Those additions make the platform safer for real event usage, but they also represent work beyond a simple MVP page build. Some later product features, such as QR collection, event management, advanced analytics, and production lead capture, remain future scope and should be separately agreed before implementation.
+> The original MVP was a customer/vendor/admin ordering platform with Stripe and notifications. The current build now includes that core loop plus substantial production safety work: server-side order authority, Stripe webhook recovery, audit logs, refunds, payment reconciliation, notification delivery tracking, vendor operations hardening, launch documentation, and launch-level analytics/search telemetry. Those additions make the platform safer for real event usage, but they also represent work beyond a simple MVP page build. Some later product features, such as QR collection, event management, advanced analytics beyond launch telemetry, and production lead capture, remain future scope and should be separately agreed before implementation.
 
 ## Recommended Next Steps
 
 1. Confirm which agreement is the commercial baseline: original contract, revised agreement, or a new written scope confirmation.
 2. Separate the discussion into three buckets: delivered MVP, already-performed launch-hardening, and future/change-order work.
 3. Do not label the current project “fully launch-ready” until live-provider checks and payment rehearsals pass.
-4. Treat QR operations, event management, advanced analytics, marketing lead capture, and multi-event tooling as future scope.
+4. Treat QR operations, event management, advanced analytics beyond launch telemetry, marketing lead capture, and multi-event tooling as future scope.
 5. If launch support is expected, define it separately from monthly maintenance: support hours, response windows, event-day standby, provider responsibilities, and escalation process.
 
 ## Verification Performed During This Review

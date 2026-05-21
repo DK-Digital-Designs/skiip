@@ -116,9 +116,15 @@ These are worthwhile improvements, but they should not distract from launch safe
 ### Scale and Performance
 
 - Large-scale concurrency and load-test tooling.
-- Deeper performance profiling for peak-event traffic.
+- Deeper performance profiling for peak-event traffic using Vercel Speed Insights field data plus targeted load testing.
 - Background-job architecture changes if current edge-function plus outbox flow no longer scales.
 - Archival and retention strategy for orders, notifications, and audit logs.
+
+### Analytics and Reporting
+
+- Advanced reporting beyond the current Vercel/Search Console launch telemetry.
+- Post-event report automation that combines campaign/funnel analytics with authoritative Supabase and Stripe order/payment data.
+- Multi-event analytics once event-management scope is implemented.
 
 ## Ongoing Principles
 

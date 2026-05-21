@@ -5,6 +5,8 @@ For staging/production parity checks, use [Environment Matrix](ENVIRONMENT_MATRI
 
 Do not commit real secrets. Use [`supabase/.env.functions.example`](../../supabase/.env.functions.example) as the local template for edge-function secrets.
 
+Analytics note: Vercel Web Analytics and Speed Insights do not add a Vite environment variable in the current product app. They are package/runtime integrations in `app/` plus hosted Vercel project features that must be enabled and verified outside this secrets inventory.
+
 ## Environment Surfaces
 
 | Surface | Setting | Required | Notes |

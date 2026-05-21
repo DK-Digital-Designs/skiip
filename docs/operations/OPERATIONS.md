@@ -54,6 +54,9 @@ Review:
 - recent orders
 - failed payments
 - failed notifications
+- campaign traffic and buyer-funnel custom events in Vercel Analytics
+- frontend performance trends in Vercel Speed Insights after real traffic
+- Search Console clicks, impressions, CTR, average position, indexing, and sitemap status after public launches
 - webhook processing errors
 - unexpected inventory changes
 - refund activity
@@ -73,6 +76,26 @@ Weekday staging smoke:
 
 - review the latest staging smoke run for public-route and sign-in regressions
 - if it fails, treat it as a deployment/auth/config warning first, not as proof of a payment-path incident
+
+## Analytics And Client Reporting
+
+Use [Analytics And Search Reporting](ANALYTICS.md) as the source of truth for event names, UTM format, Search Console checks, Vercel Analytics, Speed Insights, and client-facing reporting.
+
+Operational reporting split:
+
+- Vercel Analytics is useful for directional traffic, campaign, and funnel reporting.
+- Vercel Speed Insights is useful for frontend performance and Core Web Vitals after real traffic.
+- Google Search Console is useful for indexing, impressions, clicks, CTR, and average position.
+- Supabase, Stripe, and the admin dashboard remain authoritative for orders, payments, refunds, vendor totals, and reconciliation.
+
+For a first-event report, capture:
+
+- total visitors/pageviews and top referrers from Vercel Analytics
+- campaign performance from custom events grouped by `campaign`
+- funnel counts from `start_ordering_clicked`, `vendor_card_clicked`, `menu_item_added`, `checkout_started`, `payment_redirected`, and `checkout_completed`
+- real paid-order counts, refunds, and payment totals from Supabase/admin/Stripe
+- Speed Insights data only once enough production traffic has been collected
+- Search Console screenshots only after Google has had time to crawl and report data
 
 ## Incident Handling
 

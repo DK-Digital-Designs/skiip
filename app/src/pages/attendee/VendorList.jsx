@@ -13,6 +13,7 @@ import {
     getOrderableVendors,
     getVendorTags,
 } from '../../lib/vendor-tags';
+import { trackSkiipEvent } from '../../lib/analytics';
 
 const MOCK_VENDORS = [
     {
@@ -57,9 +58,15 @@ function VendorMedia({ vendor }) {
 
 function VendorCard({ vendor, index }) {
     const tags = getVendorTags(vendor);
+    const vendorLabel = `${vendor.id || 'unknown'}:${vendor.name || 'Unknown vendor'}`;
 
     return (
-        <Link key={vendor.id} to={`/order/vendor/${vendor.id}`} className="vendor-card">
+        <Link
+            key={vendor.id}
+            to={`/order/vendor/${vendor.id}`}
+            className="vendor-card"
+            onClick={() => trackSkiipEvent('vendor_card_clicked', { vendor: vendorLabel })}
+        >
             <div style={{ display: 'grid', alignContent: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <span className={index === 0 ? 'chip chip--accent' : 'chip'}>
@@ -156,6 +163,17 @@ export default function VendorList() {
     const vendorKicker = isBarMode ? 'BROWSE THE BAR' : 'Browse vendors';
     const vendorHeading = isBarMode ? 'Now pouring' : 'What do you fancy?';
 
+    function handleTagSelect(tag) {
+        setSelectedTag(tag);
+        trackSkiipEvent('vendor_filter_used', { filter: `tag:${tag}` });
+    }
+
+    function handleSortModeChange(event) {
+        const nextSortMode = event.target.value;
+        setSortMode(nextSortMode);
+        trackSkiipEvent('vendor_filter_used', { filter: `sort:${nextSortMode}` });
+    }
+
     return (
         <main className="app-page app-page--buyer">
             <div className="container" style={{ display: 'grid', gap: '26px' }}>
@@ -188,7 +206,7 @@ export default function VendorList() {
                             onChange={(event) => setSearchTerm(event.target.value)}
                             placeholder="Search burgers, bar, chicken..."
                         />
-                        <select aria-label="Sort vendors" value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+                        <select aria-label="Sort vendors" value={sortMode} onChange={handleSortModeChange}>
                             <option value="recommended">Recommended</option>
                             <option value="name">A to Z</option>
                             <option value="location">Location</option>
@@ -200,7 +218,7 @@ export default function VendorList() {
                                 key={tag}
                                 type="button"
                                 className={selectedTag === tag ? 'btn btn-purple' : 'btn btn-ghost'}
-                                onClick={() => setSelectedTag(tag)}
+                                onClick={() => handleTagSelect(tag)}
                                 style={{ minHeight: '34px', padding: '8px 12px', fontSize: '12px' }}
                             >
                                 {tag === 'all' ? 'All vendors' : tag}

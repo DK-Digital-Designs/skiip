@@ -245,7 +245,7 @@ These include:
 * QR code collection and scanning workflows
 * deeper event creation and event management tools
 * full multi-event operational capability
-* advanced analytics and reporting
+* advanced analytics and reporting beyond launch-level Vercel/Search Console telemetry
 * low-stock alert workflows
 * production-grade marketing lead capture
 * broader buyer account tools
@@ -288,7 +288,7 @@ In practical terms, the project has evolved across the following phases:
 | Phase 4: pilot readiness and polish   | Deployment setup, marketing/supporting pages, Stripe Connect, stability fixes, GBP/payment readiness, checkout fixes, and vendor paid-order lifecycle rules           |
 | Phase 5: hardening and fixes          | Payment hardening, inventory protection, reconciliation support, notification infrastructure, operational tooling, security/access work, documentation, and bug fixes |
 | Phase 6: final launch readiness       | Live provider setup, environment parity, payment/refund rehearsal, auth/RLS sign-off, notification verification, and event support planning                           |
-| Phase 7 and beyond: post-launch scope | QR operations, fuller event tooling, advanced analytics, broader platform expansion, and major UI/product expansion                                                   |
+| Phase 7 and beyond: post-launch scope | QR operations, fuller event tooling, advanced analytics beyond launch telemetry, broader platform expansion, and major UI/product expansion                  |
 
 This is why the current project should be understood as an evolved platform build rather than only the original MVP concept.
 

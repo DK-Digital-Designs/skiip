@@ -12,6 +12,15 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `VITE_STRIPE_PUBLIC_KEY` | Not required | Not required | Current checkout is redirect-based through edge functions. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
 
+## Vercel Project Features
+
+| Feature | Staging | Production | Notes |
+| --- | --- | --- | --- |
+| Web Analytics | Recommended | Required for public launch reporting | Repo mounts `<Analytics />`; hosted project feature must also be enabled and verified. |
+| Speed Insights | Recommended | Required for public launch performance reporting | Repo mounts `<SpeedInsights />`; field data depends on real production traffic. |
+| Production domain | Optional | Required | Search Console, sitemap, canonical URL, and social metadata expect `https://www.skiip.co.uk/`. |
+| Google Search Console | Optional | Required for search reporting | External account setup; verify property, submit sitemap, and confirm URL Inspection after deploy. |
+
 ## Supabase Function Secrets
 
 | Secret | Staging | Production | Notes |
@@ -55,3 +64,5 @@ Before production launch:
 1. Repeat the same checks against production app, production Supabase, and Stripe live mode.
 2. Do not copy staging test secrets into production.
 3. Do not switch Stripe keys without also checking webhook endpoints and connected-account mode.
+4. Confirm Web Analytics and Speed Insights are enabled on the production Vercel project.
+5. Confirm Search Console ownership, sitemap submission, and root URL inspection for the production domain.

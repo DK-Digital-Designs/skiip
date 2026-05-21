@@ -18,6 +18,7 @@ import {
     getScheduledCollectionLabel,
     toScheduledCollectionPayload,
 } from '../../lib/scheduledCollection';
+import { trackSkiipEvent } from '../../lib/analytics';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -39,6 +40,7 @@ export default function Checkout() {
 
     const subtotal = getCartTotal();
     const total = subtotal + tipAmount;
+    const cartItemCount = items.reduce((count, item) => count + item.quantity, 0);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -84,18 +86,23 @@ export default function Checkout() {
     async function handleCheckout(event) {
         event.preventDefault();
         setProcessing(true);
+        trackSkiipEvent('payment_started', { items: cartItemCount });
+
+        function stopCheckout(reason, message, type = 'error') {
+            trackSkiipEvent('checkout_failed', { reason });
+            addToast(message, type);
+            setProcessing(false);
+        }
 
         try {
             if (!isSupabaseConfigured()) {
-                addToast('Demo mode: Connect Supabase to place real orders.', 'info');
-                setProcessing(false);
+                stopCheckout('demo_mode', 'Demo mode: Connect Supabase to place real orders.', 'info');
                 return;
             }
 
             if (!user) {
-                addToast('Please sign in before placing an order.', 'error');
+                stopCheckout('signed_out', 'Please sign in before placing an order.');
                 navigate('/login', { state: { from: { pathname: '/order/checkout' } } });
-                setProcessing(false);
                 return;
             }
 
@@ -103,20 +110,17 @@ export default function Checkout() {
             const trimmedPhone = phone.trim();
 
             if (!trimmedEmail) {
-                addToast('Please provide an email address.', 'error');
-                setProcessing(false);
+                stopCheckout('missing_email', 'Please provide an email address.');
                 return;
             }
 
             if (whatsappOptIn && !trimmedPhone) {
-                addToast('Add a WhatsApp number if you want WhatsApp order updates.', 'error');
-                setProcessing(false);
+                stopCheckout('missing_whatsapp_phone', 'Add a WhatsApp number if you want WhatsApp order updates.');
                 return;
             }
 
             if (collectionMode === 'scheduled' && !scheduledCollection) {
-                addToast('Choose a scheduled collection time.', 'error');
-                setProcessing(false);
+                stopCheckout('missing_collection_time', 'Choose a scheduled collection time.');
                 return;
             }
 
@@ -126,16 +130,14 @@ export default function Checkout() {
                     ? toScheduledCollectionPayload(scheduledCollection)
                     : toScheduledCollectionPayload('');
             } catch (error) {
-                addToast(error.message || 'Choose a valid scheduled collection time.', 'error');
-                setProcessing(false);
+                stopCheckout('invalid_collection_time', error.message || 'Choose a valid scheduled collection time.');
                 return;
             }
 
             const vendorStripeStatus = vendor?.stripe_connect_status
                 || (vendor?.stripe_onboarding_complete ? 'ready' : 'onboarding');
             if (vendor && vendorStripeStatus !== 'ready') {
-                addToast('This vendor is not yet set up to receive payments.', 'error');
-                setProcessing(false);
+                stopCheckout('vendor_not_ready', 'This vendor is not yet set up to receive payments.');
                 return;
             }
 
@@ -148,6 +150,7 @@ export default function Checkout() {
                 tip_amount: tipAmount,
                 ...scheduledPayload,
             });
+            trackSkiipEvent('order_created', { items: cartItemCount });
 
             addToast('Redirecting to secure payment...', 'info');
 
@@ -157,6 +160,7 @@ export default function Checkout() {
             });
 
             if (session?.url) {
+                trackSkiipEvent('payment_redirected', { items: cartItemCount });
                 window.location.href = session.url;
                 return;
             }
@@ -164,6 +168,7 @@ export default function Checkout() {
             throw new Error('Failed to generate payment link');
         } catch (error) {
             console.error('Checkout error:', error);
+            trackSkiipEvent('checkout_failed', { reason: 'payment_error' });
             addToast(error.buyerMessage || GENERIC_CHECKOUT_ERROR_MESSAGE, 'error');
         } finally {
             setProcessing(false);

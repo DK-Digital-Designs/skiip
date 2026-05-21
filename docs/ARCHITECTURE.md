@@ -23,10 +23,13 @@ The product app is built with:
 - TanStack Query
 - Supabase JS
 - Zustand for cart state
+- Vercel Web Analytics
+- Vercel Speed Insights
 
 Important consequence:
 
 - app URLs use `/#/...` routes, for example `/#/order` and `/#/vendor/dashboard`
+- campaign links should keep UTM parameters before the hash route when possible, for example `/?utm_source=poster&utm_medium=qr&utm_campaign=sawft_launch#/order`
 
 Current routed surfaces in [App.jsx](../app/src/App.jsx):
 
@@ -43,6 +46,30 @@ Legacy files still exist in the repo but are not part of the routed app today, i
 - [`app/src/pages/attendee/BuyerLogin.jsx`](../app/src/pages/attendee/BuyerLogin.jsx)
 - [`app/src/pages/attendee/BuyerSignup.jsx`](../app/src/pages/attendee/BuyerSignup.jsx)
 - [`app/src/pages/admin/Dashboard.jsx`](../app/src/pages/admin/Dashboard.jsx)
+
+## Product Analytics And Search
+
+The product app has launch-level SEO and analytics instrumentation.
+
+Search-facing assets:
+
+- root metadata, canonical URL, social sharing metadata, JSON-LD, favicon/app icons, and manifest live in [`app/index.html`](../app/index.html)
+- crawl and sitemap files live in [`app/public/robots.txt`](../app/public/robots.txt) and [`app/public/sitemap.xml`](../app/public/sitemap.xml)
+
+Analytics runtime:
+
+- [`App.jsx`](../app/src/App.jsx) mounts Vercel Web Analytics and Speed Insights
+- [`analytics.js`](../app/src/lib/analytics.js) captures UTM attribution from page or hash-route query params into session storage
+- custom events are limited to small, non-PII properties and a campaign label
+- one-shot checkout return events are deduplicated per browser session
+
+Current event coverage includes landing-page intent, vendor selection/filtering, menu item adds, checkout start, payment start, checkout/order failures, order creation, Stripe redirect, Stripe success/cancel returns, payment retry intent, buyer cancellation intent, and buyer signup start/success/failure.
+
+Operational caveat:
+
+- Vercel analytics is directional client-side telemetry only
+- Supabase and Stripe remain the sources of truth for order, payment, refund, and revenue reporting
+- Google Search Console verification and sitemap submission are external account tasks, not repo state
 
 ## Auth Model
 

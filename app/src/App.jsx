@@ -1,4 +1,6 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Page imports
@@ -24,10 +26,15 @@ import ProtectedRoute from './components/shared/ProtectedRoute';
 import GlobalHeader from './components/shared/GlobalHeader';
 import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
+import { captureAnalyticsAttribution } from './lib/analytics';
 
 function App() {
     const location = useLocation();
     const isBuyerFlow = location.pathname.startsWith('/order');
+
+    React.useEffect(() => {
+        captureAnalyticsAttribution();
+    }, [location.key]);
 
     return (
         <>
@@ -100,6 +107,8 @@ function App() {
             </Routes>
             <AppFooter />
             <ToastContainer />
+            <Analytics />
+            <SpeedInsights />
         </>
     );
 }
