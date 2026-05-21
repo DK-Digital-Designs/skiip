@@ -32,6 +32,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 
 ## Operations
 
+- [Analytics And Search Reporting](operations/ANALYTICS.md)
+  Covers Vercel Analytics, Speed Insights, campaign UTMs, custom buyer-funnel events, Search Console checks, and client-facing reporting.
 - [Operations](operations/OPERATIONS.md)
   Covers day-to-day order operations, troubleshooting, refund handling, and operational caveats.
 - [Notifications](operations/NOTIFICATIONS.md)

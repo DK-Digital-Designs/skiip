@@ -17,6 +17,8 @@ Do not treat an environment as launch-ready until all of the following are true:
 - logging is sufficient to diagnose webhook, refund, notification, and auth failures
 - vendor onboarding has been rehearsed with the actual path you plan to use
 - all live schema changes are represented in committed migrations
+- Vercel Web Analytics and Speed Insights are enabled and verified for the production project if public launch reporting is expected
+- Google Search Console ownership, sitemap submission, and URL Inspection are complete for the production domain if search reporting is expected
 - notification retry recovery is defined:
   - operator-only manual sweep is accepted
   - or an external scheduler exists for `notification-dispatch`
@@ -35,8 +37,10 @@ Do not treat an environment as launch-ready until all of the following are true:
 7. Deploy Supabase edge functions.
 8. Deploy the frontend.
 9. Run `npm run test:e2e` against the target with `PLAYWRIGHT_BASE_URL` set.
-10. Run one manual operator rehearsal for the highest-risk flow if payments, auth, onboarding, or notifications changed. Payment rehearsals must use Stripe test mode before the May 2026 launch gate.
-11. Only then open traffic or announce the release.
+10. Run one campaign-tagged buyer smoke link and confirm Vercel Analytics receives the pageview and expected custom events.
+11. Confirm Search Console sitemap/URL checks after production deploys that affect search metadata.
+12. Run one manual operator rehearsal for the highest-risk flow if payments, auth, onboarding, or notifications changed. Payment rehearsals must use Stripe test mode before the May 2026 launch gate.
+13. Only then open traffic or announce the release.
 
 ## Rollback Checklist
 

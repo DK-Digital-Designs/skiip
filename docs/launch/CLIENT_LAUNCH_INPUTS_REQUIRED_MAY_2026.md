@@ -38,7 +38,7 @@ If ticket sales are still being considered for the first event, that should be t
 | P1 | Event-day operations owner | Confirm who handles buyer support, vendor support, refunds, failed payments, order disputes, device issues, and escalation during the event. Confirm whether DK Digital is expected to provide live event support and for which hours. | A live event creates operational responsibility. Support expectations need to be written down before real customers are involved. |
 | P1 | Production data cleanup approval | Confirm what test users, vendors, orders, carts, notifications, and audit/history data should be removed or kept before launch. | The production-facing environment should not carry stale test-era data into the first real event without an explicit decision. |
 | P2 | Marketing and public lead-capture decision | Confirm whether the external marketing site is part of launch operations and whether contact/waitlist forms must capture real leads. | The product app is the operational ordering surface. Marketing lead capture is separate unless explicitly connected and tested. |
-| P2 | Post-event reporting expectations | Confirm what SKIIP expects after the event: sales totals, vendor totals, refunds, notification performance, customer issues, or a fuller operations report. | Reporting can be prepared, but expectations should be agreed before the event so the right data is checked. |
+| P2 | Analytics and search reporting expectations | Confirm who should receive client-facing reports and whether SKIIP wants traffic, campaign QR performance, buyer funnel, Google search visibility, Speed Insights, sales totals, vendor totals, refunds, notification performance, customer issues, or a fuller operations report. | Launch-level analytics now exists in the product app, but the report shape and audience should be agreed before the event so the right screenshots and source data are captured. |
 
 ## DK Digital / Operator-Owned Work
 
@@ -50,6 +50,8 @@ The following items are not blocked on SKIIP doing the technical work, but they 
 - run one controlled live low-value payment session after SKIIP approves it
 - verify payment return, webhook finalization, admin reconciliation, and refund behavior
 - configure production Vercel/Supabase environment values and hosted origins
+- enable and verify production Vercel Web Analytics and Speed Insights
+- verify Google Search Console ownership, sitemap submission, and root URL inspection
 - configure production Resend and email formatting
 - configure Twilio credentials and callback settings after SKIIP completes WhatsApp compliance/sender prerequisites
 - run the final buyer, vendor, admin, notification, and cutover smoke checks
@@ -137,7 +139,7 @@ The following should be treated as separate scope unless agreed in writing:
 - ticket sales
 - QR ticket generation or scanning
 - full event management
-- advanced analytics
+- advanced analytics beyond the current Vercel/Search Console launch reporting
 - custom admission workflow
 - offline door operations
 - major new feature work after the go/no-go deadline

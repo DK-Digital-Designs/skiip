@@ -4,6 +4,31 @@ Audit date: 2026-04-22
 
 Note: this is a historical audit snapshot. Current implementation status should be read from `ARCHITECTURE.md`, `CURRENT_STATE.md`, `OPERATIONS.md`, and the ordered migrations.
 
+## 2026-05-21 Addendum
+
+The docs were rechecked against the search and analytics implementation on `staging` after PR #63 added SEO assets, Vercel Web Analytics, Speed Insights, UTM attribution, and custom buyer-funnel events.
+
+Docs updated in this pass:
+
+- `docs/operations/ANALYTICS.md` added as the source of truth for activation, UTM links, event taxonomy, Search Console checks, client reporting, and data caveats
+- `docs/README.md` now links the analytics/search reporting runbook
+- `docs/CURRENT_STATE.md` now records the implemented SEO/analytics/search surface and the remaining external provider checks
+- `docs/ARCHITECTURE.md` now documents Vercel Analytics, Speed Insights, UTM handling, and the client-side telemetry boundary
+- `docs/launch/DEPLOYMENT.md`, `docs/launch/ENVIRONMENT_MATRIX.md`, and `docs/launch/LAUNCH_CHECKLIST.md` now include Vercel Analytics, Speed Insights, Search Console, sitemap, and tagged smoke-link checks
+- `docs/operations/OPERATIONS.md` now includes daily analytics/search checks and first-event reporting guidance
+- `docs/launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md` now separates launch-level analytics reporting from future advanced analytics scope
+- `docs/ROADMAP.md` now treats advanced reporting and post-event automation as future scope rather than implying no measurement exists
+- `docs/scope/` and `docs/phase-5/` client-scope references now distinguish current launch telemetry from future advanced analytics
+- `PROGRESS-2.md` now captures the May 21 search/analytics work and remaining external checks
+
+Current sliding or external items after this audit:
+
+- Vercel Web Analytics and Speed Insights still require hosted project enablement/verification outside the repo
+- Google Search Console ownership, sitemap submission, URL Inspection, and reporting access are external account tasks
+- Speed Insights and Search Console reporting will lag until real traffic and crawl data exist
+- notification retry scheduling, explicit hosted `ALLOWED_ORIGINS`, `seed.sql`, full live Stripe rehearsal, production Sentry confirmation, and broader payment-path test coverage remain open from previous audits
+- advanced BI, cohort analytics, multi-event reporting, and automated post-event report generation remain future scope
+
 Scope reviewed:
 
 - [ARCHITECTURE.md](../ARCHITECTURE.md)

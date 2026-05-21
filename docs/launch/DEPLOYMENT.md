@@ -20,6 +20,7 @@ Current recommendation:
 
 - keep separate Supabase and Stripe environments for staging and production
 - keep Vercel env vars aligned to the matching Supabase project
+- enable and verify Vercel Web Analytics and Speed Insights on the hosted Vercel project
 - keep `ALLOWED_ORIGINS` explicit per environment
 - treat `ALLOWED_ORIGINS` as both the CORS allow-list and the allow-list for checkout/onboarding redirect origins
 
@@ -40,6 +41,8 @@ Recommended:
 
 - `VITE_SENTRY_DSN`
 
+No Vite environment variable is required for the current Vercel Web Analytics or Speed Insights integration. The repo-side requirement is that `@vercel/analytics`, `@vercel/speed-insights`, `<Analytics />`, and `<SpeedInsights />` are present in the product app. The hosted Vercel project still needs the corresponding dashboard features enabled.
+
 Important current clarification:
 
 - use [Environment Matrix](ENVIRONMENT_MATRIX.md) as the parity checklist before staging and production deploys
@@ -49,6 +52,38 @@ Important current clarification:
 - checkout is redirect-based through the `stripe-checkout` edge function, so this variable is not currently required for runtime
 
 For the full inventory and rotation discipline, see [Secrets and Environment Inventory](SECRETS.md).
+
+## Search And Analytics Setup
+
+Product-app search files are deployed from [`app/public`](../../app/public):
+
+- `robots.txt`
+- `sitemap.xml`
+- favicon and app icon assets
+- social preview image
+- app manifest
+
+The root HTML metadata is in [`app/index.html`](../../app/index.html).
+
+Production activation checks:
+
+1. Confirm the canonical production domain resolves to the Vercel deployment.
+2. Confirm `https://www.skiip.co.uk/robots.txt` and `https://www.skiip.co.uk/sitemap.xml` are reachable after deploy.
+3. Confirm the favicon and social preview image load from the production domain.
+4. Confirm Vercel Web Analytics records a production pageview.
+5. Confirm Vercel custom events appear after testing a campaign-tagged buyer flow.
+6. Confirm Vercel Speed Insights begins receiving field data after real traffic.
+7. Confirm Google Search Console ownership for the production domain.
+8. Submit or refresh the sitemap in Search Console.
+9. Use Search Console URL Inspection on the root URL after deployment.
+
+Campaign links should keep UTM parameters before the hash route where possible:
+
+```text
+https://www.skiip.co.uk/?utm_source=poster&utm_medium=qr&utm_campaign=sawft_launch&utm_content=burger_bliss#/order/vendor/<vendor-id>
+```
+
+See [Analytics And Search Reporting](../operations/ANALYTICS.md) for the event taxonomy and client-reporting workflow.
 
 ## Supabase Function Secrets
 
@@ -341,17 +376,21 @@ After any meaningful backend or frontend deploy:
 
 1. confirm the frontend is pointed at the intended Supabase project
 2. confirm `ALLOWED_ORIGINS` is set explicitly for that environment
-3. sign in as a buyer
-4. create a test order
-5. complete Stripe Checkout in test mode
-6. confirm the order flips to `paid`
-7. confirm vendor can move the order through statuses
-8. confirm admin dashboard loads metrics
-9. confirm admin refund flow still works
-10. confirm the buyer can complete checkout without opting into WhatsApp
-11. confirm Resend emails and, when enabled and opted in, Twilio WhatsApp updates
-12. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
-13. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
+3. confirm Web Analytics and Speed Insights are enabled on the matching Vercel project
+4. sign in as a buyer
+5. open a tagged URL such as `/?utm_source=smoke&utm_medium=manual&utm_campaign=deploy_check#/order`
+6. create a test order
+7. complete Stripe Checkout in test mode
+8. confirm the order flips to `paid`
+9. confirm vendor can move the order through statuses
+10. confirm admin dashboard loads metrics
+11. confirm admin refund flow still works
+12. confirm the buyer can complete checkout without opting into WhatsApp
+13. confirm Resend emails and, when enabled and opted in, Twilio WhatsApp updates
+14. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
+15. confirm Vercel Analytics shows the pageview and expected funnel events for the smoke path
+16. confirm Search Console sitemap/indexing checks after production deploys that affect search metadata
+17. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
 
 ## Staging Smoke Workflow
 
@@ -379,8 +418,9 @@ Before any staging or production release:
 3. confirm no production-only manual SQL is being relied on
 4. sync frontend env vars and Supabase secrets for the same environment pair
 5. set `ALLOWED_ORIGINS` explicitly for the target environment
-6. deploy migrations before or alongside dependent function changes
-7. run the Playwright smoke suite locally or against the deployed target
-8. run one manual payment-path rehearsal when payments, auth, onboarding, or notifications changed
-9. if notification retry recovery matters in that environment, confirm who or what will call `notification-dispatch`
-10. capture any emergency manual fix as a committed migration immediately afterward
+6. confirm Vercel Analytics and Speed Insights are enabled for the target deployment
+7. deploy migrations before or alongside dependent function changes
+8. run the Playwright smoke suite locally or against the deployed target
+9. run one manual payment-path rehearsal when payments, auth, onboarding, or notifications changed
+10. if notification retry recovery matters in that environment, confirm who or what will call `notification-dispatch`
+11. capture any emergency manual fix as a committed migration immediately afterward

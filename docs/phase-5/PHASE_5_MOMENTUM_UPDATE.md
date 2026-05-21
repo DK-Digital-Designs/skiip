@@ -82,6 +82,6 @@ The project is now easier to explain commercially and operationally:
 
 - **Delivered:** core buyer/vendor/admin flow plus significant Phase 5 hardening around payments, inventory, notifications, admin operations, auditability, release process, and docs.
 - **Phase 6:** live provider setup, environment parity, Stripe rehearsal, notification verification, authenticated smoke tests, and launch support planning.
-- **Phase 7+:** QR pickup, fuller event management, advanced analytics, multi-event expansion, production lead capture, broader account tooling, and major UI/product expansion.
+- **Phase 7+:** QR pickup, fuller event management, advanced analytics beyond launch telemetry, multi-event expansion, production lead capture, broader account tooling, and major UI/product expansion.
 
 That separation should keep the next phase grounded in launch readiness instead of letting post-launch expansion blur into the current closeout.

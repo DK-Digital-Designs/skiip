@@ -59,6 +59,15 @@ The production-critical path that exists in code today is:
 - queue-backed notification dispatch with delivery webhooks
 - launch RLS access matrix in [RLS Access Matrix](reference/RLS_ACCESS_MATRIX.md)
 
+### Analytics and search
+
+- production SEO metadata, favicon/app icons, Open Graph/Twitter tags, canonical URL, app manifest, JSON-LD, robots file, and sitemap in the product app
+- Vercel Web Analytics and Speed Insights mounted in the React app
+- UTM campaign attribution stored in browser session storage for the current visit
+- custom buyer-funnel events for landing intent, vendor selection, menu engagement, checkout, Stripe return, cancellation, retry, and buyer signup
+- analytics event helpers covered by Vitest
+- operations guidance in [Analytics And Search Reporting](operations/ANALYTICS.md)
+
 ## Current Runtime Truth
 
 These statements reflect the actual current implementation.
@@ -74,6 +83,7 @@ These statements reflect the actual current implementation.
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`
 - the marketing site now lives outside this repo in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing) and is not part of the order/payment source of truth
+- Vercel analytics data is directional client-side telemetry; Supabase, Stripe, and the admin dashboard remain authoritative for orders, payments, refunds, and revenue
 
 ## Important Clarifications
 
@@ -126,7 +136,7 @@ Current reality:
 
 - do not assume marketing-site forms are backend-integrated
 - marketing analytics and lead capture are owned by the external marketing repo
-- the product app in this repo remains the operational surface
+- the product app in this repo remains the operational ordering surface and now has its own launch-level analytics/search measurement
 
 Do not treat the marketing site as a backend-integrated operational surface.
 
@@ -155,6 +165,12 @@ These are the main remaining risks in the current baseline.
 - the current UI and edge-function lifecycle do not use them
 - event management remains deferred and `/admin/events` is not exposed in normal admin navigation/routing
 
+### 5. Analytics provider activation is external
+
+- the repo mounts Vercel Web Analytics and Speed Insights, but the hosted Vercel project still needs those features enabled and verified
+- Google Search Console verification, sitemap submission, URL Inspection, and reporting access are external account tasks
+- Search Console and Speed Insights reporting can lag until Google recrawls the site and real traffic reaches the production deployment
+
 ## Intentional Scope Limits
 
 These areas are still intentionally incomplete:
@@ -164,6 +180,7 @@ These areas are still intentionally incomplete:
 - automated retry scheduling for notification backlog recovery
 - event-management tooling
 - production-grade marketing-site lead capture in the external marketing repo
+- advanced BI, cohort analytics, and multi-event reporting beyond the current launch-level Vercel/UTM instrumentation
 
 ## What Changed Recently
 
@@ -178,6 +195,7 @@ Recent hardening work introduced:
 - payment failure fields on orders
 - queue-backed notification dispatch with richer delivery timestamps
 - Resend webhook ingestion
+- SEO/search assets, Vercel Analytics, Speed Insights, and privacy-conscious buyer-funnel event tracking
 - schema and auth-profile reconciliation migrations
 
 The repo now represents a first operational baseline. It does not yet represent a finished platform or a fully hardened open-launch posture.

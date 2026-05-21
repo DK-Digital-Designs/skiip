@@ -26,7 +26,37 @@
 | Dean Gibson | ~1.0 hour | 2026/05/19 | Client-facing launch dependency documentation. Cross-checked launch docs, notification docs, open GitHub launch issues, the first-event planning note, and contract responsibilities, then added a client-facing missing-inputs document for the revised first-event deadline. |
 | Dean Gibson | ~0.5 hours | 2026/05/19 | Client launch dependency refinement. Updated the client-facing launch inputs document with the confirmed 30 May 2026 event date, clarified DK-owned Stripe/live environment responsibilities, kept unresolved client decisions visible, added WhatsApp compliance urgency, and added Stripe Connect verification/payout timing guidance. |
 | Dean Gibson | ~0.5 hours | 2026/05/20 | Version bump and release promotion. Bumped staging version to 0.28.0, synchronized version references, and opened a PR from staging to main. |
-| **TOTAL** | **~63.0 hours** | | |
+| Dean Gibson | ~2.0 hours | 2026/05/21 | Search, analytics, and reporting readiness. Added product-app SEO/search assets, favicon/app icons, Vercel Web Analytics, Speed Insights, campaign UTM capture, custom buyer-funnel events, focused analytics tests, and refreshed source-of-truth docs for setup, activation, client reporting, and remaining provider-side checks. |
+| **TOTAL** | **~65.0 hours** | | |
+
+## May 21 Search, Analytics, And Reporting Readiness
+
+May 21 added launch-level search and analytics instrumentation to the product app and aligned the repo docs with the new measurement surface.
+
+Completed or verified:
+
+- product app includes favicon/app icons, manifest, social preview image, canonical metadata, Open Graph/Twitter metadata, JSON-LD, `robots.txt`, and `sitemap.xml`
+- Vercel Web Analytics and Speed Insights packages are installed and mounted in `App.jsx`
+- `app/src/lib/analytics.js` captures campaign UTM attribution from normal query strings or hash-route query strings
+- custom events now cover landing intent, vendor selection/filtering, menu engagement, checkout, Stripe handoff/return, payment retry/cancel intent, and buyer signup
+- analytics helpers avoid sending customer names, emails, phone numbers, notes, order IDs, payment IDs, or full product/vendor records
+- focused analytics tests cover attribution capture, event-property limits, campaign labelling, and one-shot event deduplication
+- docs now explain activation, UTM link format, event taxonomy, client reporting, Search Console checks, and the distinction between directional analytics and authoritative order/payment reporting
+
+Verification already completed for the implementation branch:
+
+- `npm run lint`
+- `npm run test -- analytics.test.js`
+- `npm run test`
+- `npm run build`
+
+Still external / not complete:
+
+- production Vercel Web Analytics and Speed Insights must be enabled and checked in the hosted project
+- Google Search Console ownership, sitemap submission, URL Inspection, and report access must be completed against the production domain
+- Speed Insights and Search Console data will lag until real production traffic and crawl data exist
+- advanced BI, cohort analytics, multi-event reporting, and automated post-event report generation remain future scope
+- live launch blockers around Stripe rehearsal, environment parity, notification retry scheduling, `ALLOWED_ORIGINS`, `seed.sql`, and live Sentry confirmation remain unchanged
 
 ## May 19 First Event And Ticketing Status Refresh
 
@@ -270,6 +300,8 @@ Known local verification caveat:
 ## Full Commit Log (Phase 5+)
 
 ```text
+4bfa3e2 - 2026-05-21 : feat(analytics): track campaign attribution and buyer funnel events
+c44810f - 2026-05-21 : feat(seo): add search and analytics instrumentation
 9df9afa - 2026-05-20 : chore(release): bump staging baseline to 0.28.0
 d4da18e - 2026-05-20 : fix(site): address SKIIP observation feedback
 a99472c - 2026-05-19 : feat(docs): add first event and ticketing decision note
