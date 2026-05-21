@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { track } from '@vercel/analytics';
 import { Link } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import { DEFAULT_LAUNCH_EVENT } from '../lib/launch-event';
@@ -23,13 +24,17 @@ export default function LandingPage() {
                 <section>
                     <p className="page-kicker">Food without the queue</p>
                     <h1 className="page-title" style={{ marginTop: '12px' }}>
-                        Skip the lines, enjoy the vibes.
+                        Order food and drinks without the queue.
                     </h1>
                     <p className="page-subtitle" style={{ marginTop: '18px' }}>
-                        Browse → Pay → Collect
+                        Browse festival vendors, pay on your phone, and collect when your order is ready.
                     </p>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '30px' }}>
-                        <Link to="/order" className="btn btn-primary">
+                        <Link
+                            to="/order"
+                            className="btn btn-primary"
+                            onClick={() => track('start_ordering_clicked', { location: 'landing_page' })}
+                        >
                             <Icon name="bag" size={18} />
                             Start Ordering
                         </Link>

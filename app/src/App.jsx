@@ -1,4 +1,6 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Page imports
@@ -100,6 +102,8 @@ function App() {
             </Routes>
             <AppFooter />
             <ToastContainer />
+            <Analytics />
+            <SpeedInsights />
         </>
     );
 }

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /login
+Disallow: /signup
+Disallow: /order/checkout
+Disallow: /order/track
+
+Sitemap: https://www.skiip.co.uk/sitemap.xml

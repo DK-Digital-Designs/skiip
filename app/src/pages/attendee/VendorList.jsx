@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { track } from '@vercel/analytics';
 import { Link, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useStores } from '../../lib/hooks/useMenu';
@@ -59,7 +60,16 @@ function VendorCard({ vendor, index }) {
     const tags = getVendorTags(vendor);
 
     return (
-        <Link key={vendor.id} to={`/order/vendor/${vendor.id}`} className="vendor-card">
+        <Link
+            key={vendor.id}
+            to={`/order/vendor/${vendor.id}`}
+            className="vendor-card"
+            onClick={() => track('vendor_card_clicked', {
+                vendor_id: String(vendor.id),
+                vendor_name: vendor.name || 'Unknown vendor',
+                position: index + 1,
+            })}
+        >
             <div style={{ display: 'grid', alignContent: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <span className={index === 0 ? 'chip chip--accent' : 'chip'}>
