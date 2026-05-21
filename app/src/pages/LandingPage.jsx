@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { track } from '@vercel/analytics';
 import { Link } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import { DEFAULT_LAUNCH_EVENT } from '../lib/launch-event';
 import { SettingsService } from '../lib/services/settings.service';
+import { trackSkiipEvent } from '../lib/analytics';
 
 export default function LandingPage() {
     const [launchEvent, setLaunchEvent] = useState(DEFAULT_LAUNCH_EVENT);
@@ -33,7 +33,7 @@ export default function LandingPage() {
                         <Link
                             to="/order"
                             className="btn btn-primary"
-                            onClick={() => track('start_ordering_clicked', { location: 'landing_page' })}
+                            onClick={() => trackSkiipEvent('start_ordering_clicked', { location: 'landing_page' })}
                         >
                             <Icon name="bag" size={18} />
                             Start Ordering

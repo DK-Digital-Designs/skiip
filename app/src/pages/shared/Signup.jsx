@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../../lib/services/auth.service';
 import { useToast } from '../../components/ui/Toast';
 import SkiipLogo from '../../components/ui/SkiipLogo';
+import { trackSkiipEvent } from '../../lib/analytics';
 
 export default function UnifiedSignup() {
     const navigate = useNavigate();
@@ -18,12 +19,15 @@ export default function UnifiedSignup() {
     async function handleSignup(event) {
         event.preventDefault();
         setLoading(true);
+        trackSkiipEvent('signup_started', { role: 'buyer' });
 
         try {
             await AuthService.signUp(formData.email, formData.password, formData.fullName, 'buyer');
+            trackSkiipEvent('signup_completed', { role: 'buyer' });
             addToast('Account created. You can start ordering.', 'success');
             navigate('/order');
         } catch (error) {
+            trackSkiipEvent('signup_failed', { role: 'buyer' });
             addToast(error.message || 'Signup failed. Please try again.', 'error');
         } finally {
             setLoading(false);

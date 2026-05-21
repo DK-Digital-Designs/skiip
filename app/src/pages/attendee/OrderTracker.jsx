@@ -19,6 +19,7 @@ import {
     getOrderStatusColor,
 } from '../../lib/orders';
 import { formatCurrency, formatOrderCode, getBuyerTimelineSteps } from '../../lib/ui-format';
+import { trackSkiipEvent, trackSkiipEventOnce } from '../../lib/analytics';
 
 export default function OrderTracker() {
     const navigate = useNavigate();
@@ -40,6 +41,7 @@ export default function OrderTracker() {
 
     useEffect(() => {
         if (isCanceled) {
+            trackSkiipEventOnce(`checkout_canceled:${orderId || 'missing'}`, 'checkout_canceled', { status: 'stripe_canceled' });
             addToast('Payment was not completed. You can continue payment or cancel the order.', 'info');
             if (orderId && !pathOrderId) {
                 navigate(`/order/track/${orderId}`, { replace: true });
@@ -47,6 +49,7 @@ export default function OrderTracker() {
         }
 
         if (isSuccess && orderId) {
+            trackSkiipEventOnce(`checkout_completed:${orderId}`, 'checkout_completed', { status: 'stripe_success' });
             clearCart();
             if (!pathOrderId) {
                 navigate(`/order/track/${orderId}`, { replace: true });
@@ -91,6 +94,7 @@ export default function OrderTracker() {
 
     async function handleContinuePayment() {
         if (!order?.id) return;
+        trackSkiipEvent('continue_payment_clicked', { status: order.status || 'unknown' });
 
         if (!isSupabaseConfigured()) {
             addToast('Demo mode: payment recovery simulated.', 'info');
@@ -120,6 +124,7 @@ export default function OrderTracker() {
 
     async function handleCancelOrder() {
         if (!order?.id) return;
+        trackSkiipEvent('order_cancel_clicked', { status: order.status || 'unknown' });
 
         if (!isSupabaseConfigured()) {
             setOrder((current) => ({ ...current, status: 'cancelled' }));

@@ -26,10 +26,15 @@ import ProtectedRoute from './components/shared/ProtectedRoute';
 import GlobalHeader from './components/shared/GlobalHeader';
 import AppFooter from './components/shared/AppFooter';
 import { ToastContainer } from './components/ui/Toast';
+import { captureAnalyticsAttribution } from './lib/analytics';
 
 function App() {
     const location = useLocation();
     const isBuyerFlow = location.pathname.startsWith('/order');
+
+    React.useEffect(() => {
+        captureAnalyticsAttribution();
+    }, [location.key]);
 
     return (
         <>
