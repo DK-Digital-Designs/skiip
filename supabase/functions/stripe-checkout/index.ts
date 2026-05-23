@@ -55,7 +55,7 @@ serve(async (req: Request) => {
     const supabase = createServiceClient()
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, store_id, subtotal, total, tip_amount, status, payment_status')
+      .select('id, user_id, store_id, subtotal, total, tip_amount, service_fee, status, payment_status')
       .eq('id', orderId)
       .single()
 
@@ -102,6 +102,7 @@ serve(async (req: Request) => {
     const computedSubtotal = orderItems.reduce((sum, item) => sum + Number(item.total || 0), 0)
     const storedSubtotal = Number(order.subtotal || 0)
     const tipAmount = Number(order.tip_amount || 0)
+    const serviceFee = Number(order.service_fee || 0)
     const storedTotal = Number(order.total || 0)
 
     if (Math.abs(computedSubtotal - storedSubtotal) > 0.01) {
@@ -109,8 +110,13 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order subtotal mismatch' }, 409, origin)
     }
 
-    if (Math.abs(storedTotal - (storedSubtotal + tipAmount)) > 0.01) {
-      log.warn('Order total mismatch detected', { orderId, storedTotal, computed: storedSubtotal + tipAmount })
+    if (serviceFee < 0) {
+      log.warn('Order has invalid service fee', { orderId, serviceFee })
+      return jsonResponse({ error: 'Order service fee is invalid' }, 409, origin)
+    }
+
+    if (Math.abs(storedTotal - (storedSubtotal + tipAmount + serviceFee)) > 0.01) {
+      log.warn('Order total mismatch detected', { orderId, storedTotal, computed: storedSubtotal + tipAmount + serviceFee })
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
     }
 
@@ -146,7 +152,19 @@ serve(async (req: Request) => {
       })
     }
 
-    const applicationFeeAmount = Math.round(storedSubtotal * PLATFORM_FEE_PERCENT * 100)
+    if (serviceFee > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'gbp',
+          product_data: { name: 'Service Fees' },
+          unit_amount: Math.round(serviceFee * 100),
+        },
+        quantity: 1,
+      })
+    }
+
+    const serviceFeeAmount = Math.round(serviceFee * 100)
+    const applicationFeeAmount = Math.round(storedSubtotal * PLATFORM_FEE_PERCENT * 100) + serviceFeeAmount
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,

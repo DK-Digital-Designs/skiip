@@ -19,11 +19,12 @@ import {
     toScheduledCollectionPayload,
 } from '../../lib/scheduledCollection';
 import { trackSkiipEvent } from '../../lib/analytics';
+import { calculateOrderSummary } from '../../lib/orders';
 
 export default function Checkout() {
     const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
-    const { items, addItem, removeItem, getCartTotal, vendorId } = useCart();
+    const { items, addItem, removeItem, vendorId } = useCart();
     const { addToast } = useToast();
 
     const [vendor, setVendor] = useState(null);
@@ -38,8 +39,7 @@ export default function Checkout() {
     const [customTip, setCustomTip] = useState('');
     const [selectedTipPercent, setSelectedTipPercent] = useState(0);
 
-    const subtotal = getCartTotal();
-    const total = subtotal + tipAmount;
+    const { subtotal, tip, serviceFee, total } = calculateOrderSummary(items, tipAmount);
     const cartItemCount = items.reduce((count, item) => count + item.quantity, 0);
 
     useEffect(() => {
@@ -147,7 +147,7 @@ export default function Checkout() {
                 customer_phone: trimmedPhone || null,
                 whatsapp_opt_in: whatsappOptIn,
                 notes,
-                tip_amount: tipAmount,
+                tip_amount: tip,
                 ...scheduledPayload,
             });
             trackSkiipEvent('order_created', { items: cartItemCount });
@@ -374,12 +374,16 @@ export default function Checkout() {
                                 <span className="text-muted">Subtotal</span>
                                 <strong>{formatCurrency(subtotal)}</strong>
                             </div>
-                            {tipAmount > 0 && (
+                            {tip > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span className="text-muted">Tip</span>
-                                    <strong>{formatCurrency(tipAmount)}</strong>
+                                    <strong>{formatCurrency(tip)}</strong>
                                 </div>
                             )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span className="text-muted">Service Fees</span>
+                                <strong>{formatCurrency(serviceFee)}</strong>
+                            </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--stroke)', paddingTop: '14px', fontSize: '20px' }}>
                                 <strong>Total</strong>
                                 <strong className="text-accent">{formatCurrency(total)}</strong>

@@ -8,14 +8,16 @@ import { logger } from "../_shared/logger.ts"
 const log = logger('admin-store')
 
 const STORE_STATUSES = new Set(['pending', 'active', 'suspended'])
+const STORE_CATEGORIES = new Set(['Food', 'Drinks', 'Dessert', 'Coffee', 'Other'])
 
 interface AdminStoreRequest {
-  action: 'create' | 'update_status' | 'archive'
+  action: 'create' | 'update_status' | 'update_category' | 'archive'
   userId?: string
   storeId?: string
   name?: string
   slug?: string
   status?: string
+  category?: string
 }
 
 function normalizeSlug(value: string) {
@@ -92,6 +94,23 @@ serve(async (req: Request) => {
         p_actor_user_id: user.id,
         p_store_id: body.storeId,
         p_status: body.status,
+      })
+
+      if (error) throw error
+      return jsonResponse({ store: data }, 200, origin)
+    }
+
+    if (body.action === 'update_category') {
+      assertUuid(body.storeId, 'storeId')
+      const category = body.category?.trim()
+      if (!category || !STORE_CATEGORIES.has(category)) {
+        return jsonResponse({ error: 'Invalid store category' }, 400, origin)
+      }
+
+      const { data, error } = await supabase.rpc('admin_update_store_category_v1', {
+        p_actor_user_id: user.id,
+        p_store_id: body.storeId,
+        p_category: category,
       })
 
       if (error) throw error

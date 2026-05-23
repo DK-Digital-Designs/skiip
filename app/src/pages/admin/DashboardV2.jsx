@@ -53,6 +53,7 @@ export default function AdminDashboard() {
         activeOrders: 0,
         failedPayments: 0,
         paidRevenue: 0,
+        serviceFeeRevenue: 0,
         refundedRevenue: 0,
         statusCounts: {},
         vendors: [],
@@ -98,6 +99,7 @@ export default function AdminDashboard() {
             activeOrders: metrics?.activeOrders || 0,
             failedPayments: metrics?.failedPayments || 0,
             paidRevenue: parseFloat(metrics?.paidRevenue || 0),
+            serviceFeeRevenue: parseFloat(metrics?.serviceFeeRevenue || 0),
             refundedRevenue: parseFloat(metrics?.refundedRevenue || 0),
             statusCounts: metrics?.statusCounts || {},
             vendors: metrics?.vendors || [],
@@ -181,6 +183,7 @@ export default function AdminDashboard() {
         { label: 'All Orders', value: stats.totalOrders },
         { label: 'Active Orders', value: stats.activeOrders },
         { label: 'Paid Revenue', value: formatCurrency(stats.paidRevenue) },
+        { label: 'Service Fees', value: formatCurrency(stats.serviceFeeRevenue) },
         { label: 'Failed Payments', value: stats.failedPayments, danger: stats.failedPayments > 0 },
         { label: 'Refunded Revenue', value: formatCurrency(stats.refundedRevenue) },
     ];
@@ -314,7 +317,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <strong>{vendor.orders} orders</strong>
-                                        <p className="text-muted" style={{ fontSize: '13px' }}>{formatCurrency(vendor.revenue || 0)}</p>
+                                        <p className="text-muted" style={{ fontSize: '13px' }}>{formatCurrency(vendor.revenue || 0)} vendor gross</p>
                                     </div>
                                 </div>
                             ))}
@@ -337,6 +340,11 @@ export default function AdminDashboard() {
                                         <p className="text-muted" style={{ fontSize: '14px' }}>
                                             {new Date(order.created_at).toLocaleString()} - {order.stores?.name || 'Unknown Store'} - {order.customer_phone || order.customer_email || 'No direct contact'}
                                         </p>
+                                        {Number(order.service_fee || 0) > 0 && (
+                                            <p className="text-muted" style={{ fontSize: '12px', marginTop: '8px' }}>
+                                                Buyer total includes {formatMoney(order.service_fee)} Service Fees retained by the platform.
+                                            </p>
+                                        )}
                                         {getScheduledCollectionLabel(order) && (
                                             <p className="chip chip--cyan" style={{ marginTop: '8px', width: 'fit-content' }}>
                                                 Scheduled collection: {getScheduledCollectionLabel(order)}

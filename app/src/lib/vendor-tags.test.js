@@ -25,6 +25,10 @@ describe('vendor tag helpers', () => {
         expect(getVendorTags({ tags: null })).toEqual(['Food']);
         expect(getVendorTags({ name: 'Chicken Shack', tags: [] })).toContain('Chicken');
     });
+
+    it('surfaces store category alongside explicit vendor tags', () => {
+        expect(getVendorTags({ category: 'Drinks', tags: ['Cocktails'] })).toEqual(['Drinks', 'Cocktails']);
+    });
 });
 
 describe('vendor payment helpers', () => {
