@@ -178,7 +178,11 @@ For each staging payment rehearsal, compare:
 Operational notes:
 
 - May 12 testing must remain in Stripe test mode
-- `vendor_net` is calculated from order total minus platform fee and Stripe fee after the webhook retrieves the expanded balance transaction
+- checkout includes a fixed GBP 2.00 `Service Fees` line for the test event
+- the service fee is platform-retained and is included in Stripe `application_fee_amount`
+- `application_fee_amount` is calculated as `10%` of order subtotal plus GBP 2.00, not as `10%` of the full buyer total
+- vendor gross revenue excludes service fees and should use order subtotal plus tip
+- `vendor_net` is calculated from buyer total minus platform fee and Stripe fee after the webhook retrieves the expanded balance transaction
 - older orders may show missing fee values if they were paid before reconciliation fields were populated
 
 ### Vendor cannot change order status
@@ -227,6 +231,8 @@ Current refund path:
 - inventory is restocked when appropriate
 - tracked in `audit_logs`
 - followed by transactional notification queuing
+
+For the test event, full refunds include item total, tips, and the GBP 2.00 service fee. A future partial-refund policy can decide whether service fees should ever be retained on refunds.
 
 Refunds should be treated as financial operations, not simple UI status changes.
 

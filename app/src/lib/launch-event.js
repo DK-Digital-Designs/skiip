@@ -1,9 +1,9 @@
 export const DEFAULT_LAUNCH_EVENT = {
     label: 'Live now',
-    title: 'SAWFT',
-    subtitle: "Official event ordering. Your food doesn't need a queue anymore.",
-    landingTitle: 'SAWFT',
-    landingSubtitle: "Official event ordering. Your food doesn't need a queue anymore.",
+    title: 'FOOD WITHOUT THE QUEUE',
+    subtitle: "Order food and drinks from your phone and collect when it's ready.",
+    landingTitle: 'FOOD WITHOUT THE QUEUE',
+    landingSubtitle: "Order food and drinks from your phone and collect when it's ready.",
 };
 
 export function normalizeLaunchEvent(value = {}) {

@@ -2,16 +2,20 @@ export function roundCurrency(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
+export const SERVICE_FEE_AMOUNT = 2;
+
 export function calculateOrderSummary(items, tipAmount = 0) {
   const subtotal = roundCurrency(
     (items || []).reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0)
   );
   const tip = roundCurrency(Math.max(Number(tipAmount || 0), 0));
+  const serviceFee = SERVICE_FEE_AMOUNT;
 
   return {
     subtotal,
     tip,
-    total: roundCurrency(subtotal + tip),
+    serviceFee,
+    total: roundCurrency(subtotal + tip + serviceFee),
   };
 }
 

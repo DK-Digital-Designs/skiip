@@ -182,6 +182,7 @@ Before any broader launch:
 Authoritative schema source:
 
 - [`supabase/migrations`](../../supabase/migrations)
+- Supabase no longer automatically exposes newly created tables to the Data API in newer projects. Test-event hotfixes should prefer columns/functions on existing exposed tables unless a new table is deliberately needed and its API/RLS exposure is reviewed.
 
 Do not treat these files as the current live-working schema source of truth:
 
@@ -278,7 +279,11 @@ Current payment specifics:
 - onboarding currently requests `card_payments` and `transfers`
 - vendor readiness is enforced through `stores.stripe_connect_status = 'ready'`
 - `stripe-connect-status` reconciles live Stripe account state after onboarding return
-- application fees are calculated as `10%` of order subtotal in `stripe-checkout`
+- checkout includes a fixed GBP 2.00 `Service Fees` line on new orders
+- service fees are computed server-side in `order-create`; browser values are display-only
+- application fees are calculated as `10%` of order subtotal plus GBP 2.00 in `stripe-checkout`
+- vendor revenue reporting must exclude the GBP 2.00 service fee
+- test-event full refunds include the service fee; partial/non-refundable service-fee handling is deferred
 
 Important:
 

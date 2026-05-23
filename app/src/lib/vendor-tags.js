@@ -7,6 +7,13 @@ const FALLBACK_TAG_RULES = [
     { tag: 'Budget', terms: ['cheap', 'budget', 'value'] },
 ];
 
+const VENDOR_CATEGORIES = ['Food', 'Drinks', 'Dessert', 'Coffee', 'Other'];
+
+export function normalizeVendorCategory(category) {
+    const cleaned = String(category || '').trim();
+    return VENDOR_CATEGORIES.includes(cleaned) ? cleaned : '';
+}
+
 export function normalizeVendorTags(tags) {
     const values = Array.isArray(tags)
         ? tags
@@ -27,15 +34,16 @@ function normalizeVendorSource(vendor) {
 
 export function getVendorTags(vendor = {}) {
     const source = normalizeVendorSource(vendor);
+    const category = normalizeVendorCategory(source.category);
     const explicitTags = normalizeVendorTags(source.tags);
-    if (explicitTags.length > 0) return explicitTags;
+    if (explicitTags.length > 0) return normalizeVendorTags([category, ...explicitTags]);
 
     const haystack = `${source.name || ''} ${source.description || ''}`.toLowerCase();
     const inferred = FALLBACK_TAG_RULES
         .filter((rule) => rule.terms.some((term) => haystack.includes(term)))
         .map((rule) => rule.tag);
 
-    return inferred.length > 0 ? inferred : ['Food'];
+    return inferred.length > 0 ? normalizeVendorTags([category, ...inferred]) : [category || 'Food'];
 }
 
 export function getVendorPaymentStatus(vendor = {}) {

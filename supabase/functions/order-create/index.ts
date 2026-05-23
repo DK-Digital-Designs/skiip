@@ -12,6 +12,7 @@ import {
 } from "./order-items.ts"
 
 const log = logger('order-create')
+const SERVICE_FEE_AMOUNT = 2
 
 interface CreateOrderRequest {
   items?: unknown
@@ -22,6 +23,11 @@ interface CreateOrderRequest {
   tip_amount?: number
   scheduled_collection_at?: string | null
   scheduled_collection_timezone?: string | null
+}
+
+interface CreatedOrder {
+  id: string
+  store_id: string
 }
 
 function roundMoney(value: number) {
@@ -167,7 +173,8 @@ serve(async (req: Request) => {
     })
 
     const subtotal = roundMoney(orderItems.reduce((sum, item) => sum + item.total, 0))
-    const total = roundMoney(subtotal + tipAmount)
+    const serviceFee = SERVICE_FEE_AMOUNT
+    const total = roundMoney(subtotal + tipAmount + serviceFee)
     const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
     const { data: order, error: orderError } = await supabase
@@ -178,6 +185,7 @@ serve(async (req: Request) => {
         p_subtotal: subtotal,
         p_total: total,
         p_tip_amount: tipAmount,
+        p_service_fee: serviceFee,
         p_customer_email: customerEmail,
         p_customer_phone: customerPhone || null,
         p_notes: body.notes?.trim() || null,
@@ -198,22 +206,25 @@ serve(async (req: Request) => {
       throw orderError || new Error('Failed to create order')
     }
 
+    const createdOrder = order as CreatedOrder
+
     await supabase.from('audit_logs').insert({
       event_type: 'order_created',
       entity_type: 'order',
-      entity_id: order.id,
+      entity_id: createdOrder.id,
       actor_user_id: user.id,
       actor_role: user.role,
       payload: {
-        store_id: order.store_id,
+        store_id: createdOrder.store_id,
         subtotal,
         total,
         tip_amount: tipAmount,
+        service_fee: serviceFee,
         item_count: orderItems.length,
       },
     })
 
-    return jsonResponse({ order }, 200, origin)
+    return jsonResponse({ order: createdOrder }, 200, origin)
   } catch (err: unknown) {
     const error = err as Error
     log.error('Order creation failed', { error: error.message, stack: error.stack })

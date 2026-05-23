@@ -6,6 +6,8 @@ import { AdminStoreService } from '../../lib/services/adminStore.service';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
 
+const STORE_CATEGORIES = ['Food', 'Drinks', 'Dessert', 'Coffee', 'Other'];
+
 export default function AdminVendors() {
     const [stores, setStores] = useState([]);
     const [users, setUsers] = useState([]);
@@ -14,6 +16,7 @@ export default function AdminVendors() {
     const [showNewStoreForm, setShowNewStoreForm] = useState(false);
     const [archiveTarget, setArchiveTarget] = useState(null);
     const [newStore, setNewStore] = useState({ name: '', slug: '', user_id: '' });
+    const [updatingCategoryId, setUpdatingCategoryId] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -24,7 +27,7 @@ export default function AdminVendors() {
         try {
             const { data: storesData, error: storesError } = await supabase
                 .from('stores')
-                .select('id, name, slug, status, created_at, user_id, deleted_at')
+                .select('id, name, slug, status, category, created_at, user_id, deleted_at')
                 .is('deleted_at', null)
                 .order('created_at', { ascending: false });
 
@@ -60,6 +63,19 @@ export default function AdminVendors() {
             fetchData();
         } catch (error) {
             addToast(error.message, 'error');
+        }
+    }
+
+    async function handleUpdateCategory(storeId, category) {
+        try {
+            setUpdatingCategoryId(storeId);
+            await AdminStoreService.updateStoreCategory(storeId, category);
+            addToast(`Store category set to ${category}`, 'success');
+            fetchData();
+        } catch (error) {
+            addToast(error.message, 'error');
+        } finally {
+            setUpdatingCategoryId(null);
         }
     }
 
@@ -155,6 +171,7 @@ export default function AdminVendors() {
                                     <tr>
                                         <th>Store Info</th>
                                         <th>Owner</th>
+                                        <th>Category</th>
                                         <th>Status</th>
                                         <th style={{ textAlign: 'right' }}>Actions</th>
                                     </tr>
@@ -169,6 +186,19 @@ export default function AdminVendors() {
                                             <td>
                                                 {store.user_profiles?.full_name || 'N/A'}<br />
                                                 <span className="text-muted" style={{ fontSize: '13px' }}>{store.user_profiles?.email}</span>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    aria-label={`Category for ${store.name}`}
+                                                    value={store.category || 'Food'}
+                                                    disabled={updatingCategoryId === store.id}
+                                                    onChange={(event) => handleUpdateCategory(store.id, event.target.value)}
+                                                    style={{ minWidth: '130px' }}
+                                                >
+                                                    {STORE_CATEGORIES.map((category) => (
+                                                        <option key={category} value={category}>{category}</option>
+                                                    ))}
+                                                </select>
                                             </td>
                                             <td>
                                                 <span className={store.status === 'active' ? 'chip chip--green' : 'chip'}>

@@ -32,6 +32,14 @@ export const AdminStoreService = {
         });
     },
 
+    updateStoreCategory(storeId, category) {
+        return invokeAdminStore({
+            action: 'update_category',
+            storeId,
+            category,
+        });
+    },
+
     archiveStore(storeId) {
         return invokeAdminStore({
             action: 'archive',

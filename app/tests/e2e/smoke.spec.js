@@ -107,7 +107,7 @@ test.describe('public smoke', () => {
   test('landing page renders primary CTA', async ({ page }) => {
     await page.goto('/');
     await expect(
-      page.getByRole('link', { name: /start ordering/i }),
+      page.getByRole('link', { name: /let's eat/i }),
       'routing: public landing page should render the primary ordering CTA',
     ).toBeVisible();
   });

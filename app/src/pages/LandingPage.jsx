@@ -22,12 +22,13 @@ export default function LandingPage() {
         <main className="app-page">
             <div className="container two-column" style={{ alignItems: 'center', minHeight: 'calc(100vh - 170px)' }}>
                 <section>
-                    <p className="page-kicker">Food without the queue</p>
+                    <p className="page-kicker">FOOD WITHOUT THE QUEUE</p>
                     <h1 className="page-title" style={{ marginTop: '12px' }}>
-                        Order food and drinks without the queue.
+                        Skip the queue.<br />
+                        Stay in the moment.
                     </h1>
                     <p className="page-subtitle" style={{ marginTop: '18px' }}>
-                        Browse festival vendors, pay on your phone, and collect when your order is ready.
+                        Order food and drinks from your phone and collect when it&apos;s ready.
                     </p>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '30px' }}>
                         <Link
@@ -36,7 +37,7 @@ export default function LandingPage() {
                             onClick={() => trackSkiipEvent('start_ordering_clicked', { location: 'landing_page' })}
                         >
                             <Icon name="bag" size={18} />
-                            Start Ordering
+                            Let&apos;s eat
                         </Link>
                     </div>
                 </section>

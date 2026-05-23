@@ -158,10 +158,13 @@ export default function OrderTracker() {
                     status: 'preparing',
                     payment_status: 'succeeded',
                     total: 39,
+                    subtotal: 37,
+                    tip_amount: 0,
+                    service_fee: 2,
                     created_at: new Date().toISOString(),
                     whatsapp_opt_in: true,
                     order_items: [
-                        { quantity: 2, price: 12, product_snapshot: { name: 'Classic Cheeseburger', price: 12 } },
+                        { quantity: 2, price: 11, product_snapshot: { name: 'Classic Cheeseburger', price: 11 } },
                         { quantity: 3, price: 5, product_snapshot: { name: 'Large Fries', price: 5 } },
                     ],
                 });
@@ -318,9 +321,23 @@ export default function OrderTracker() {
                             </div>
                         ))}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '18px', paddingTop: '18px', borderTop: '2px solid var(--stroke)', fontSize: '20px', fontWeight: 950 }}>
-                        <span>Total paid</span>
-                        <span className="text-accent">{formatCurrency(order.total)}</span>
+                    <div style={{ display: 'grid', gap: '10px', marginTop: '18px', paddingTop: '18px', borderTop: '2px solid var(--stroke)' }}>
+                        {Number(order.tip_amount || 0) > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
+                                <span className="text-muted">Tip</span>
+                                <span>{formatCurrency(order.tip_amount)}</span>
+                            </div>
+                        )}
+                        {Number(order.service_fee || 0) > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
+                                <span className="text-muted">Service Fees</span>
+                                <span>{formatCurrency(order.service_fee)}</span>
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 950 }}>
+                            <span>Total paid</span>
+                            <span className="text-accent">{formatCurrency(order.total)}</span>
+                        </div>
                     </div>
                 </section>
 

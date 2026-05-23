@@ -20,6 +20,12 @@ Default launch behavior in code:
 - checkout does not require WhatsApp
 - WhatsApp sends only when the buyer opts in and provides a phone number
 
+Test-event baseline:
+
+- email must be verified for `order_paid` and `order_ready`
+- `EMAIL_NOTIFICATION_EVENTS=order_paid,order_ready` is the recommended narrow test-day setting
+- WhatsApp should remain disabled or allowlisted until the Meta/Twilio sender is confirmed healthy
+
 Config levers:
 
 - `EMAIL_PROVIDER`

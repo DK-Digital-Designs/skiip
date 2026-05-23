@@ -29,6 +29,10 @@ function getOrderTotal(order) {
     return Number(order?.total ?? order?.total_amount ?? 0);
 }
 
+function getVendorGross(order) {
+    return Number(order?.subtotal || 0) + Number(order?.tip_amount || 0);
+}
+
 function getOrderContact(order) {
     if (order?.customer_phone) {
         return { label: order.customer_phone, href: `tel:${order.customer_phone}`, type: 'Phone' };
@@ -103,9 +107,15 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
 
             <div style={{ display: 'grid', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--stroke)', fontSize: '13px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontWeight: 900 }}>
-                    <span>Total</span>
+                    <span>Buyer total</span>
                     <span className="text-accent">{formatCurrency(getOrderTotal(order))}</span>
                 </div>
+                {Number(order.service_fee || 0) > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                        <span className="text-muted">Vendor gross</span>
+                        <span>{formatCurrency(getVendorGross(order))}</span>
+                    </div>
+                )}
                 <div>
                     <span className="text-muted" style={{ fontSize: '12px', display: 'block' }}>{contact.type}</span>
                     {contact.href ? (
