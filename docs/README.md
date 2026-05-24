@@ -47,7 +47,7 @@ The broad entrypoint files above are intentionally short. Follow their topic lin
 
 ## Delivery
 
-- Progress logs live in [`PROGRESS.md`](../PROGRESS.md) and [`PROGRESS-2.md`](../PROGRESS-2.md). For active Phase 5+ closeout work, update `PROGRESS-2.md` and the relevant GitHub issues as part of the normal handoff.
+- Completed progress logs live in [Phase 1-4 Progress](PROGRESS.md) and [Phase 5 Progress](PROGRESS-2.md). Active Phase 6 work is tracked in [`PHASE6.md`](../PHASE6.md) at the project root.
 - [Agent Automation Plan](delivery/AGENT_AUTOMATION_PLAN.md)
   Stable index for proposed SKIIP-specific agent skills, deterministic scripts, recurring automations, and implementation phases.
 - [Branching Workflow](delivery/BRANCHING_WORKFLOW.md)

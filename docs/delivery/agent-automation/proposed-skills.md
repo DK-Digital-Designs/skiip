@@ -95,7 +95,7 @@ Core references:
 - `docs/launch/DEPLOYMENT.md`
 - `docs/launch/SECRETS.md`
 - `README.md`
-- root legacy notes such as `PLAN.md`, `PROGRESS.md`, `client.md`, and `meeting.md`
+- current `PHASE6.md` plus archived notes such as `docs/PROGRESS.md`, `docs/PROGRESS-2.md`, `PLAN.md`, `client.md`, and `meeting.md`
 
 Expected behavior:
 

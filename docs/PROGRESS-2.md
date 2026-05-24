@@ -1,4 +1,4 @@
-# Progress Documentation Phase 5+ (April 14th - Present)
+# Progress Documentation Phase 5+ (April 14th - May 24th)
 
 | Actor | Time | Date | Description |
 | :--- | :--- | :--- | :--- |
@@ -91,7 +91,7 @@ Current follow-up:
 
 ## May 19 Client-Facing Launch Inputs Document
 
-Created [`docs/launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md`](docs/launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md) as the client-facing missing-inputs list for the revised first-event deadline.
+Created [`docs/launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md`](launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md) as the client-facing missing-inputs list for the revised first-event deadline.
 
 The document confirms that the core app flow exists, but launch readiness still depends on client-owned and external items:
 
@@ -386,4 +386,3 @@ The following three points from the PR review will be addressed in a follow-up p
 1. **Vendor Dashboard Default**: Update `app/src/pages/vendor/Dashboard.jsx` to dynamically prepend the `attention` lane if `groupedOrders.attention.length > 0` and the selected filter is an active view (`paid`, `preparing`, `ready`). This prevents critical attention/problem orders from being hidden behind the "Needs review" tab.
 2. **`launch_event` Migration Safety**: Refine `20260520120518_backfill_store_tags.sql` to use `ON CONFLICT (key) DO NOTHING` when inserting `launch_event` settings, protecting custom landing page configurations from being reset on future migration runs.
 3. **Store Tags Backfill Efficiency**: Restrict the tags cleanup update in `20260520120518_backfill_store_tags.sql` using `tags IS DISTINCT FROM new_tags` so that it only updates rows that actually need modification, preventing unnecessary trigger fires and `updated_at` modifications for clean curated records.
-
