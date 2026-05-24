@@ -7,47 +7,49 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 ## Start Here
 
 - [Architecture](ARCHITECTURE.md)
-  Explains the repo structure, runtime architecture, active data flow, auth model, and current legacy boundaries.
+  Stable index for repo structure, runtime architecture, frontend, auth, payments, notifications, data model, and legacy boundaries.
 - [Current State](CURRENT_STATE.md)
-  Describes what is implemented now, what is actually working, and what is still operationally risky.
+  Stable index for what is implemented now, runtime truth, known risks, recent changes, and the May 2026 assessment.
 - [Roadmap](ROADMAP.md)
-  Lists the next engineering priorities that are not already implemented.
+  Stable index for current gaps, next priorities, later work, and ongoing principles.
+
+The broad entrypoint files above are intentionally short. Follow their topic links when you need detailed implementation, launch, or operations context.
 
 ## Launch And Environment
 
 - [Deployment](launch/DEPLOYMENT.md)
-  Covers environments, secrets, migrations, function deployment, webhooks, and deployment-specific caveats.
+  Stable index for environment model, frontend vars, migrations, function deployment, provider configuration, verification, and release discipline.
 - [Environment Matrix](launch/ENVIRONMENT_MATRIX.md)
   Tracks staging/production parity across frontend vars, Supabase secrets, Stripe, and notification providers.
 - [Launch Baseline May 2026](launch/LAUNCH_BASELINE_MAY_2026.md)
   Captures the current launch baseline posture.
 - [Launch Checklist](launch/LAUNCH_CHECKLIST.md)
-  Defines launch gates, release order, rollback rules, incident response, and vendor onboarding checks.
+  Stable index for launch gates, release order, rollback, incident response, vendor onboarding, and schema verification.
 - [Client Launch Inputs Required May 2026](launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md)
   Lists the missing client-owned launch inputs, provider setup, vendor details, and verification gates for the revised first-event deadline.
 - [Releases](launch/RELEASES.md)
   Defines pre-launch versioning, sync rules, and GitHub tag timing.
 - [Secrets and Environments](launch/SECRETS.md)
-  Tracks required environment variables, pilot auth decisions, current allow-list behavior, and secret rotation discipline.
+  Stable index for environment surfaces, pilot auth, allowed origins, rotation, and local drift.
 
 ## Operations
 
 - [Analytics And Search Reporting](operations/ANALYTICS.md)
   Covers Vercel Analytics, Speed Insights, campaign UTMs, custom buyer-funnel events, Search Console checks, and client-facing reporting.
 - [Operations](operations/OPERATIONS.md)
-  Covers day-to-day order operations, troubleshooting, refund handling, and operational caveats.
+  Stable index for day-to-day order operations, troubleshooting, refund handling, vendor onboarding, and operational caveats.
 - [Supabase Metrics API](operations/SUPABASE_METRICS_API.md)
-  Covers optional Prometheus-compatible database metrics export, dashboard bootstrap, alerting, and secret handling.
+  Stable index for optional Prometheus-compatible database metrics export, dashboard bootstrap, alerting, and secret handling.
 - [Notifications](operations/NOTIFICATIONS.md)
-  Covers the current Resend + Twilio setup, outbox behavior, remaining provider-account tasks, and retry limitations.
+  Stable index for Resend, Twilio WhatsApp, outbox behavior, provider setup, smoke checks, and retry limitations.
 - [Testing Data](operations/TESTING_DATA.md)
-  Lists the shared test accounts and the current smoke-test fixture model.
+  Stable index for shared test accounts, smoke inputs, staging automation, fixture strategy, and seed/reset caveats.
 
 ## Delivery
 
 - Progress logs live in [`PROGRESS.md`](../PROGRESS.md) and [`PROGRESS-2.md`](../PROGRESS-2.md). For active Phase 5+ closeout work, update `PROGRESS-2.md` and the relevant GitHub issues as part of the normal handoff.
 - [Agent Automation Plan](delivery/AGENT_AUTOMATION_PLAN.md)
-  Defines proposed SKIIP-specific agent skills, deterministic scripts, and read-only recurring automations for launch and operations workflows.
+  Stable index for proposed SKIIP-specific agent skills, deterministic scripts, recurring automations, and implementation phases.
 - [Branching Workflow](delivery/BRANCHING_WORKFLOW.md)
   Defines the intended branch roles, PR targets, release promotion flow, hotfix handling, branch hygiene rules, and standing progress/issue update practice.
 - [Commit Conventions](delivery/COMMIT_CONVENTIONS.md)
@@ -55,7 +57,7 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 - [Docs Audit Report](delivery/DOCS_AUDIT_REPORT.md)
   Records the status of each reviewed doc, what changed, the key mismatches found, and any remaining ambiguities.
 - [GitHub Setup](delivery/GITHUB_SETUP.md)
-  Covers GitHub Actions, the delivery board, labels, milestones, and the currently verified GitHub-side setup.
+  Stable index for GitHub Actions, PR review tooling, the delivery board, labels, milestones, issues, and PR snapshots.
 - [Pull Request Review](delivery/PR_REVIEW.md)
   Covers the Qodo GitHub app setup and repository-level AI review defaults.
 
@@ -66,14 +68,16 @@ If a statement in an old note, branch description, PR body, or legacy setup file
 - [RLS Access Matrix](reference/RLS_ACCESS_MATRIX.md)
   Captures the launch access boundary for buyer, seller, admin, and service-role paths.
 
-## Phase 5+
+## Archive And Generated Material
 
-- [Client Recap](phase-5/PHASE_5_CLIENT_RECAP.md)
-  Summarizes recent progress in a polished client-facing format with lightweight charts.
-- [Internal Delivery Report](phase-5/PHASE_5_INTERNAL_DELIVERY_REPORT.md)
-  Captures commits, issue state, verification results, and launch blockers for internal delivery tracking.
-- [Momentum Update](phase-5/PHASE_5_MOMENTUM_UPDATE.md)
-  Presents the recent delivery story as a high-level momentum and risk-reduction update.
+- [Archive](archive/README.md)
+  Historical notes, generated outputs, client deliverables, phase reports, and scope reviews. These are context, not active truth.
+- [Output Archive Waypoint](output/README.md)
+  Points old generated-output browsing paths to the cold archive.
+- [Phase Reports Archive Waypoint](phase-5/README.md)
+  Points old Phase 5 report paths to the cold archive.
+- [Scope Reviews Archive Waypoint](scope/README.md)
+  Points old scope-review paths to the cold archive.
 
 ## Current Project Shape
 

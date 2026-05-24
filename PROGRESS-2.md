@@ -27,7 +27,8 @@
 | Dean Gibson | ~0.5 hours | 2026/05/19 | Client launch dependency refinement. Updated the client-facing launch inputs document with the confirmed 30 May 2026 event date, clarified DK-owned Stripe/live environment responsibilities, kept unresolved client decisions visible, added WhatsApp compliance urgency, and added Stripe Connect verification/payout timing guidance. |
 | Dean Gibson | ~0.5 hours | 2026/05/20 | Version bump and release promotion. Bumped staging version to 0.28.0, synchronized version references, and opened a PR from staging to main. |
 | Dean Gibson | ~2.0 hours | 2026/05/21 | Search, analytics, and reporting readiness. Added product-app SEO/search assets, favicon/app icons, Vercel Web Analytics, Speed Insights, campaign UTM capture, custom buyer-funnel events, focused analytics tests, and refreshed source-of-truth docs for setup, activation, client reporting, and remaining provider-side checks. |
-| **TOTAL** | **~65.0 hours** | | |
+| Dean Gibson | ~1.5 hours | 2026/05/24 | Documentation granularity cleanup. Split broad source-of-truth docs into topic-level files with stable index entrypoints, moved generated and historical material into cold archive folders, and updated documentation navigation for easier human and AI lookup. |
+| **TOTAL** | **~66.5 hours** | | |
 
 ## May 21 Search, Analytics, And Reporting Readiness
 
