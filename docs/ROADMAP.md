@@ -69,6 +69,7 @@ These items matter, but they do not block a safe first launch if Priority 1 is c
 - Enable Supabase Pro features such as database branches if they become part of the deployment model.
 - Run a backup verification and restore drill.
 - Add environment comparison checks so staging and production do not drift silently.
+- Configure external Supabase Metrics API monitoring and alert routes if the launch support model needs database-health alerts outside Supabase Studio.
 - Decide whether preview deployments should have backend connectivity.
 
 ### Product and Admin Capability

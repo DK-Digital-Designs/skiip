@@ -20,6 +20,9 @@ Analytics note: Vercel Web Analytics and Speed Insights do not add a Vite enviro
 | Local operator scripts | `VITE_SUPABASE_SERVICE_ROLE_KEY` | Legacy compatibility only | Some local scripts still accept this older name. Prefer `SUPABASE_SERVICE_ROLE_KEY`. |
 | Local operator scripts | `SUPABASE_URL` | Optional | Used by local scripts; set explicitly to avoid pointing at the wrong project. |
 | Local operator scripts | `VITE_SUPABASE_URL` | Legacy compatibility only | Some local scripts still accept this older name. |
+| External monitoring collector | `SUPABASE_METRICS_PROJECT_REF` | Conditional | Convenience value for Prometheus-compatible collectors. Derive from the target Supabase URL; not used by the app. |
+| External monitoring collector | `SUPABASE_METRICS_USERNAME` | Conditional | Use `service_role` for the Metrics API Basic Auth username. |
+| External monitoring collector | `SUPABASE_METRICS_SECRET_API_KEY` | Conditional | Secret API key for the Metrics API Basic Auth password. Prefer a dedicated `sb_secret_...` key and store it only in the collector secret manager. |
 | Supabase functions | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Required for privileged writes, refunds, webhook processing, and admin flows. |
 | Supabase functions | `SKIIP_ENVIRONMENT` | Recommended | Set to `staging`, `production`, or the active environment name. WhatsApp live mode is treated as non-production unless this resolves to `production` or `prod`. |
 | Supabase functions | `STRIPE_SECRET_KEY` | Yes | Required anywhere checkout, onboarding, refunds, or webhooks run. |
@@ -113,6 +116,12 @@ Use this checklist for Supabase, Stripe, Resend, Twilio, and any related environ
 5. Run smoke verification for the affected flow.
 6. Revoke the old secret only after verification passes.
 7. Record the rotation date and operator in the release notes or operational log.
+
+Metrics API note:
+
+- the external monitoring collector may hold a Supabase Secret API key for Basic Auth
+- keep that key out of Vercel app variables, frontend examples, GitHub Actions logs, and committed Prometheus config
+- rotate it through the same process as other launch-sensitive secrets
 
 Immediate rotation triggers:
 

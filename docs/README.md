@@ -36,6 +36,8 @@ If a statement in an old note, branch description, PR body, or legacy setup file
   Covers Vercel Analytics, Speed Insights, campaign UTMs, custom buyer-funnel events, Search Console checks, and client-facing reporting.
 - [Operations](operations/OPERATIONS.md)
   Covers day-to-day order operations, troubleshooting, refund handling, and operational caveats.
+- [Supabase Metrics API](operations/SUPABASE_METRICS_API.md)
+  Covers optional Prometheus-compatible database metrics export, dashboard bootstrap, alerting, and secret handling.
 - [Notifications](operations/NOTIFICATIONS.md)
   Covers the current Resend + Twilio setup, outbox behavior, remaining provider-account tasks, and retry limitations.
 - [Testing Data](operations/TESTING_DATA.md)
