@@ -24,15 +24,18 @@ Read these first for most documentation truth checks:
 - `docs/launch/DEPLOYMENT.md`
 - `docs/operations/OPERATIONS.md`
 
+These broad files are navigation indexes. Follow their topic links before opening archive material or old generated reports.
+
 Read these when the topic touches their area:
 
 - Launch gates: `docs/launch/LAUNCH_CHECKLIST.md`
 - Secrets and env vars: `docs/launch/SECRETS.md`, `docs/launch/ENVIRONMENT_MATRIX.md`, `app/.env.example`
-- RLS and auth: `docs/reference/RLS_ACCESS_MATRIX.md`, `supabase/config.toml`, `supabase/migrations/`, `supabase/functions/`
+- RLS and auth: `docs/architecture/auth-model.md`, `docs/architecture/function-auth-posture.md`, `docs/reference/RLS_ACCESS_MATRIX.md`, `supabase/config.toml`, `supabase/migrations/`, `supabase/functions/`
 - GitHub workflow: `docs/delivery/BRANCHING_WORKFLOW.md`, `docs/delivery/GITHUB_SETUP.md`, `.github/workflows/`
 - Test fixtures: `docs/operations/TESTING_DATA.md`, `app/tests/e2e/`, `app/src/**/*.test.*`
-- Notifications: `docs/operations/NOTIFICATIONS.md`, `supabase/functions/notification-dispatch/`, webhook functions
+- Notifications: `docs/architecture/notifications.md`, `docs/operations/NOTIFICATIONS.md`, `supabase/functions/notification-dispatch/`, webhook functions
 - Releases: `docs/launch/RELEASES.md`, `VERSION`, `app/package.json`, `scripts/sync-version.mjs`
+- Historical/client context: `docs/archive/README.md`; do not treat archived notes, generated outputs, phase reports, or scope reviews as active truth without verification.
 
 For known drift-prone checks, read `references/drift-checks.md`.
 
@@ -50,7 +53,7 @@ For known drift-prone checks, read `references/drift-checks.md`.
 5. Patch the narrowest doc set that removes the mismatch.
 6. Update `docs/README.md` if a new source-of-truth doc is added.
 7. When implementation changed, ensure operational docs are updated in the same pass where relevant.
-8. For meaningful launch, closeout, or delivery-state work, update `PROGRESS-2.md` and the relevant GitHub issue notes before final handoff. If a finding is not already tracked, create a new issue rather than leaving it only in chat.
+8. For meaningful launch, closeout, or delivery-state work, update `PHASE6.md` and the relevant GitHub issue notes before final handoff. If a finding is not already tracked, create a new issue rather than leaving it only in chat.
 
 ## Verification Targets
 

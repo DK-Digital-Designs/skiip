@@ -18,8 +18,8 @@ Docs updated in this pass:
 - `docs/operations/OPERATIONS.md` now includes daily analytics/search checks and first-event reporting guidance
 - `docs/launch/CLIENT_LAUNCH_INPUTS_REQUIRED_MAY_2026.md` now separates launch-level analytics reporting from future advanced analytics scope
 - `docs/ROADMAP.md` now treats advanced reporting and post-event automation as future scope rather than implying no measurement exists
-- `docs/scope/` and `docs/phase-5/` client-scope references now distinguish current launch telemetry from future advanced analytics
-- `PROGRESS-2.md` now captures the May 21 search/analytics work and remaining external checks
+- archived scope reviews and phase reports now distinguish current launch telemetry from future advanced analytics
+- `docs/PROGRESS-2.md` now captures the May 21 search/analytics work and remaining external checks
 
 Current sliding or external items after this audit:
 

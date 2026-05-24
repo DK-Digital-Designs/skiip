@@ -12,6 +12,7 @@ Primary source of truth:
 Secondary context:
 
 - root `README.md`
+- active `PHASE6.md`
 - GitHub issues and project board
 - recent PR descriptions
 - current branch changes
@@ -19,8 +20,8 @@ Secondary context:
 Legacy or cautionary context:
 
 - `PLAN.md`
-- `PROGRESS.md`
-- `PROGRESS-2.md`
+- `docs/PROGRESS.md`
+- `docs/PROGRESS-2.md`
 - `client.md`
 - `meeting.md`
 - old setup snippets
