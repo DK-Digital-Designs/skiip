@@ -171,6 +171,12 @@ These are the main remaining risks in the current baseline.
 - Google Search Console verification, sitemap submission, URL Inspection, and reporting access are external account tasks
 - Search Console and Speed Insights reporting can lag until Google recrawls the site and real traffic reaches the production deployment
 
+### 6. External database observability is documented but not configured
+
+- the repo now documents Supabase Metrics API setup for Prometheus-compatible collectors
+- no Prometheus, Grafana, Datadog, or hosted collector config is committed in this repository
+- if launch monitoring requires external database-health alerts, that setup remains a provider-side operations task
+
 ## Intentional Scope Limits
 
 These areas are still intentionally incomplete:

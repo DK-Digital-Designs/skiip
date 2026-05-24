@@ -21,6 +21,7 @@ Current recommendation:
 - keep separate Supabase and Stripe environments for staging and production
 - keep Vercel env vars aligned to the matching Supabase project
 - enable and verify Vercel Web Analytics and Speed Insights on the hosted Vercel project
+- configure Supabase Metrics API scraping only in an external collector if database-health monitoring is expected
 - keep `ALLOWED_ORIGINS` explicit per environment
 - treat `ALLOWED_ORIGINS` as both the CORS allow-list and the allow-list for checkout/onboarding redirect origins
 
@@ -84,6 +85,12 @@ https://www.skiip.co.uk/?utm_source=poster&utm_medium=qr&utm_campaign=sawft_laun
 ```
 
 See [Analytics And Search Reporting](../operations/ANALYTICS.md) for the event taxonomy and client-reporting workflow.
+
+## External Database Metrics
+
+Supabase database metrics are not exported by this repository. If external database-health monitoring is required, configure a Prometheus-compatible collector against the hosted Supabase Metrics API.
+
+Use [Supabase Metrics API](../operations/SUPABASE_METRICS_API.md) for the scrape endpoint, Basic Auth credentials, dashboard bootstrap, alerting gates, and rotation process.
 
 ## Supabase Function Secrets
 
@@ -395,7 +402,8 @@ After any meaningful backend or frontend deploy:
 14. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
 15. confirm Vercel Analytics shows the pageview and expected funnel events for the smoke path
 16. confirm Search Console sitemap/indexing checks after production deploys that affect search metadata
-17. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
+17. if external database-health monitoring is configured, confirm the Supabase Metrics API scrape target is healthy
+18. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
 
 ## Staging Smoke Workflow
 
@@ -424,8 +432,9 @@ Before any staging or production release:
 4. sync frontend env vars and Supabase secrets for the same environment pair
 5. set `ALLOWED_ORIGINS` explicitly for the target environment
 6. confirm Vercel Analytics and Speed Insights are enabled for the target deployment
-7. deploy migrations before or alongside dependent function changes
-8. run the Playwright smoke suite locally or against the deployed target
-9. run one manual payment-path rehearsal when payments, auth, onboarding, or notifications changed
-10. if notification retry recovery matters in that environment, confirm who or what will call `notification-dispatch`
-11. capture any emergency manual fix as a committed migration immediately afterward
+7. confirm Supabase Metrics API scraping and alert routing if external database-health monitoring is expected
+8. deploy migrations before or alongside dependent function changes
+9. run the Playwright smoke suite locally or against the deployed target
+10. run one manual payment-path rehearsal when payments, auth, onboarding, or notifications changed
+11. if notification retry recovery matters in that environment, confirm who or what will call `notification-dispatch`
+12. capture any emergency manual fix as a committed migration immediately afterward

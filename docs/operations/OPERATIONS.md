@@ -57,6 +57,7 @@ Review:
 - campaign traffic and buyer-funnel custom events in Vercel Analytics
 - frontend performance trends in Vercel Speed Insights after real traffic
 - Search Console clicks, impressions, CTR, average position, indexing, and sitemap status after public launches
+- Supabase database health through the external Metrics API collector if configured
 - webhook processing errors
 - unexpected inventory changes
 - refund activity
@@ -86,6 +87,7 @@ Operational reporting split:
 - Vercel Analytics is useful for directional traffic, campaign, and funnel reporting.
 - Vercel Speed Insights is useful for frontend performance and Core Web Vitals after real traffic.
 - Google Search Console is useful for indexing, impressions, clicks, CTR, and average position.
+- Supabase Metrics API is useful for external database CPU, IO, WAL, connection, and query-health alerting when a Prometheus-compatible collector is configured.
 - Supabase, Stripe, and the admin dashboard remain authoritative for orders, payments, refunds, vendor totals, and reconciliation.
 
 For a first-event report, capture:
@@ -162,6 +164,22 @@ Operational note:
 
 - failed payments currently leave the order in the pending flow with `payment_status = failed`
 - the buyer can retry checkout on the same order once a new checkout session is created
+
+### Database performance or saturation warning fires
+
+Check:
+
+- Supabase Studio database reports and Query Performance
+- external Metrics API dashboard if configured
+- recent deployment, migration, or bulk-operator activity
+- Stripe webhook retries and app error logs for downstream impact
+- long-running transactions or unusually high connection usage
+
+Operational note:
+
+- the Metrics API is an external observability feed, not an in-app source of truth
+- if external metrics are not configured, use Supabase Studio reports, Query Performance, Advisors, and application symptoms
+- treat database saturation during live orders as a launch incident, especially if checkout, webhook finalization, or vendor dashboard refresh is affected
 
 ### Stripe reconciliation check
 
