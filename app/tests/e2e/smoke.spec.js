@@ -167,6 +167,13 @@ test.describe('public smoke', () => {
     await expect(page.getByRole('button', { name: /update password/i })).toHaveCount(0);
   });
 
+  test('expired Supabase recovery callbacks show the reset-link recovery state', async ({ page }) => {
+    await page.goto('/?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired&sb=');
+    await expect(page).toHaveURL(/#\/reset-password\?reason=expired$/);
+    await expect(page.getByText(/reset link is invalid or has expired/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /request new link/i })).toBeVisible();
+  });
+
   test('protected routes redirect unauthenticated users to login', async ({ page }) => {
     for (const protectedPath of ['/vendor/dashboard', '/admin/orders', '/admin/events', '/admin/settings']) {
       await page.goto(appPath(protectedPath));
