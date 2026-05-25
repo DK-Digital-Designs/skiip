@@ -3,11 +3,17 @@ import { AuthService } from '../services/auth.service';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 const AuthContext = createContext({});
+const PASSWORD_RECOVERY_SESSION_KEY = 'skiip-password-recovery-session';
+
+function getStoredRecoverySession() {
+    return typeof window !== 'undefined' && window.sessionStorage.getItem(PASSWORD_RECOVERY_SESSION_KEY) === 'active';
+}
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [passwordRecoverySession, setPasswordRecoverySession] = useState(getStoredRecoverySession);
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
@@ -43,6 +49,14 @@ export const AuthProvider = ({ children }) => {
             try {
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
+
+                if (event === 'PASSWORD_RECOVERY' && currentUser) {
+                    window.sessionStorage.setItem(PASSWORD_RECOVERY_SESSION_KEY, 'active');
+                    setPasswordRecoverySession(true);
+                } else if (!currentUser || event === 'SIGNED_OUT') {
+                    window.sessionStorage.removeItem(PASSWORD_RECOVERY_SESSION_KEY);
+                    setPasswordRecoverySession(false);
+                }
                 
                 if (currentUser) {
                     const { data, error } = await supabase
@@ -85,10 +99,17 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
+    function clearPasswordRecoverySession() {
+        window.sessionStorage.removeItem(PASSWORD_RECOVERY_SESSION_KEY);
+        setPasswordRecoverySession(false);
+    }
+
     const value = {
         user,
         profile,
         loading,
+        passwordRecoverySession,
+        clearPasswordRecoverySession,
         signIn: AuthService.signIn.bind(AuthService),
         signUp: AuthService.signUp.bind(AuthService),
         signOut: AuthService.signOut.bind(AuthService),

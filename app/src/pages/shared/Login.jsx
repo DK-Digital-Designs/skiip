@@ -85,7 +85,12 @@ export default function UnifiedLogin() {
                         </div>
 
                         <div>
-                            <label htmlFor="login-password">Password</label>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label htmlFor="login-password">Password</label>
+                                <Link to="/forgot-password" className="text-accent" style={{ fontSize: '14px' }}>
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     id="login-password"

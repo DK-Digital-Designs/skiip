@@ -13,6 +13,7 @@ Current roles:
 Current account-entry paths:
 
 - buyer self-signup through `/signup`
+- password recovery for existing accounts through `/#/forgot-password` and `/#/reset-password`, backed by Supabase Auth PKCE recovery links
 - admin-created seller/store setup through the admin vendor management UI
 - no public or invite-code vendor self-signup for the May 2026 launch
 

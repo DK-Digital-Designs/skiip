@@ -21,7 +21,7 @@ The current launch boundary is broadly server-authoritative for sensitive busine
 
 The active browser-side writes that remain are:
 
-- Supabase Auth signup, sign-in, and sign-out calls
+- Supabase Auth signup, sign-in, sign-out, and password recovery calls
 - seller product create/update/soft-delete writes to `products`
 - seller product image uploads to Supabase Storage
 
@@ -35,6 +35,7 @@ No new untracked high-risk browser-side privileged write was found in this audit
 | --- | --- | --- | --- |
 | `AuthService.signUp()` in [`auth.service.js`](../../app/src/lib/services/auth.service.js) and routed buyer signup in [`Signup.jsx`](../../app/src/pages/shared/Signup.jsx) | Supabase Auth creates the user; `handle_new_user()` creates/reconciles `user_profiles` | Safe as-is for closed pilot | Browser does not choose privileged roles. New profiles are forced to buyer by backend trigger behavior documented in the architecture and RLS matrix. |
 | `AuthService.signIn()` / `AuthService.signOut()` | Supabase Auth session lifecycle | Safe as-is for closed pilot | Session mutations are Supabase Auth-managed, not application data privilege writes. |
+| `AuthService.requestPasswordReset()` / `AuthService.updatePassword()` in [`auth.service.js`](../../app/src/lib/services/auth.service.js), routed through [`ForgotPassword.jsx`](../../app/src/pages/shared/ForgotPassword.jsx) and [`ResetPassword.jsx`](../../app/src/pages/shared/ResetPassword.jsx) | Supabase Auth recovery email and password update lifecycle | Safe as-is for closed pilot | Reset requests return a generic confirmation; the update form is exposed only after Supabase emits `PASSWORD_RECOVERY` for the PKCE email callback, and the recovery state is cleared after use. |
 | `ProductService.createProduct()` | Direct `products.insert()` from browser | Safe as-is for closed pilot | Seller insert policy checks that `store_id` belongs to the authenticated user's non-deleted store. Admin policy can manage all products. |
 | `ProductService.updateProduct()` | Direct `products.update()` from browser | Safe as-is for closed pilot | Seller update policy uses and checks ownership through `stores.user_id = auth.uid()`. This covers product edits and soft-delete updates. |
 | `ProductService.deleteProduct()` | Direct `products.update({ deleted_at, status: 'archived' })` from browser | Safe as-is for closed pilot | Soft-delete is constrained by the same seller-owned product update policy. |
@@ -117,7 +118,7 @@ This audit was built by searching `app/src` for:
 - Edge Function calls: `functions.invoke(`
 - RPC calls: `.rpc(`
 - storage writes: `.upload(` and `.remove(`
-- auth mutations: `signUp`, `signInWithPassword`, `signOut`
+- auth mutations: `signUp`, `signInWithPassword`, `signOut`, `resetPasswordForEmail`, `updateUser`, and `PASSWORD_RECOVERY`
 - realtime subscriptions: `.channel(` and `postgres_changes`
 
 Findings were cross-checked against:
@@ -127,4 +128,4 @@ Findings were cross-checked against:
 - [`supabase/config.toml`](../../supabase/config.toml)
 - authoritative migrations in [`supabase/migrations`](../../supabase/migrations)
 
-No runtime behavior was changed as part of this audit.
+No runtime behavior was changed as part of the original audit. The browser-write inventory was later amended to include the password-recovery hotfix.

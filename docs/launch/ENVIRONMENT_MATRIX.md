@@ -49,6 +49,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | Admin payment switch | Admin Settings `Checkout availability` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
 | WhatsApp status callback | Callback points to `/functions/v1/whatsapp-status-webhook`; token query matches `TWILIO_WEBHOOK_TOKEN` if configured. | Same with production Supabase URL. |
 | Resend webhook | Callback points to `/functions/v1/resend-email-webhook` if provider webhooks are enabled. | Same with production Supabase URL. |
+| Supabase Auth password recovery | Auth redirect allow-list includes the staging app `/#/reset-password` callback; send and redeem one reset email. | Auth redirect allow-list includes `https://www.skiip.co.uk/#/reset-password`; production SMTP can deliver recovery email. |
 
 ## Pre-Test Verification
 
@@ -59,8 +60,9 @@ Before May 12 staging testing:
 3. Confirm `ALLOWED_ORIGINS` includes only the staging app origin, local dev origins if needed, and any approved preview origin.
 4. Confirm Stripe dashboard webhook endpoint and secret match the deployed staging function.
 5. Confirm notification provider sender/callback settings match staging function URLs.
-6. Run one immediate order and one scheduled order through Stripe test checkout.
-7. Confirm webhook marks payment succeeded, inventory finalizes, notifications queue, and vendor/admin views show the order.
+6. Confirm Supabase Auth password recovery callback and email delivery with one test account.
+7. Run one immediate order and one scheduled order through Stripe test checkout.
+8. Confirm webhook marks payment succeeded, inventory finalizes, notifications queue, and vendor/admin views show the order.
 
 Before production launch:
 
@@ -69,3 +71,4 @@ Before production launch:
 3. Do not switch Stripe keys without also checking webhook endpoints and connected-account mode.
 4. Confirm Web Analytics and Speed Insights are enabled on the production Vercel project.
 5. Confirm Search Console ownership, sitemap submission, and root URL inspection for the production domain.
+6. Confirm the production Supabase Auth callback URL and SMTP sender deliver a usable password recovery email.
