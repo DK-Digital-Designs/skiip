@@ -11,6 +11,7 @@ import {
   buildPaymentReconciliation,
   retrievePaymentIntentWithCharge,
 } from "../_shared/stripe-reconciliation.ts"
+import { createStripeClient } from "../_shared/stripe-config.ts"
 
 const log = logger('stripe-reconcile-order')
 
@@ -19,9 +20,7 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
 interface ReconcileOrderRequest {
   orderId?: string

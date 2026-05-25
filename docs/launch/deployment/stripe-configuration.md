@@ -33,4 +33,11 @@ Important:
 
 - the webhook signing secret must come from the exact hosted Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
+- set `STRIPE_MODE=test` for test-mode endpoints and `STRIPE_MODE=live` for live endpoints; mismatched `event.livemode` webhooks are rejected before event claiming
+- set `PAYMENTS_ENABLED=false` to pause only new Checkout Session creation while leaving live webhooks, refunds, reconciliation, disputes, and Connect status recovery available
+- `PAYMENTS_ENABLED` is the Supabase environment master switch; the admin portal `Payment controls` switch writes `app_settings.payment_controls` and can pause/resume checkout only when the master switch is `true`
+- live webhook endpoint API version must be pinned to `2023-10-16` while the edge functions remain on `stripe@14.x`
+- `stripe-checkout` reuses an existing open Checkout Session for an order and uses a Stripe idempotency key for new session creation
+- `account.updated` Connect events are matched to stores by `event.account` when present, otherwise by the account object's `id`
+- `charge.dispute.created` records an audit row and emits an alert-worthy warning for operator follow-up
 - seeded test seller accounts are not automatically Stripe-onboarded by the repo seeding scripts

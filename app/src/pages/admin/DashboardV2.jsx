@@ -48,6 +48,13 @@ export default function AdminDashboard() {
     const [launchEvent, setLaunchEvent] = useState(DEFAULT_LAUNCH_EVENT);
     const [launchEventDraft, setLaunchEventDraft] = useState(DEFAULT_LAUNCH_EVENT);
     const [savingLaunchEvent, setSavingLaunchEvent] = useState(false);
+    const [paymentControls, setPaymentControls] = useState({
+        controls: { enabled: true, reason: null, updatedAt: null, updatedBy: null },
+        masterEnabled: false,
+        checkoutEnabled: false,
+    });
+    const [paymentPauseReason, setPaymentPauseReason] = useState('');
+    const [savingPaymentControls, setSavingPaymentControls] = useState(false);
     const [stats, setStats] = useState({
         totalOrders: 0,
         activeOrders: 0,
@@ -88,10 +95,11 @@ export default function AdminDashboard() {
     }
 
     async function refreshDashboard() {
-        const [metrics, orders, eventSettings] = await Promise.all([
+        const [metrics, orders, eventSettings, paymentSettings] = await Promise.all([
             AdminService.getDashboardMetrics(),
             AdminService.getRecentOrders(20),
             SettingsService.getLaunchEvent(),
+            SettingsService.getPaymentControls(),
         ]);
 
         setStats({
@@ -108,6 +116,8 @@ export default function AdminDashboard() {
         setRecentOrders(orders || []);
         setLaunchEvent(eventSettings);
         setLaunchEventDraft(eventSettings);
+        setPaymentControls(paymentSettings);
+        setPaymentPauseReason(paymentSettings?.controls?.reason || '');
     }
 
     function updateLaunchEventField(field, value) {
@@ -127,6 +137,24 @@ export default function AdminDashboard() {
             addToast(error.message || 'Could not save launch event copy.', 'error');
         } finally {
             setSavingLaunchEvent(false);
+        }
+    }
+
+    async function handleSetPaymentsEnabled(enabled) {
+        setSavingPaymentControls(true);
+        try {
+            const saved = await SettingsService.savePaymentControls({
+                enabled,
+                reason: enabled ? null : paymentPauseReason || 'Admin paused checkout',
+            });
+            setPaymentControls(saved);
+            setPaymentPauseReason(saved.controls.reason || '');
+            addToast(enabled ? 'Buyer checkout resumed.' : 'Buyer checkout paused.', 'success');
+        } catch (error) {
+            console.error('Payment controls update failed:', error);
+            addToast(error.message || 'Could not update payment controls.', 'error');
+        } finally {
+            setSavingPaymentControls(false);
         }
     }
 
@@ -205,6 +233,64 @@ export default function AdminDashboard() {
                 </section>
 
                 <section className="two-column">
+                    <section className="card" style={{ display: 'grid', gap: '14px' }}>
+                        <div>
+                            <p className="page-kicker">Payment controls</p>
+                            <h2 style={{ color: 'var(--ink)', fontSize: '24px' }}>Checkout switch</h2>
+                            <p className="text-muted" style={{ marginTop: '6px' }}>
+                                Pause buyer checkout for incidents, curfew, or operator stop-sale. Webhooks, refunds, reconciliation, and Connect recovery stay available.
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <span className={paymentControls.checkoutEnabled ? 'chip chip--green' : 'chip chip--red'}>
+                                Checkout {paymentControls.checkoutEnabled ? 'enabled' : 'paused'}
+                            </span>
+                            <span className={paymentControls.masterEnabled ? 'chip chip--cyan' : 'chip chip--amber'}>
+                                Env master {paymentControls.masterEnabled ? 'on' : 'off'}
+                            </span>
+                            <span className={paymentControls.controls.enabled ? 'chip chip--cyan' : 'chip chip--amber'}>
+                                Admin switch {paymentControls.controls.enabled ? 'on' : 'off'}
+                            </span>
+                        </div>
+                        {!paymentControls.masterEnabled && (
+                            <p className="text-muted" style={{ fontSize: '13px' }}>
+                                <code>PAYMENTS_ENABLED</code> is off in Supabase secrets. Resuming here will not enable checkout until the environment master switch is set to true.
+                            </p>
+                        )}
+                        <div>
+                            <label htmlFor="payment-pause-reason">Pause reason</label>
+                            <input
+                                id="payment-pause-reason"
+                                value={paymentPauseReason}
+                                onChange={(event) => setPaymentPauseReason(event.target.value)}
+                                placeholder="Curfew, incident, vendor issue, or operator stop-sale"
+                            />
+                        </div>
+                        {paymentControls.controls.updatedAt && (
+                            <p className="text-muted" style={{ fontSize: '12px' }}>
+                                Last changed {new Date(paymentControls.controls.updatedAt).toLocaleString()}
+                            </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => handleSetPaymentsEnabled(true)}
+                                disabled={savingPaymentControls || paymentControls.controls.enabled}
+                            >
+                                {savingPaymentControls ? 'Updating...' : 'Resume Checkout'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-danger"
+                                onClick={() => handleSetPaymentsEnabled(false)}
+                                disabled={savingPaymentControls || !paymentControls.controls.enabled}
+                            >
+                                {savingPaymentControls ? 'Updating...' : 'Pause Checkout'}
+                            </button>
+                        </div>
+                    </section>
+
                     <form className="card" onSubmit={handleSaveLaunchEvent} style={{ display: 'grid', gap: '14px' }}>
                         <div>
                             <p className="page-kicker">Launch event</p>

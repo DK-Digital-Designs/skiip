@@ -49,7 +49,6 @@ cp .env.example .env
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_STRIPE_PUBLIC_KEY=pk_test_...
 VITE_SENTRY_DSN=your-sentry-dsn-here
 ```
 
@@ -60,6 +59,8 @@ Run these commands in your terminal (requires [Supabase CLI](https://supabase.co
 ```bash
 supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set STRIPE_MODE=test
+supabase secrets set PAYMENTS_ENABLED=true
 supabase secrets set SENTRY_DSN=your-sentry-dsn-here
 supabase secrets set RESEND_API_KEY=re_xxx
 supabase secrets set NOTIFICATION_FROM_EMAIL=orders@yourdomain.com
@@ -74,6 +75,8 @@ supabase secrets set TWILIO_TEMPLATE_ORDER_READY=HX...
 supabase secrets set TWILIO_TEMPLATE_ORDER_CANCELLED=HX...
 supabase secrets set TWILIO_TEMPLATE_ORDER_REFUNDED=HX...
 ```
+
+`PAYMENTS_ENABLED` is the environment master switch. When it is `true`, admins can still pause or resume new buyer checkout from the admin dashboard Payment controls card without changing Stripe secrets.
 
 ### Run the App
 

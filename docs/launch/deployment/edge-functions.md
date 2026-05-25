@@ -11,6 +11,7 @@ Current critical functions:
 - `stripe-webhook`
 - `order-transition`
 - `admin-store`
+- `payment-control`
 - `stripe-refund`
 - `stripe-reconcile-order`
 - `stripe-onboarding-link`

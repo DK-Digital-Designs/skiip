@@ -4,6 +4,7 @@ const VENDOR_NOT_READY_MESSAGE = 'Oops! This vendor is still setting up their ba
 const PRODUCT_UNAVAILABLE_MESSAGE = 'One or more items in your cart are no longer available. Refresh your cart, adjust the items, and try again.';
 const SCHEDULED_COLLECTION_MESSAGE = 'Choose a valid scheduled collection time before checking out.';
 const SESSION_EXPIRED_MESSAGE = 'Your session expired. Please sign in again before checking out.';
+const PAYMENTS_PAUSED_MESSAGE = 'Payments are temporarily unavailable. No payment has been taken. Please try again shortly.';
 
 export class CheckoutFunctionError extends Error {
     constructor(message, { code = null, status = null, payload = null, buyerMessage = GENERIC_CHECKOUT_ERROR_MESSAGE, cause = null } = {}) {
@@ -76,6 +77,10 @@ export function getCheckoutBuyerMessage({ code, status, payload }) {
 
     if (code === 'VENDOR_NOT_READY') {
         return VENDOR_NOT_READY_MESSAGE;
+    }
+
+    if (code === 'PAYMENTS_PAUSED') {
+        return PAYMENTS_PAUSED_MESSAGE;
     }
 
     if (status === 401) {

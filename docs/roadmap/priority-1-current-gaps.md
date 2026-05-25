@@ -42,7 +42,7 @@ These items most directly affect launch safety, payment correctness, security, a
   - Supabase secrets
   - Stripe accounts and webhook endpoints
   - notification providers
-- Decide whether `VITE_STRIPE_PUBLIC_KEY` should be removed from examples/docs or reintroduced through real Stripe.js usage.
+- Keep `VITE_STRIPE_PUBLIC_KEY` out of active Vercel/env examples unless real Stripe.js usage is deliberately reintroduced.
 - Fix or replace incomplete setup artifacts outside `docs/`, especially stale schema/setup references that can mislead operators.
 
 ### Testing and Fixtures

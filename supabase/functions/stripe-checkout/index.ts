@@ -1,10 +1,15 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, isAllowedRedirectUrl, jsonResponse } from "../_shared/http.ts"
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
+import { createStripeClient, isPaymentsEnabled } from "../_shared/stripe-config.ts"
+import {
+  buildCheckoutSessionIdempotencyKey,
+  getReusableCheckoutSession,
+} from "../_shared/stripe-checkout.ts"
+import { getPaymentControls } from "../_shared/payment-control.ts"
 
 const log = logger('stripe-checkout')
 const PLATFORM_FEE_PERCENT = 0.10
@@ -14,9 +19,7 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
 interface CheckoutRequest {
   orderDetails: {
@@ -44,6 +47,18 @@ serve(async (req: Request) => {
 
   try {
     const user = await requireUser(req)
+
+    if (!isPaymentsEnabled()) {
+      return jsonResponse(
+        {
+          error: 'PAYMENTS_PAUSED',
+          message: 'Payments are temporarily unavailable. No payment has been taken.',
+        },
+        503,
+        origin,
+      )
+    }
+
     const body = (await req.json()) as CheckoutRequest
     const orderId = body.orderDetails?.order_id
     const returnUrl = body.returnUrl
@@ -53,9 +68,22 @@ serve(async (req: Request) => {
     }
 
     const supabase = createServiceClient()
+    const paymentControls = await getPaymentControls(supabase)
+
+    if (!paymentControls.enabled) {
+      return jsonResponse(
+        {
+          error: 'PAYMENTS_PAUSED',
+          message: 'Payments are temporarily unavailable. No payment has been taken.',
+        },
+        503,
+        origin,
+      )
+    }
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, store_id, subtotal, total, tip_amount, service_fee, status, payment_status')
+      .select('id, user_id, store_id, subtotal, total, tip_amount, service_fee, status, payment_status, checkout_session_id, payment_failed_at')
       .eq('id', orderId)
       .single()
 
@@ -130,6 +158,27 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order item quantity is invalid' }, 409, origin)
     }
 
+    if (order.checkout_session_id) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(order.checkout_session_id)
+        const reusableSession = getReusableCheckoutSession(existingSession)
+
+        if (reusableSession) {
+          log.info('Reusing open Stripe Checkout Session', {
+            orderId,
+            checkoutSessionId: reusableSession.sessionId,
+          })
+          return jsonResponse(reusableSession, 200, origin)
+        }
+      } catch (error: unknown) {
+        log.warn('Existing Stripe Checkout Session could not be reused', {
+          orderId,
+          checkoutSessionId: order.checkout_session_id,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
     const lineItems = orderItems.map((item) => ({
       price_data: {
         currency: 'gbp',
@@ -185,6 +234,8 @@ serve(async (req: Request) => {
           store_id: order.store_id,
         },
       },
+    }, {
+      idempotencyKey: buildCheckoutSessionIdempotencyKey(order),
     })
 
     const { error: updateError } = await supabase

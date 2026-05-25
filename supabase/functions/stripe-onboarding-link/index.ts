@@ -1,5 +1,4 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { logger } from "../_shared/logger.ts"
@@ -9,6 +8,7 @@ import {
   buildStripeConnectStoreUpdate,
   deriveStripeConnectStatus,
 } from "../_shared/stripe-connect-status.ts"
+import { createStripeClient } from "../_shared/stripe-config.ts"
 
 const log = logger('stripe-onboarding-link')
 
@@ -17,9 +17,7 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
 interface OnboardingRequest {
   store_id: string
@@ -106,7 +104,7 @@ serve(async (req: Request) => {
       stripeAccountId = account.id
 
       const derivedStatus = deriveStripeConnectStatus(account)
-      const statusUpdate = buildStripeConnectStoreUpdate(store, derivedStatus)
+      const statusUpdate = buildStripeConnectStoreUpdate({}, derivedStatus)
 
       const { error: updateError } = await supabase
         .from('stores')

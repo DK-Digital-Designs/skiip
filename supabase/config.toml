@@ -444,6 +444,11 @@ verify_jwt = false
 import_map = "./functions/stripe-reconcile-order/deno.json"
 entrypoint = "./functions/stripe-reconcile-order/index.ts"
 
+[functions.payment-control]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/payment-control/index.ts"
+
 [functions.whatsapp-notify]
 enabled = true
 verify_jwt = false

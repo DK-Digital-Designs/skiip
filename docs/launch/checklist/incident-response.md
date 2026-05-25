@@ -14,6 +14,7 @@ Check:
 Actions:
 
 - verify webhook secret and target endpoint
+- confirm `STRIPE_MODE` matches the Stripe event mode and the hosted endpoint secret is not a Stripe CLI listener secret
 - confirm the webhook function is deployed to the right project
 - inspect `stripe_processed_events.processing_status`, `attempt_count`, and `last_error`
 - use the admin `Reconcile Payment` action only after Stripe confirms the payment succeeded
@@ -73,6 +74,37 @@ Actions:
 
 - stop retrying from multiple places
 - capture the failing order IDs and reconcile them from one operator path
+
+### Checkout must be paused
+
+Actions:
+
+- first use the admin dashboard `Payment controls` card to pause buyer checkout and record the reason
+- set `PAYMENTS_ENABLED=false` if the admin dashboard is unavailable or checkout must be disabled at the environment level
+- do not swap production back to test Stripe keys after live orders exist
+- keep `stripe-webhook`, `stripe-refund`, and `stripe-reconcile-order` operating with live secrets
+- if intake must stop completely, expire open Stripe Checkout Sessions for affected pending orders and record the operator action
+
+Expected buyer behavior:
+
+- checkout returns a clear payment-paused message
+- the buyer is told no payment has been taken
+- the order remains retryable after payments are re-enabled
+
+### Stripe dispute created
+
+Check:
+
+- `audit_logs` entries with `event_type = stripe_dispute_created`
+- linked `orders.charge_id`
+- Stripe Dashboard dispute details
+
+Actions:
+
+- assign an owner immediately
+- inspect the linked order and fulfilment state
+- pause fulfilment or vendor release if needed
+- respond through Stripe Dashboard according to the dispute deadline
 
 ### Notification failures spike
 

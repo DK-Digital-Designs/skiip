@@ -276,6 +276,18 @@ img {
   background: rgba(34, 197, 94, 0.12);
 }
 
+.chip--amber {
+  color: #92400e;
+  border-color: rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.chip--red {
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.38);
+  background: rgba(239, 68, 68, 0.12);
+}
+
 .app-header {
   position: sticky;
   top: 0;

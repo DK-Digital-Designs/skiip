@@ -8,7 +8,6 @@ Read this when you need the environment surfaces details from [Secrets and Envir
 | Vercel app | `VITE_SUPABASE_ANON_KEY` | Yes | Public key, but still environment-specific. |
 | Vercel app | `VITE_VENDOR_INVITE_CODE` | No for launch | Legacy invite-code vendor signup is not exposed in the May 2026 launch app. |
 | Vercel app | `VITE_SENTRY_DSN` | Recommended | Used by the browser app for Sentry error/reporting setup when present. |
-| Vercel app | `VITE_STRIPE_PUBLIC_KEY` | No | Present in `app/.env.example`, but the current app does not read it. Checkout is redirect-based through edge functions. |
 | Local operator scripts | `SUPABASE_SERVICE_ROLE_KEY` | Conditional | Used by `app/scripts/*.js` for seeding/admin scripting. Never expose this in browser runtime config. |
 | Local operator scripts | `VITE_SUPABASE_SERVICE_ROLE_KEY` | Legacy compatibility only | Some local scripts still accept this older name. Prefer `SUPABASE_SERVICE_ROLE_KEY`. |
 | Local operator scripts | `SUPABASE_URL` | Optional | Used by local scripts; set explicitly to avoid pointing at the wrong project. |
@@ -20,6 +19,8 @@ Read this when you need the environment surfaces details from [Secrets and Envir
 | Supabase functions | `SKIIP_ENVIRONMENT` | Recommended | Set to `staging`, `production`, or the active environment name. WhatsApp live mode is treated as non-production unless this resolves to `production` or `prod`. |
 | Supabase functions | `STRIPE_SECRET_KEY` | Yes | Required anywhere checkout, onboarding, refunds, or webhooks run. |
 | Supabase functions | `STRIPE_WEBHOOK_SECRET` | Yes | Must come from the exact hosted Stripe webhook endpoint in use. |
+| Supabase functions | `STRIPE_MODE` | Yes | Must be `test` or `live`. Stripe webhooks with mismatched `event.livemode` are rejected before event claiming. |
+| Supabase functions | `PAYMENTS_ENABLED` | Yes | Environment-level master switch. Only exact `true` allows new Checkout Session creation, and the admin payment switch must also be enabled. Keep `false` during production cutover until the live payment window. |
 | Supabase functions | `ALLOWED_ORIGINS` | Yes in hosted envs | Should always be set explicitly in staging and production. |
 | Supabase functions | `SENTRY_DSN` | Recommended | Read by the shared logger for edge-function error reporting if configured. |
 | Supabase functions | `RESEND_API_KEY` | Required for email | Required for customer email notifications in any environment that should send them. |
@@ -57,3 +58,4 @@ Read this when you need the environment surfaces details from [Secrets and Envir
 | Supabase functions | `NOTIFICATION_RETRY_BASE_DELAY_SECONDS` | Optional | Defaults to `60`. |
 | Supabase auth config | `auth.email.enable_confirmations` | Decision required | Repo config currently keeps it `false`, but signup UI copy still implies inbox verification. |
 | Stripe dashboard | Webhook endpoint + subscribed events | Yes | Keep staging and production endpoints separate. |
+| Supabase database | `app_settings.payment_controls` | Managed by migration/admin portal | Admin-facing checkout pause switch. Does not replace `PAYMENTS_ENABLED`; effective checkout requires both to be enabled. |
