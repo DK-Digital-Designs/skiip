@@ -58,6 +58,16 @@ describe('checkout function error mapping', () => {
     expect(error.buyerMessage).toBe('Your session expired. Please sign in again before checking out.');
   });
 
+  it('maps paused payments to a buyer-safe no-payment-taken message', async () => {
+    const error = await createCheckoutFunctionError(functionError({
+      error: 'PAYMENTS_PAUSED',
+      message: 'Payments are temporarily unavailable. No payment has been taken.',
+    }, 503));
+
+    expect(error.code).toBe('PAYMENTS_PAUSED');
+    expect(error.buyerMessage).toBe('Payments are temporarily unavailable. No payment has been taken. Please try again shortly.');
+  });
+
   it('keeps unknown failures generic', async () => {
     const error = await createCheckoutFunctionError(functionError({
       error: 'database statement timeout at internal.stack.trace',

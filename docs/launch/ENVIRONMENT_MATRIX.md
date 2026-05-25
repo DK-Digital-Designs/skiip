@@ -9,7 +9,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `VITE_SUPABASE_URL` | Required | Required | Must point to the matching Supabase project for the anon key. |
 | `VITE_SUPABASE_ANON_KEY` | Required | Required | Public but environment-specific. |
 | `VITE_SENTRY_DSN` | Recommended | Recommended | Browser error reporting. |
-| `VITE_STRIPE_PUBLIC_KEY` | Not required | Not required | Current checkout is redirect-based through edge functions. |
+| `VITE_STRIPE_PUBLIC_KEY` | Removed | Removed | Current checkout is redirect-based through edge functions. Do not set this in Vercel production. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
 
 ## Vercel Project Features
@@ -31,6 +31,8 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `ALLOWED_ORIGINS` | Required | Required | Comma-separated exact frontend origins. Do not rely on code fallback for hosted envs. |
 | `STRIPE_SECRET_KEY` | Test mode | Live mode | Must match webhook/account environment. |
 | `STRIPE_WEBHOOK_SECRET` | Test endpoint | Live endpoint | Must match the deployed `stripe-webhook` endpoint. |
+| `STRIPE_MODE` | `test` | `live` | Webhooks whose `event.livemode` does not match are rejected before event claiming. |
+| `PAYMENTS_ENABLED` | `true` for rehearsals | `false` during cutover, then `true` at live-test window | Environment-level master switch for new Checkout Session creation. Keep live secrets in place for recovery/refunds. |
 | `NOTIFICATION_FROM_EMAIL` | Required for email | Required for email | Must use a verified sender/domain. |
 | `RESEND_API_KEY` | Test/staging key | Production key | Required for email notifications. |
 | `TWILIO_ACCOUNT_SID` | Test/staging account | Production account | Required for WhatsApp notifications if enabled. |
@@ -44,6 +46,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | --- | --- | --- |
 | Stripe checkout success/cancel | Frontend origin in `ALLOWED_ORIGINS`; app returns to `/#/order/track`. | Same as staging with production app origin. |
 | Stripe webhook | Dashboard endpoint points to `/functions/v1/stripe-webhook`; secret matches `STRIPE_WEBHOOK_SECRET`. | Same with live endpoint and live secret. |
+| Admin payment switch | Admin dashboard `Payment controls` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
 | WhatsApp status callback | Callback points to `/functions/v1/whatsapp-status-webhook`; token query matches `TWILIO_WEBHOOK_TOKEN` if configured. | Same with production Supabase URL. |
 | Resend webhook | Callback points to `/functions/v1/resend-email-webhook` if provider webhooks are enabled. | Same with production Supabase URL. |
 

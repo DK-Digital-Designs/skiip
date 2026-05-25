@@ -1,5 +1,4 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
@@ -10,6 +9,7 @@ import {
   canReconcileStripeConnectStore,
   deriveStripeConnectStatus,
 } from "../_shared/stripe-connect-status.ts"
+import { createStripeClient } from "../_shared/stripe-config.ts"
 
 const log = logger('stripe-connect-status')
 
@@ -18,9 +18,7 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
 interface ConnectStatusRequest {
   store_id?: string
@@ -86,20 +84,22 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Store not found' }, 404, origin)
     }
 
-    if (!canReconcileStripeConnectStore(user, store)) {
+    const storeRecord = store as any
+
+    if (!canReconcileStripeConnectStore(user, storeRecord)) {
       return jsonResponse({ error: 'Forbidden' }, 403, origin)
     }
 
-    const account = store.stripe_account_id
-      ? await stripe.accounts.retrieve(store.stripe_account_id)
+    const account = storeRecord.stripe_account_id
+      ? await stripe.accounts.retrieve(storeRecord.stripe_account_id)
       : null
     const derivedStatus = deriveStripeConnectStatus(account)
-    const update = buildStripeConnectStoreUpdate(store, derivedStatus)
+    const update = buildStripeConnectStoreUpdate(storeRecord, derivedStatus)
 
     const { data: updatedStore, error: updateError } = await supabase
       .from('stores')
       .update(update)
-      .eq('id', store.id)
+      .eq('id', storeRecord.id)
       .select(STORE_STATUS_SELECT)
       .single()
 

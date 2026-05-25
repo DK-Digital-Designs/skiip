@@ -1,11 +1,11 @@
 import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
+import { createStripeClient } from "../_shared/stripe-config.ts"
 
 const log = logger('stripe-refund')
 
@@ -14,9 +14,7 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
 interface RefundRequest {
   orderId: string

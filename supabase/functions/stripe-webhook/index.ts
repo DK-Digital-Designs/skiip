@@ -13,6 +13,16 @@ import {
   buildStripeConnectStoreUpdate,
   deriveStripeConnectStatus,
 } from "../_shared/stripe-connect-status.ts"
+import {
+  assertStripeLivemode,
+  constructWithWebhookSecrets,
+  createStripeClient,
+  parseStripeWebhookSecrets,
+} from "../_shared/stripe-config.ts"
+import {
+  getStripeConnectAccountId,
+  handleStripeDisputeCreated,
+} from "../_shared/stripe-webhook-events.ts"
 
 const log = logger('stripe-webhook')
 
@@ -21,18 +31,9 @@ if (!stripeSecretKey) {
   throw new Error('Missing STRIPE_SECRET_KEY environment variable')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient(stripeSecretKey)
 
-function parseWebhookSecrets() {
-  return (Deno.env.get('STRIPE_WEBHOOK_SECRET') || '')
-    .split(',')
-    .map((secret) => secret.trim())
-    .filter(Boolean)
-}
-
-const endpointSecrets = parseWebhookSecrets()
+const endpointSecrets = parseStripeWebhookSecrets()
 
 interface WebhookClaim {
   should_process: boolean
@@ -150,21 +151,12 @@ async function recordAuditLog(supabase: any, row: Record<string, unknown>) {
   }
 }
 
-async function constructStripeEvent(body: string, signature: string) {
-  if (!endpointSecrets.length) {
-    throw new Error('STRIPE_WEBHOOK_SECRET is not configured')
-  }
-
-  const errors: string[] = []
-  for (const secret of endpointSecrets) {
-    try {
-      return await stripe.webhooks.constructEventAsync(body, signature, secret)
-    } catch (error: unknown) {
-      errors.push(getErrorMessage(error))
-    }
-  }
-
-  throw new Error(errors[0] || 'Stripe webhook signature verification failed')
+async function constructStripeEvent(body: string, signature: string): Promise<Stripe.Event> {
+  return await constructWithWebhookSecrets<Stripe.Event>(
+    endpointSecrets,
+    (secret) => stripe.webhooks.constructEventAsync(body, signature, secret),
+    getErrorMessage,
+  )
 }
 
 async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event) {
@@ -460,10 +452,19 @@ async function handleStripeEvent(supabase: any, event: Stripe.Event) {
     await handlePaymentIntentFailed(supabase, event)
   } else if (event.type === 'account.updated') {
     const account = event.data.object as Stripe.Account
+    const stripeAccountId = getStripeConnectAccountId(event, account)
+
+    if (!stripeAccountId) {
+      log.warn('Account update ignored because the Stripe account id is missing', {
+        eventId: event.id,
+      })
+      return
+    }
+
     const { data: store, error: storeLookupError } = await supabase
       .from('stores')
       .select(STORE_CONNECT_STATUS_SELECT)
-      .eq('stripe_account_id', account.id)
+      .eq('stripe_account_id', stripeAccountId)
       .maybeSingle()
 
     if (storeLookupError) {
@@ -472,7 +473,9 @@ async function handleStripeEvent(supabase: any, event: Stripe.Event) {
 
     if (!store) {
       log.warn('Account update ignored because no store has this Stripe account', {
-        accountId: account.id,
+        accountId: stripeAccountId,
+        eventAccount: event.account || null,
+        objectAccountId: account.id || null,
       })
       return
     }
@@ -508,7 +511,12 @@ async function handleStripeEvent(supabase: any, event: Stripe.Event) {
     }
   } else if (event.type === 'charge.dispute.created') {
     const dispute = event.data.object as Stripe.Dispute
-    log.warn(`Dispute created: ${dispute.id} for charge ${dispute.charge}`)
+    await handleStripeDisputeCreated({
+      supabase,
+      dispute,
+      eventId: event.id,
+      log,
+    })
   }
 }
 
@@ -538,6 +546,8 @@ serve(async (req: Request) => {
     const event = await constructStripeEvent(body, signature)
     eventId = event.id
     eventType = event.type
+    assertStripeLivemode(event)
+
     const supabase = createServiceClient()
     const claim = await claimWebhookEvent(supabase, event)
 
@@ -567,6 +577,7 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
   } catch (error: unknown) {
     const errorMessage = getErrorMessage(error)
+
     log.error(`Webhook processing failed: ${errorMessage}`, {
       eventId,
       eventType,

@@ -23,8 +23,8 @@ Important current clarification:
 
 - use [Environment Matrix](../ENVIRONMENT_MATRIX.md) as the parity checklist before staging and production deploys
 
-- `VITE_STRIPE_PUBLIC_KEY` is still present in [`app/.env.example`](../../../app/.env.example)
-- the current app does not load Stripe.js or read `VITE_STRIPE_PUBLIC_KEY`
+- `VITE_STRIPE_PUBLIC_KEY` has been removed from [`app/.env.example`](../../../app/.env.example)
+- the current app does not load Stripe.js or read a frontend Stripe public key
 - checkout is redirect-based through the `stripe-checkout` edge function, so this variable is not currently required for runtime
 
 For the full inventory and rotation discipline, see [Secrets and Environment Inventory](../SECRETS.md).

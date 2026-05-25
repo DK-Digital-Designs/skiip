@@ -12,7 +12,7 @@ These are the main remaining risks in the current baseline.
 
 - `VITE_VENDOR_INVITE_CODE` is no longer part of the launch app route, but stale references may remain in legacy docs or unmounted code
 - `ALLOWED_ORIGINS` has a hardcoded fallback list in code if the env var is missing
-- `VITE_STRIPE_PUBLIC_KEY` is still documented in places even though the current redirect-based checkout flow does not read it
+- `VITE_STRIPE_PUBLIC_KEY` has been removed from active env examples; continue avoiding frontend Stripe public-key setup unless Stripe.js is deliberately reintroduced
 
 ### 3. Local reset and schema guidance still have drift
 
