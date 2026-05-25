@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
+import { routeActivePasswordRecoverySession } from '../auth-callback';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 const AuthContext = createContext({});
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }) => {
                 if (event === 'PASSWORD_RECOVERY' && currentUser) {
                     window.sessionStorage.setItem(PASSWORD_RECOVERY_SESSION_KEY, 'active');
                     setPasswordRecoverySession(true);
+                    routeActivePasswordRecoverySession();
                 } else if (!currentUser || event === 'SIGNED_OUT') {
                     window.sessionStorage.removeItem(PASSWORD_RECOVERY_SESSION_KEY);
                     setPasswordRecoverySession(false);
