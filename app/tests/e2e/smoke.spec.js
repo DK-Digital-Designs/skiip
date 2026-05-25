@@ -152,6 +152,21 @@ test.describe('public smoke', () => {
     ).toBeVisible();
   });
 
+  test('sign-in links to the password recovery request page', async ({ page }) => {
+    await page.goto(appPath('/login'));
+    await page.getByRole('link', { name: /forgot password/i }).click();
+    await expect(page).toHaveURL(/#\/forgot-password$/);
+    await expect(page.getByRole('heading', { name: /reset password/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /send reset link/i })).toBeVisible();
+  });
+
+  test('password update form requires a recovery session', async ({ page }) => {
+    await page.goto(appPath('/reset-password'));
+    await expect(page.getByRole('heading', { name: /choose new password/i })).toBeVisible();
+    await expect(page.getByText(/reset link is invalid or has expired/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /update password/i })).toHaveCount(0);
+  });
+
   test('protected routes redirect unauthenticated users to login', async ({ page }) => {
     for (const protectedPath of ['/vendor/dashboard', '/admin/orders', '/admin/events', '/admin/settings']) {
       await page.goto(appPath(protectedPath));

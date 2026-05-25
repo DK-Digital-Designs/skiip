@@ -24,3 +24,4 @@ After any meaningful backend or frontend deploy:
 18. confirm Search Console sitemap/indexing checks after production deploys that affect search metadata
 19. if external database-health monitoring is configured, confirm the Supabase Metrics API scrape target is healthy
 20. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
+21. request and redeem a password recovery email using a test account, then sign in with the new password

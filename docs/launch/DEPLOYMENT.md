@@ -11,6 +11,7 @@ This is the stable entrypoint for deployment documentation. The detailed topics 
 - [Supabase Function Secrets](./deployment/supabase-function-secrets.md)
 - [Allowed Origins](./deployment/allowed-origins.md)
 - [Pilot Auth Decision](./deployment/pilot-auth-decision.md)
+- [Password Recovery](./deployment/password-recovery.md)
 - [Migrations and Schema Truth](./deployment/migrations-and-schema-truth.md)
 - [Edge Functions](./deployment/edge-functions.md)
 - [Stripe Configuration](./deployment/stripe-configuration.md)

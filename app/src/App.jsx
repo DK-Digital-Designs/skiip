@@ -13,6 +13,8 @@ import BuyerProfile from './pages/attendee/BuyerProfile';
 
 import UnifiedLogin from './pages/shared/Login';
 import UnifiedSignup from './pages/shared/Signup';
+import ForgotPassword from './pages/shared/ForgotPassword';
+import ResetPassword from './pages/shared/ResetPassword';
 
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
@@ -49,6 +51,8 @@ function App() {
                 {/* Unified Auth */}
                 <Route path="/login" element={<UnifiedLogin />} />
                 <Route path="/signup" element={<UnifiedSignup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 {/* Legacy redirects keep old links from breaking */}
                 <Route path="/order/login" element={<UnifiedLogin />} />
                 <Route path="/vendor/login" element={<UnifiedLogin />} />

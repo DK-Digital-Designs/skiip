@@ -1,5 +1,11 @@
 import { supabase } from '../supabase';
 
+function getPasswordResetRedirectUrl() {
+    const appRoot = new URL(import.meta.env.BASE_URL || '/', window.location.origin);
+    appRoot.hash = '/reset-password';
+    return appRoot.toString();
+}
+
 export const AuthService = {
     /**
      * Sign up a new user
@@ -45,6 +51,34 @@ export const AuthService = {
             email,
             password,
         });
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Email a recovery link that returns users to the password update screen.
+     * @param {string} email
+     */
+    async requestPasswordReset(email) {
+        if (!supabase) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: getPasswordResetRedirectUrl(),
+        });
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Change the current authenticated user's password.
+     * @param {string} password
+     */
+    async updatePassword(password) {
+        if (!supabase) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabase.auth.updateUser({ password });
 
         if (error) throw error;
         return data;
