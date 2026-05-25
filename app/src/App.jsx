@@ -19,7 +19,10 @@ import VendorProducts from './pages/vendor/Products';
 import VendorProfile from './pages/vendor/Profile';
 
 import AdminDashboard from './pages/admin/DashboardV2';
+import AdminOrders from './pages/admin/Orders';
 import AdminVendors from './pages/admin/Vendors';
+import AdminEvents from './pages/admin/Events';
+import AdminSettings from './pages/admin/Settings';
 import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
@@ -99,6 +102,30 @@ function App() {
                     element={
                         <ProtectedRoute roles={['admin']}>
                             <AdminVendors />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/orders"
+                    element={
+                        <ProtectedRoute roles={['admin']}>
+                            <AdminOrders />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/events"
+                    element={
+                        <ProtectedRoute roles={['admin']}>
+                            <AdminEvents />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/settings"
+                    element={
+                        <ProtectedRoute roles={['admin']}>
+                            <AdminSettings />
                         </ProtectedRoute>
                     }
                 />

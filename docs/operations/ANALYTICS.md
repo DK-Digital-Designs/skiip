@@ -75,7 +75,7 @@ The custom events are intentionally small and avoid personal data.
 Privacy rule:
 
 - do not add customer names, emails, phone numbers, notes, order IDs, payment IDs, or full product/vendor records to analytics events
-- order and payment truth remains in Supabase, Stripe, and the admin dashboard, not Vercel custom events
+- order and payment truth remains in Supabase, Stripe, and the admin operations portal, not Vercel custom events
 - `checkout_completed` is a client-side return signal, not final proof that the webhook finalized the order
 
 ## Client Reporting
@@ -89,7 +89,7 @@ For client-facing post-launch or post-event reporting, combine these sources:
 | Did users move through the ordering funnel? | Custom events from `start_ordering_clicked` through `payment_redirected` and `checkout_completed`. |
 | Did the site feel fast on real devices? | Vercel Speed Insights and Core Web Vitals. |
 | Did Google discover the site? | Google Search Console indexing, impressions, clicks, CTR, and average position. |
-| How many real paid orders happened? | Supabase orders/admin dashboard plus Stripe, not Vercel analytics. |
+| How many real paid orders happened? | Supabase orders/Admin Orders plus Stripe, not Vercel analytics. |
 | How much money moved and what was refunded? | Stripe dashboard plus SKIIP reconciliation/admin views. |
 
 Recommended client dashboard screenshots:

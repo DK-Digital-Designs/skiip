@@ -26,6 +26,14 @@ const paths = {
             <path d="M17 20h.01" />
         </>
     ),
+    calendar: (
+        <>
+            <rect x="4" y="5" width="16" height="15" rx="2" />
+            <path d="M8 3v4" />
+            <path d="M16 3v4" />
+            <path d="M4 10h16" />
+        </>
+    ),
     check: <path d="m5 12 4 4L19 6" />,
     clock: (
         <>

@@ -18,4 +18,5 @@ Audit coverage:
 
 Also note:
 
-- event management is deferred and `/admin/events` is not exposed in launch routing
+- vendor performance visibility is presented with vendor management at `/admin/vendors`
+- launch-event public copy is managed separately at `/admin/events`
