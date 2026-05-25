@@ -25,8 +25,15 @@ Current routed surfaces in [App.jsx](../../app/src/App.jsx):
 - admin-created vendor onboarding for launch; `/vendor/signup` is not exposed in the app router
 - buyer ordering flow
 - vendor kanban order dashboard and product management
-- admin dashboard and vendor management
-- admin events are deferred and `/admin/events` is not exposed for launch
+- admin operations workspace with overview, orders, vendor management, event setup, and checkout settings routes
+
+Admin routes:
+
+- `/admin/dashboard` provides read-only operational summaries
+- `/admin/orders` provides refund and payment reconciliation actions
+- `/admin/vendors` provides vendor mutations and performance visibility
+- `/admin/events` provides launch-event public copy management
+- `/admin/settings` provides checkout pause/resume controls
 
 Legacy files still exist in the repo but are not part of the routed app today, including:
 

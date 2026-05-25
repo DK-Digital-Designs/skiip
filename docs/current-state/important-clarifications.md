@@ -17,9 +17,9 @@ Also note:
 
 That means buyer signup copy and auth configuration are aligned for the launch path.
 
-### Admin vendor operations are edge-function mediated
+### Admin operational mutations keep their backend boundaries
 
-The admin dashboard refund flow and vendor management flow are edge-function mediated for launch.
+The Admin Orders refund/reconciliation flow and Admin Vendors mutation flow are edge-function mediated for launch. Admin Settings writes the existing checkout control through `payment-control`; moving these controls out of the dashboard does not change their backend boundaries.
 
 [`AdminVendors.jsx`](../../app/src/pages/admin/Vendors.jsx) calls [`admin-store`](../../supabase/functions/admin-store/index.ts) for:
 

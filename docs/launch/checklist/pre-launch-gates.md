@@ -8,7 +8,7 @@ Do not treat an environment as launch-ready until all of the following are true:
 - RLS audit is complete for buyer, seller, admin, and service-role boundaries
 - Vercel app vars, Supabase secrets, and Stripe keys all match the same environment pair
 - `STRIPE_MODE` matches the Stripe account mode and `PAYMENTS_ENABLED` starts false for production cutover until the live payment test window
-- admin dashboard `Payment controls` can pause buyer checkout after `PAYMENTS_ENABLED=true`; effective checkout requires both switches enabled
+- Admin Settings `Checkout availability` can pause buyer checkout after `PAYMENTS_ENABLED=true`; effective checkout requires both switches enabled
 - `ALLOWED_ORIGINS` is explicitly set for the target environment and hosted traffic is not relying on fallback origins in code
 - notification provider accounts, webhook endpoints, and template IDs are configured for the target environment
 - WhatsApp cost gates are explicitly configured: `WHATSAPP_SEND_MODE`, E.164 allowlist if required, daily cap, per-dispatch cap, and non-production live-mode override policy

@@ -17,7 +17,7 @@ Actions:
 - confirm `STRIPE_MODE` matches the Stripe event mode and the hosted endpoint secret is not a Stripe CLI listener secret
 - confirm the webhook function is deployed to the right project
 - inspect `stripe_processed_events.processing_status`, `attempt_count`, and `last_error`
-- use the admin `Reconcile Payment` action only after Stripe confirms the payment succeeded
+- use the Admin Orders `Reconcile payment` action only after Stripe confirms the payment succeeded
 - confirm the environment still has the required inventory/audit SQL objects from current migrations
 - if multiple orders are affected, pause new order intake before retrying
 
@@ -32,7 +32,7 @@ Check:
 - `orders.platform_fee`
 - `orders.stripe_fee`
 - `orders.vendor_net`
-- admin recent-orders reconciliation display
+- Admin Orders reconciliation detail display
 
 Actions:
 
@@ -79,8 +79,8 @@ Actions:
 
 Actions:
 
-- first use the admin dashboard `Payment controls` card to pause buyer checkout and record the reason
-- set `PAYMENTS_ENABLED=false` if the admin dashboard is unavailable or checkout must be disabled at the environment level
+- first use Admin Settings `Checkout availability` to pause buyer checkout and record the reason
+- set `PAYMENTS_ENABLED=false` if Admin Settings is unavailable or checkout must be disabled at the environment level
 - do not swap production back to test Stripe keys after live orders exist
 - keep `stripe-webhook`, `stripe-refund`, and `stripe-reconcile-order` operating with live secrets
 - if intake must stop completely, expire open Stripe Checkout Sessions for affected pending orders and record the operator action

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/context/AuthContext';
 import SkiipLogo from '../ui/SkiipLogo';
 import Icon from '../ui/Icon';
@@ -18,10 +18,12 @@ function getRoleDetails(role) {
 export default function GlobalHeader() {
     const { user, profile, signOut } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     const roleDetails = profile ? getRoleDetails(profile.role) : null;
+    const isAdminPortal = profile?.role === 'admin' && location.pathname.startsWith('/admin');
     const initials = profile?.full_name?.charAt(0).toUpperCase()
         || user?.email?.charAt(0).toUpperCase()
         || '?';
@@ -48,16 +50,23 @@ export default function GlobalHeader() {
             <div className="container app-header__inner">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
                     <SkiipLogo />
-                    <nav className="top-nav" aria-label="Primary navigation">
-                        <Link to="/order">Browse Vendors</Link>
-                        {user && <Link to="/order/profile">My Orders</Link>}
-                    </nav>
+                    {isAdminPortal ? (
+                        <div className="admin-header__identity">
+                            <span className="admin-header__divider" />
+                            <span>Admin Portal</span>
+                        </div>
+                    ) : (
+                        <nav className="top-nav" aria-label="Primary navigation">
+                            <Link to="/order">Browse Vendors</Link>
+                            {user && <Link to="/order/profile">My Orders</Link>}
+                        </nav>
+                    )}
                 </div>
 
                 <div ref={dropdownRef} style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
                     {user && profile ? (
                         <>
-                            {roleDetails && (
+                            {roleDetails && !isAdminPortal && (
                                 <Link
                                     to={roleDetails.route}
                                     className="chip"
@@ -96,10 +105,12 @@ export default function GlobalHeader() {
                                             {user.email}
                                         </p>
                                     </div>
-                                    <Link to="/order/profile" onClick={() => setDropdownOpen(false)} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px' }}>
-                                        <Icon name="receipt" size={16} />
-                                        My Orders
-                                    </Link>
+                                    {!isAdminPortal && (
+                                        <Link to="/order/profile" onClick={() => setDropdownOpen(false)} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px' }}>
+                                            <Icon name="receipt" size={16} />
+                                            My Orders
+                                        </Link>
+                                    )}
                                     {roleDetails && (
                                         <Link to={roleDetails.route} onClick={() => setDropdownOpen(false)} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px' }}>
                                             <Icon name="settings" size={16} />

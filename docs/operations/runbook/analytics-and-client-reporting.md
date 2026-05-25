@@ -10,7 +10,7 @@ Operational reporting split:
 - Vercel Speed Insights is useful for frontend performance and Core Web Vitals after real traffic.
 - Google Search Console is useful for indexing, impressions, clicks, CTR, and average position.
 - Supabase Metrics API is useful for external database CPU, IO, WAL, connection, and query-health alerting when a Prometheus-compatible collector is configured.
-- Supabase, Stripe, and the admin dashboard remain authoritative for orders, payments, refunds, vendor totals, and reconciliation.
+- Supabase, Stripe, and the admin operations portal remain authoritative for orders, payments, refunds, vendor totals, and reconciliation.
 
 For a first-event report, capture:
 

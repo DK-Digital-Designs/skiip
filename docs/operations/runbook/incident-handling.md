@@ -18,7 +18,7 @@ Likely causes:
 - schema drift in the target Supabase project
 - Stripe event processing failed and is retryable (`processing_status = failed`)
 
-If Stripe confirms payment but the order remains pending after webhook retries, use the admin `Reconcile Payment` action for that order. If this affects more than one order, pause new order intake before retrying payment-side operations.
+If Stripe confirms payment but the order remains pending after webhook retries, use Admin Orders `Reconcile payment` for that order. If this affects more than one order, pause new order intake through Admin Settings before retrying payment-side operations.
 
 ### Buyer gets `401` or `403` on a protected edge function
 
@@ -92,7 +92,7 @@ For each staging payment rehearsal, compare:
 - `orders.platform_fee`
 - `orders.stripe_fee`
 - `orders.vendor_net`
-- the values shown in the admin recent-orders reconciliation line
+- the values shown in Admin Orders reconciliation detail
 
 Operational notes:
 
@@ -120,6 +120,7 @@ Check:
 - order has a Stripe payment intent or charge
 - `stripe-refund` is deployed
 - Stripe secret key is valid for the same environment
+- the admin used the refund action in Admin Orders
 
 ### Notifications fail
 

@@ -9,7 +9,7 @@ Current staging smoke scope:
 - protected-route redirect to login
 - buyer sign-in and buyer profile/order-history shell
 - seller sign-in, vendor dashboard, and inventory shell
-- admin sign-in, admin dashboard, and vendor-management shell
+- admin sign-in, dashboard, orders, vendor-management, event-setup, and settings shells
 - failure output annotated as `auth`, `routing`, or `business-surface` in Playwright steps and expectation messages
 
 Current non-scope:

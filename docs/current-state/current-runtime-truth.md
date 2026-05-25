@@ -15,4 +15,4 @@ These statements reflect the actual current implementation.
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`
 - the marketing site now lives outside this repo in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing) and is not part of the order/payment source of truth
-- Vercel analytics data is directional client-side telemetry; Supabase, Stripe, and the admin dashboard remain authoritative for orders, payments, refunds, and revenue
+- Vercel analytics data is directional client-side telemetry; Supabase, Stripe, and the admin operations portal remain authoritative for orders, payments, refunds, and revenue

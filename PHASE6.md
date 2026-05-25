@@ -10,7 +10,8 @@ Historical progress logs:
 | Actor | Time | Date | Description |
 | :--- | :--- | :--- | :--- |
 | Dean Gibson | ~0.5 hours | 2026/05/24 | Phase 6 tracking rollover. Capped the Phase 5 progress log, moved Phase 1-5 progress history into `docs/`, and created `PHASE6.md` as the active root tracker for new work. |
-| **TOTAL** | **~0.5 hours** | | |
+| Dean Gibson | ~2.5 hours | 2026/05/25 | Admin portal operational restructure hotfix. Split admin overview, orders, vendor performance, event setup, and checkout settings into focused routed surfaces; added action-path test coverage and updated active operations/launch documentation. Added local lint, Vitest, build, route-protection smoke, and visual-layout evidence; authenticated operational action verification remains a draft-PR merge gate. |
+| **TOTAL** | **~3.0 hours** | | |
 
 ## Tracking Rules
 

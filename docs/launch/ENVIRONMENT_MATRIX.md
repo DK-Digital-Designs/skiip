@@ -46,7 +46,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | --- | --- | --- |
 | Stripe checkout success/cancel | Frontend origin in `ALLOWED_ORIGINS`; app returns to `/#/order/track`. | Same as staging with production app origin. |
 | Stripe webhook | Dashboard endpoint points to `/functions/v1/stripe-webhook`; secret matches `STRIPE_WEBHOOK_SECRET`. | Same with live endpoint and live secret. |
-| Admin payment switch | Admin dashboard `Payment controls` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
+| Admin payment switch | Admin Settings `Checkout availability` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
 | WhatsApp status callback | Callback points to `/functions/v1/whatsapp-status-webhook`; token query matches `TWILIO_WEBHOOK_TOKEN` if configured. | Same with production Supabase URL. |
 | Resend webhook | Callback points to `/functions/v1/resend-email-webhook` if provider webhooks are enabled. | Same with production Supabase URL. |
 

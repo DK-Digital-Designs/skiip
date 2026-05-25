@@ -25,11 +25,13 @@ Read this when you need the what is working details from [Current State](../CURR
 
 ### Admin
 
-- admin dashboard metrics RPC
-- recent order listing
-- vendor performance summary
+- admin operations navigation across dashboard, orders, vendors, event setup, and settings
+- read-only dashboard metrics and operational health overview
+- recent order listing with refund and payment reconciliation actions in Admin Orders
+- vendor performance summary alongside vendor management
 - notification health summary
-- refund actions
+- launch-event public copy editing in Admin Event Setup
+- checkout pause/resume control in Admin Settings
 - edge-function mediated vendor store management
 
 ### Backend
@@ -39,7 +41,7 @@ Read this when you need the what is working details from [Current State](../CURR
 - inventory finalization on successful payment
 - automatic refund on paid-order inventory failure
 - payment failure recording
-- payment reconciliation fields exposed in the admin recent-orders view
+- payment reconciliation fields exposed in Admin Orders
 - refund recording
 - audit logging for key order and payment events
 - user profile reconciliation trigger/backfill support

@@ -57,7 +57,7 @@ Stripe live-cutover notes:
 
 - set `STRIPE_MODE=test` in staging and `STRIPE_MODE=live` in production
 - set `PAYMENTS_ENABLED=false` before production live-key cutover, then flip to `true` only when the controlled live payment window starts
-- after `PAYMENTS_ENABLED=true`, admins can pause/resume new checkout from the admin dashboard `Payment controls` card; this updates `app_settings.payment_controls` and does not change Stripe secrets
+- after `PAYMENTS_ENABLED=true`, admins can pause/resume new checkout from Admin Settings `Checkout availability`; this updates `app_settings.payment_controls` and does not change Stripe secrets
 - never disable live reconciliation/refund/webhook functions by swapping back to test Stripe keys after live orders exist
 
 Notes:

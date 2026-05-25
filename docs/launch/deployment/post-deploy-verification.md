@@ -14,11 +14,13 @@ After any meaningful backend or frontend deploy:
 8. confirm the order flips to `paid`
 9. confirm vendor can move the order through statuses
 10. confirm admin dashboard loads metrics
-11. confirm admin refund flow still works
-12. confirm the buyer can complete checkout without opting into WhatsApp
-13. confirm Resend emails and, when enabled and opted in, Twilio WhatsApp updates
-14. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
-15. confirm Vercel Analytics shows the pageview and expected funnel events for the smoke path
-16. confirm Search Console sitemap/indexing checks after production deploys that affect search metadata
-17. if external database-health monitoring is configured, confirm the Supabase Metrics API scrape target is healthy
-18. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy
+11. confirm Admin Orders loads payment detail and the refund/reconciliation controls operate correctly on eligible test orders
+12. confirm Admin Settings can pause and resume checkout in the safe test path and records the reason
+13. confirm Admin Event Setup saves approved test copy and returns it to the intended live wording after verification
+14. confirm the buyer can complete checkout without opting into WhatsApp
+15. confirm Resend emails and, when enabled and opted in, Twilio WhatsApp updates
+16. confirm `notification_logs` records queued, sent, delivered, and failed states with timestamps
+17. confirm Vercel Analytics shows the pageview and expected funnel events for the smoke path
+18. confirm Search Console sitemap/indexing checks after production deploys that affect search metadata
+19. if external database-health monitoring is configured, confirm the Supabase Metrics API scrape target is healthy
+20. if self-serve signup is in scope for the environment, verify actual signup behavior matches the chosen confirmation policy

@@ -23,7 +23,6 @@ These are the main remaining risks in the current baseline.
 
 - legacy order statuses such as `processing`, `shipped`, and `delivered` still exist in the schema
 - the current UI and edge-function lifecycle do not use them
-- event management remains deferred and `/admin/events` is not exposed in normal admin navigation/routing
 
 ### 5. Analytics provider activation is external
 

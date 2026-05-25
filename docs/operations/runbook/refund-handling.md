@@ -4,7 +4,7 @@ Read this when you need the refund handling details from [Operations](../OPERATI
 
 Current refund path:
 
-- initiated by admin UI
+- initiated from Admin Orders
 - sent through `stripe-refund`
 - written back to `orders`
 - inventory is restocked when appropriate

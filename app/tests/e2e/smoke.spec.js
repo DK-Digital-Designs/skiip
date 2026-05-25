@@ -54,20 +54,52 @@ const authScenarios = [
     emailEnv: 'PLAYWRIGHT_ADMIN_EMAIL',
     passwordEnv: 'PLAYWRIGHT_ADMIN_PASSWORD',
     expectedUrl: /#\/admin\/dashboard$/,
-    readyLocator: (page) => page.getByRole('heading', { name: /admin dashboard/i }),
+    readyLocator: (page) => page.getByRole('heading', { name: /^dashboard$/i }),
     checks: [
+      {
+        label: 'admin order operations shell renders',
+        path: '/admin/orders',
+        assert: async (page) => {
+          await expect(
+            page.getByRole('heading', { name: /^orders$/i }),
+            'business-surface: admin order operations should render after sign-in',
+          ).toBeVisible();
+        },
+      },
       {
         label: 'admin vendor management shell renders',
         path: '/admin/vendors',
         assert: async (page) => {
           await expect(
-            page.getByRole('heading', { name: /manage vendors/i }),
+            page.getByRole('heading', { name: /^vendors$/i }),
             'business-surface: admin vendor management should render after sign-in',
           ).toBeVisible();
           await expect(
             page.getByRole('button', { name: /add vendor store/i }),
             'business-surface: admin vendor management controls should be available',
           ).toBeVisible();
+        },
+      },
+      {
+        label: 'admin event setup shell renders',
+        path: '/admin/events',
+        assert: async (page) => {
+          await expect(
+            page.getByRole('heading', { name: /event setup/i }),
+            'business-surface: admin event setup should render after sign-in',
+          ).toBeVisible();
+          await expect(page.getByRole('button', { name: /save event copy/i })).toBeVisible();
+        },
+      },
+      {
+        label: 'admin settings shell renders',
+        path: '/admin/settings',
+        assert: async (page) => {
+          await expect(
+            page.getByRole('heading', { name: /^settings$/i }),
+            'business-surface: admin operational settings should render after sign-in',
+          ).toBeVisible();
+          await expect(page.getByRole('button', { name: /pause checkout/i })).toBeVisible();
         },
       },
     ],
@@ -121,14 +153,16 @@ test.describe('public smoke', () => {
   });
 
   test('protected routes redirect unauthenticated users to login', async ({ page }) => {
-    await page.goto(appPath('/vendor/dashboard'));
-    await expect(page, 'auth: unauthenticated seller route should redirect to login').toHaveURL(
-      /#\/login$/,
-    );
-    await expect(
-      page.getByRole('heading', { name: /sign in/i }),
-      'auth: redirected login page should render',
-    ).toBeVisible();
+    for (const protectedPath of ['/vendor/dashboard', '/admin/orders', '/admin/events', '/admin/settings']) {
+      await page.goto(appPath(protectedPath));
+      await expect(page, `auth: unauthenticated ${protectedPath} should redirect to login`).toHaveURL(
+        /#\/login$/,
+      );
+      await expect(
+        page.getByRole('heading', { name: /sign in/i }),
+        'auth: redirected login page should render',
+      ).toBeVisible();
+    }
   });
 });
 
