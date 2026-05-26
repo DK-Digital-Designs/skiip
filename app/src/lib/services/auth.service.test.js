@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { supabase } from '../supabase';
+import { hasPendingPasswordRecoveryRequest } from '../auth-callback';
 
 vi.mock('../supabase', () => ({
     supabase: {
@@ -13,7 +14,9 @@ vi.mock('../supabase', () => ({
 
 describe('AuthService password recovery', () => {
     beforeEach(() => {
+        vi.useRealTimers();
         vi.clearAllMocks();
+        window.localStorage.clear();
     });
 
     it('requests a password reset back to the hash-routed update screen', async () => {
@@ -24,6 +27,8 @@ describe('AuthService password recovery', () => {
         expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('buyer@example.com', {
             redirectTo: `${window.location.origin}/#/reset-password`,
         });
+        expect(window.localStorage.getItem('skiip-password-recovery-request')).not.toBeNull();
+        expect(hasPendingPasswordRecoveryRequest()).toBe(true);
     });
 
     it('updates the password through the authenticated recovery session', async () => {

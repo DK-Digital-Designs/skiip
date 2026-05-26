@@ -15,7 +15,8 @@ Historical progress logs:
 | Dean Gibson | ~0.5 hours | 2026/05/26 | Follow-up password recovery callback hotfix after live validation exposed an `otp_expired` callback being interpreted as a hash-router 404. Added callback error normalization and recovery-event routing, corrected the production callback origin/documented Supabase email-template requirement, and verified lint, Vitest (`86` tests), production build, and public Playwright smoke including the failed-link regression. |
 | Dean Gibson | ~1.0 hours | 2026/05/26 | Addressed launch-readiness buyer bugs #80 and #81: added keyboard-operable menu item details with focus restoration, enabled decrement-to-empty plus explicit checkout line removal, and added regression coverage. Investigated #79 against the implemented Supabase reset flow and current SMTP guidance; custom production SMTP plus received-email/link-redemption evidence remains a live launch gate. Verified lint, Vitest (`90` tests), production build, public Playwright smoke, and rendered buyer interaction checks. |
 | Dean Gibson | ~0.25 hours | 2026/05/26 | Bumped the hotfix testing candidate version to `0.29.3` for the password-recovery and buyer menu/cart bug-fix validation pass; no production release or tag implied. |
-| **TOTAL** | **~5.5 hours** | | |
+| Dean Gibson | ~0.75 hours | 2026/05/26 | Follow-up valid-link password-recovery hotfix after a delivered PKCE email returned `?code=...#/login` without opening reset. Added explicit PKCE callback exchange and recovery-intent handling, bumped the testing candidate to `0.29.4`, and corrected recovery operations guidance. Verified lint, Vitest (`94` tests), production build, public Playwright smoke (`7` passed, `3` credential-gated skipped), and the rendered reset-link failure state; live successful link redemption remains a deployment gate. |
+| **TOTAL** | **~6.25 hours** | | |
 
 ## Tracking Rules
 

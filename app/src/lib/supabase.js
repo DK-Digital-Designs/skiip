@@ -23,9 +23,10 @@ export const supabase = isConfigured
         // lock function serializes them in-memory instead, which is safe for
         // single-origin web apps.
         lock: async (_name, _acquireTimeout, fn) => fn(),
-        // Persist session in localStorage (default) — keep this explicit
+        // Persist session in localStorage (default); keep this explicit.
         persistSession: true,
-        detectSessionInUrl: true,
+        // The app exchanges PKCE callbacks so recovery intent is retained.
+        detectSessionInUrl: false,
         flowType: 'pkce',
       },
     })
