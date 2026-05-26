@@ -39,14 +39,94 @@ function MenuImage({ item }) {
     const image = item.images?.[0] || item.product_snapshot?.image;
 
     return (
-        <div className="menu-row__image">
+        <span className="menu-row__image">
             {image ? <img src={image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(item.name)}
-        </div>
+        </span>
     );
 }
 
 function getMenuItemAnalyticsLabel(item) {
     return `${item.id || 'unknown'}:${item.name || 'Unknown item'}`;
+}
+
+function MenuItemDetailsDialog({ item, quantity, onAdd, onRemove, onClose }) {
+    const closeButtonRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (!item) return undefined;
+
+        closeButtonRef.current?.focus();
+
+        function handleKeyDown(event) {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [item, onClose]);
+
+    if (!item) return null;
+
+    const soldOut = item.inventory_quantity === 0;
+
+    return (
+        <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
+            <section
+                className="dialog menu-item-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="menu-item-details-title"
+                onMouseDown={(event) => event.stopPropagation()}
+            >
+                <button
+                    ref={closeButtonRef}
+                    type="button"
+                    className="menu-item-dialog__close"
+                    onClick={onClose}
+                    aria-label="Close item details"
+                >
+                    <Icon name="close" size={18} />
+                </button>
+                <MenuImage item={item} />
+                <p className="page-kicker">{item.category || 'Menu item'}</p>
+                <h2 id="menu-item-details-title" style={{ color: 'var(--ink)', fontSize: '26px', marginTop: '6px' }}>
+                    {item.name}
+                </h2>
+                {item.description && (
+                    <p className="text-muted" style={{ marginTop: '10px' }}>
+                        {item.description}
+                    </p>
+                )}
+                <p className="text-accent" style={{ fontWeight: 900, fontSize: '22px', marginTop: '16px' }}>
+                    {formatCurrency(item.price)}
+                </p>
+                <div style={{ marginTop: '22px' }}>
+                    {soldOut ? (
+                        <span className="chip" style={{ color: 'var(--red)' }}>Sold out</span>
+                    ) : quantity > 0 ? (
+                        <QuantityControl
+                            value={quantity}
+                            onIncrement={() => onAdd(item)}
+                            onDecrement={() => onRemove(item.id)}
+                            label={`${item.name} details quantity`}
+                        />
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => onAdd(item)}
+                            className="btn btn-primary"
+                            aria-label={`Add ${item.name} to cart from details`}
+                        >
+                            <Icon name="plus" size={17} />
+                            Add to cart
+                        </button>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
 }
 
 export default function Menu() {
@@ -56,6 +136,8 @@ export default function Menu() {
     const { data: qMenu = [], isLoading: isMenuLoading } = useStoreMenu(isSupabaseConfigured() ? vendorId : null);
     const { items: cart, addItem, removeItem, clearCart, getCartTotal, getItemCount, vendorId: cartVendorId } = useCart();
     const [switchItem, setSwitchItem] = React.useState(null);
+    const [detailItem, setDetailItem] = React.useState(null);
+    const detailTriggerRef = React.useRef(null);
 
     const isDemo = !isSupabaseConfigured();
     const vendor = isDemo ? (MOCK_VENDORS[vendorId] || MOCK_VENDORS['1']) : qStore;
@@ -85,6 +167,16 @@ export default function Menu() {
         }
         setSwitchItem(null);
     }
+
+    function openItemDetails(item, trigger) {
+        detailTriggerRef.current = trigger;
+        setDetailItem(item);
+    }
+
+    const closeItemDetails = React.useCallback(() => {
+        setDetailItem(null);
+        window.requestAnimationFrame(() => detailTriggerRef.current?.focus());
+    }, []);
 
     function handleCheckoutStart() {
         trackSkiipEvent('checkout_started', { items: getItemCount() });
@@ -153,17 +245,25 @@ export default function Menu() {
 
                                 return (
                                     <article key={item.id} className="menu-row">
-                                        <MenuImage item={item} />
-                                        <div>
-                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                <h3 style={{ color: 'var(--ink)', fontSize: '19px', lineHeight: 1.15 }}>{item.name}</h3>
-                                                {soldOut && <span className="chip" style={{ color: 'var(--red)' }}>Sold out</span>}
-                                            </div>
-                                            {item.description && <p className="text-muted" style={{ fontSize: '14px', marginTop: '4px' }}>{item.description}</p>}
-                                            <p className="text-accent" style={{ fontWeight: 900, fontSize: '18px', marginTop: '8px' }}>
-                                                {formatCurrency(item.price)}
-                                            </p>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            className="menu-row__details"
+                                            onClick={(event) => openItemDetails(item, event.currentTarget)}
+                                            aria-label={`View details for ${item.name}`}
+                                            aria-haspopup="dialog"
+                                        >
+                                            <MenuImage item={item} />
+                                            <span>
+                                                <span style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                                    <span style={{ color: 'var(--ink)', fontSize: '19px', fontWeight: 700, lineHeight: 1.15 }}>{item.name}</span>
+                                                    {soldOut && <span className="chip" style={{ color: 'var(--red)' }}>Sold out</span>}
+                                                </span>
+                                                {item.description && <span className="text-muted menu-row__description">{item.description}</span>}
+                                                <span className="text-accent menu-row__price">
+                                                    {formatCurrency(item.price)}
+                                                </span>
+                                            </span>
+                                        </button>
                                         {quantity > 0 ? (
                                             <QuantityControl
                                                 value={quantity}
@@ -176,6 +276,7 @@ export default function Menu() {
                                                 type="button"
                                                 onClick={() => handleAddItem(item)}
                                                 className="btn btn-primary"
+                                                aria-label={soldOut ? `${item.name} is out of stock` : `Add ${item.name} to cart`}
                                                 disabled={soldOut}
                                             >
                                                 <Icon name="plus" size={17} />
@@ -205,6 +306,13 @@ export default function Menu() {
                 </div>
             )}
             <BottomNav />
+            <MenuItemDetailsDialog
+                item={detailItem}
+                quantity={detailItem ? getQuantity(detailItem.id) : 0}
+                onAdd={handleAddItem}
+                onRemove={removeItem}
+                onClose={closeItemDetails}
+            />
             <ConfirmDialog
                 open={Boolean(switchItem)}
                 title="Switch vendor?"

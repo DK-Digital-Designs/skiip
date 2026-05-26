@@ -24,7 +24,7 @@ import { calculateOrderSummary } from '../../lib/orders';
 export default function Checkout() {
     const navigate = useNavigate();
     const { user, profile, loading: authLoading } = useAuth();
-    const { items, addItem, removeItem, vendorId } = useCart();
+    const { items, addItem, removeItem, removeLineItem, vendorId } = useCart();
     const { addToast } = useToast();
 
     const [vendor, setVendor] = useState(null);
@@ -335,11 +335,19 @@ export default function Checkout() {
                                     </div>
                                     <QuantityControl
                                         value={item.quantity}
-                                        min={1}
                                         onIncrement={() => addItem(item)}
                                         onDecrement={() => removeItem(item.id)}
                                         label={`${item.name} checkout quantity`}
                                     />
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost"
+                                        onClick={() => removeLineItem(item.id)}
+                                        aria-label={`Remove ${item.name} from cart`}
+                                        style={{ width: 'fit-content', minHeight: '36px', color: 'var(--red)' }}
+                                    >
+                                        Remove
+                                    </button>
                                 </div>
                             ))}
                         </div>

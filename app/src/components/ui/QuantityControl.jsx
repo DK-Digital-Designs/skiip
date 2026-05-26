@@ -8,12 +8,12 @@ export default function QuantityControl({ value, onIncrement, onDecrement, min =
                 type="button"
                 onClick={onDecrement}
                 disabled={value <= min}
-                aria-label="Decrease quantity"
+                aria-label={`Decrease ${label}`}
             >
                 <Icon name="minus" size={16} />
             </button>
             <strong>{value}</strong>
-            <button type="button" onClick={onIncrement} aria-label="Increase quantity">
+            <button type="button" onClick={onIncrement} aria-label={`Increase ${label}`}>
                 <Icon name="plus" size={16} />
             </button>
         </div>
