@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
-import { routeActivePasswordRecoverySession } from '../auth-callback';
+import {
+    clearPendingPasswordRecoveryRequest,
+    clearPkceCallbackCode,
+    getPkceCallbackCode,
+    hasPendingPasswordRecoveryRequest,
+    routeActivePasswordRecoverySession,
+} from '../auth-callback';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 const AuthContext = createContext({});
@@ -23,6 +29,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         let isMounted = true;
+        let subscription = null;
         
         // Timeout fail-safe
         const timeoutId = setTimeout(() => {
@@ -34,7 +41,29 @@ export const AuthProvider = ({ children }) => {
 
         async function initializeAuth() {
             try {
-                // 1. Check current session immediately
+                const callbackCode = getPkceCallbackCode(window.location.href);
+                if (callbackCode) {
+                    const recoveryRequestPending = hasPendingPasswordRecoveryRequest();
+                    const { data, error } = await supabase.auth.exchangeCodeForSession(callbackCode);
+                    if (error) throw error;
+
+                    clearPkceCallbackCode();
+                    const isRecoveryCallback =
+                        data?.redirectType === 'PASSWORD_RECOVERY' || recoveryRequestPending;
+
+                    if (isRecoveryCallback) {
+                        clearPendingPasswordRecoveryRequest();
+                    }
+
+                    if (isMounted) {
+                        await handleAuthStateChange(
+                            isRecoveryCallback ? 'PASSWORD_RECOVERY' : 'SIGNED_IN',
+                            data.session
+                        );
+                    }
+                    return;
+                }
+
                 const { data: { session } } = await supabase.auth.getSession();
                 if (isMounted) {
                     await handleAuthStateChange('SIGNED_IN', session);
@@ -86,18 +115,33 @@ export const AuthProvider = ({ children }) => {
             }
         }
 
-        // Initialize immediately
-        initializeAuth();
+        function subscribeToAuthChanges() {
+            const { data } = supabase.auth.onAuthStateChange((event, session) => {
+                handleAuthStateChange(event, session);
+            });
+            subscription = data.subscription;
+        }
 
-        // 2. Listen for subsequent changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            handleAuthStateChange(event, session);
-        });
+        async function initializeAndSubscribe() {
+            const hasPkceCallback = Boolean(getPkceCallbackCode(window.location.href));
+
+            if (!hasPkceCallback) {
+                subscribeToAuthChanges();
+            }
+
+            await initializeAuth();
+
+            if (hasPkceCallback && isMounted) {
+                subscribeToAuthChanges();
+            }
+        }
+
+        initializeAndSubscribe();
 
         return () => {
             isMounted = false;
             clearTimeout(timeoutId);
-            subscription.unsubscribe();
+            subscription?.unsubscribe();
         };
     }, []);
 

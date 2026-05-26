@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { markPasswordRecoveryRequest } from '../auth-callback';
 
 function getPasswordResetRedirectUrl() {
     const appRoot = new URL(import.meta.env.BASE_URL || '/', window.location.origin);
@@ -68,6 +69,7 @@ export const AuthService = {
         });
 
         if (error) throw error;
+        markPasswordRecoveryRequest();
         return data;
     },
 
