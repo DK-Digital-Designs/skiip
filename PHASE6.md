@@ -17,7 +17,8 @@ Historical progress logs:
 | Dean Gibson | ~0.25 hours | 2026/05/26 | Bumped the hotfix testing candidate version to `0.29.3` for the password-recovery and buyer menu/cart bug-fix validation pass; no production release or tag implied. |
 | Dean Gibson | ~0.75 hours | 2026/05/26 | Follow-up valid-link password-recovery hotfix after a delivered PKCE email returned `?code=...#/login` without opening reset. Added explicit PKCE callback exchange and recovery-intent handling, bumped the testing candidate to `0.29.4`, and corrected recovery operations guidance. Verified lint, Vitest (`94` tests), production build, public Playwright smoke (`7` passed, `3` credential-gated skipped), and the rendered reset-link failure state; live successful link redemption remains a deployment gate. |
 | Dean Gibson | ~0.75 hours | 2026/05/26 | Reopened #79 after first-click recovery failure reproduced on deployed `0.29.4`: a Vercel callback origin cannot redeem a PKCE verifier initiated on the canonical custom domain. Added canonical `www.skiip.co.uk` origin routing and reset-link configuration, bumped the testing candidate to `0.29.5`, and documented the required hosted Supabase Site URL/template/redirect correction. Verified lint, Vitest (`97` tests), production build, public Playwright smoke (`7` passed, `3` credential-gated skipped), and synthetic legacy-host callback redirect preservation on the rendered build. |
-| **TOTAL** | **~7.0 hours** | | |
+| Dean Gibson | ~0.5 hours | 2026/05/26 | Added a branded SKIIP Supabase recovery-email template with canonical logo/domain, CTA, and security copy; configured it for local Auth previews and corrected hosted-template guidance to use Supabase's verified `ConfirmationURL` flow. Hosted dashboard template publication remains required before branded production-email verification. |
+| **TOTAL** | **~7.5 hours** | | |
 
 ## Tracking Rules
 
