@@ -27,6 +27,7 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
+- `0.29.3` is the current hotfix testing candidate for the May 26 password-recovery delivery follow-up and buyer menu/cart bug fixes.
 - `0.28.0` is the staging and main baseline containing observation feedback fixes, launch checklists, and decision notes on 2026-05-20.
 - `0.27.0` was the previous staging baseline for the Issue 41 site-wide UI/UX overhaul on 2026-05-13.
 - `0.26.0` was the previous staging baseline after retiring the in-repo marketing surface and confirming the staging continuation-payment flow still worked on the deployed environment on 2026-05-08.

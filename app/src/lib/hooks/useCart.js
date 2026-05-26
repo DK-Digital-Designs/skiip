@@ -54,6 +54,15 @@ export const useCart = create(
                 }
             },
 
+            removeLineItem: (productId) => {
+                const { items, vendorId } = get();
+                const newItems = items.filter((item) => item.id !== productId);
+                set({
+                    items: newItems,
+                    vendorId: newItems.length === 0 ? null : vendorId
+                });
+            },
+
             clearCart: () => set({ items: [], vendorId: null }),
 
             getCartTotal: () => {

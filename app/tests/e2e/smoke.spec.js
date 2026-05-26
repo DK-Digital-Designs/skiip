@@ -152,6 +152,24 @@ test.describe('public smoke', () => {
     ).toBeVisible();
   });
 
+  test('buyer can inspect a menu item and remove its final cart quantity', async ({ page }) => {
+    await page.goto(appPath('/order/vendor/1'));
+
+    await page.getByRole('button', { name: /view details for classic burger/i }).press('Enter');
+    const detailsDialog = page.getByRole('dialog', { name: /classic burger/i });
+    await expect(detailsDialog).toBeVisible();
+    await expect(detailsDialog.getByText(/beef patty, lettuce, tomato, cheese/i)).toBeVisible();
+    await expect(page.getByText(/cart \(1 items\)/i)).toHaveCount(0);
+
+    await page.getByRole('button', { name: /close item details/i }).click();
+    await expect(page.getByRole('button', { name: /view details for classic burger/i })).toBeFocused();
+    await page.getByRole('button', { name: /add classic burger to cart/i }).click();
+    await expect(page.getByText(/cart \(1 items\)/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /decrease classic burger quantity/i }).click();
+    await expect(page.getByText(/cart \(1 items\)/i)).toHaveCount(0);
+  });
+
   test('sign-in links to the password recovery request page', async ({ page }) => {
     await page.goto(appPath('/login'));
     await page.getByRole('link', { name: /forgot password/i }).click();

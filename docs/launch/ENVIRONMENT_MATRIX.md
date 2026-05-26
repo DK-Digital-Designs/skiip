@@ -49,7 +49,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | Admin payment switch | Admin Settings `Checkout availability` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
 | WhatsApp status callback | Callback points to `/functions/v1/whatsapp-status-webhook`; token query matches `TWILIO_WEBHOOK_TOKEN` if configured. | Same with production Supabase URL. |
 | Resend webhook | Callback points to `/functions/v1/resend-email-webhook` if provider webhooks are enabled. | Same with production Supabase URL. |
-| Supabase Auth password recovery | Auth redirect allow-list includes the staging app `/#/reset-password` callback; send and redeem one reset email. | Auth redirect allow-list includes `https://skiip.vercel.app/#/reset-password` and any active custom product-app auth origin; production SMTP can deliver recovery email. |
+| Supabase Auth password recovery | Auth redirect allow-list includes the staging app `/#/reset-password` callback; send and redeem one reset email. | Auth redirect allow-list includes `https://skiip.vercel.app/#/reset-password` and any active custom product-app auth origin; custom production SMTP delivers and redeems one recovery email for a controlled buyer account. |
 
 ## Pre-Test Verification
 
