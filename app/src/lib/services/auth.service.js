@@ -1,8 +1,10 @@
 import { supabase } from '../supabase';
-import { markPasswordRecoveryRequest } from '../auth-callback';
+import { CANONICAL_PRODUCTION_ORIGIN, markPasswordRecoveryRequest } from '../auth-callback';
 
 function getPasswordResetRedirectUrl() {
-    const appRoot = new URL(import.meta.env.BASE_URL || '/', window.location.origin);
+    const configuredAppOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN;
+    const appOrigin = configuredAppOrigin || (import.meta.env.PROD ? CANONICAL_PRODUCTION_ORIGIN : window.location.origin);
+    const appRoot = new URL(import.meta.env.BASE_URL || '/', appOrigin);
     appRoot.hash = '/reset-password';
     return appRoot.toString();
 }

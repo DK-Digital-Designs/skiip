@@ -6,6 +6,7 @@ Read this when you need the environment surfaces details from [Secrets and Envir
 | :--- | :--- | :--- | :--- |
 | Vercel app | `VITE_SUPABASE_URL` | Yes | Must match the same Supabase project as the anon key. |
 | Vercel app | `VITE_SUPABASE_ANON_KEY` | Yes | Public key, but still environment-specific. |
+| Vercel app | `VITE_PUBLIC_APP_ORIGIN` | Yes | Must be `https://www.skiip.co.uk` in production so Supabase Auth callback links stay on the canonical PKCE origin. |
 | Vercel app | `VITE_VENDOR_INVITE_CODE` | No for launch | Legacy invite-code vendor signup is not exposed in the May 2026 launch app. |
 | Vercel app | `VITE_SENTRY_DSN` | Recommended | Used by the browser app for Sentry error/reporting setup when present. |
 | Local operator scripts | `SUPABASE_SERVICE_ROLE_KEY` | Conditional | Used by `app/scripts/*.js` for seeding/admin scripting. Never expose this in browser runtime config. |

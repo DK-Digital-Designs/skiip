@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     clearPkceCallbackCode,
+    getCanonicalProductionRoute,
     getPasswordRecoveryErrorRoute,
     getPkceCallbackCode,
     hasPendingPasswordRecoveryRequest,
@@ -46,6 +47,16 @@ describe('password recovery callback routing', () => {
         clearPkceCallbackCode();
 
         expect(window.location.href).toBe(`${window.location.origin}/#/login`);
+    });
+
+    it('moves legacy production PKCE callbacks to the canonical domain before exchange', () => {
+        expect(getCanonicalProductionRoute('https://skiip.vercel.app/?code=recovery-code#/')).toBe(
+            'https://www.skiip.co.uk/?code=recovery-code#/'
+        );
+        expect(getCanonicalProductionRoute('https://skiip.co.uk/#/forgot-password')).toBe(
+            'https://www.skiip.co.uk/#/forgot-password'
+        );
+        expect(getCanonicalProductionRoute('https://www.skiip.co.uk/?code=recovery-code#/')).toBeNull();
     });
 
     it('keeps recovery request intent only for a recent reset request', () => {

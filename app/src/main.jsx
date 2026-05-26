@@ -5,12 +5,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import App from './App';
 import { AuthProvider } from './lib/context/AuthContext';
-import { routePasswordRecoveryErrorCallback } from './lib/auth-callback';
+import { routeCanonicalProductionOrigin, routePasswordRecoveryErrorCallback } from './lib/auth-callback';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import * as Sentry from "@sentry/react";
 import './index.css';
 
-routePasswordRecoveryErrorCallback();
+const shouldRenderApp = !routeCanonicalProductionOrigin();
+
+if (shouldRenderApp) {
+  routePasswordRecoveryErrorCallback();
+}
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -37,17 +41,19 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <HashRouter>
-            <App />
-          </HashRouter>
-        </AuthProvider>
-        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-      </QueryClientProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
-);
+if (shouldRenderApp) {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <HashRouter>
+              <App />
+            </HashRouter>
+          </AuthProvider>
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
+}

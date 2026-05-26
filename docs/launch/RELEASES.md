@@ -27,7 +27,8 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
-- `0.29.4` is the current hotfix testing candidate for the May 26 valid password-recovery PKCE callback routing fix.
+- `0.29.5` is the current hotfix testing candidate for canonical-domain password-recovery redirects after repeated live PKCE cross-origin failure.
+- `0.29.4` was the previous hotfix testing candidate for the May 26 valid password-recovery PKCE callback routing fix.
 - `0.29.3` was the previous hotfix testing candidate for the password-recovery delivery follow-up and buyer menu/cart bug fixes.
 - `0.28.0` is the staging and main baseline containing observation feedback fixes, launch checklists, and decision notes on 2026-05-20.
 - `0.27.0` was the previous staging baseline for the Issue 41 site-wide UI/UX overhaul on 2026-05-13.

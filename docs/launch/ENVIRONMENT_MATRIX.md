@@ -8,6 +8,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | --- | --- | --- | --- |
 | `VITE_SUPABASE_URL` | Required | Required | Must point to the matching Supabase project for the anon key. |
 | `VITE_SUPABASE_ANON_KEY` | Required | Required | Public but environment-specific. |
+| `VITE_PUBLIC_APP_ORIGIN` | Matching staging app origin | `https://www.skiip.co.uk` | Canonical origin used in Supabase Auth email redirects; do not set production to a Vercel deployment URL. |
 | `VITE_SENTRY_DSN` | Recommended | Recommended | Browser error reporting. |
 | `VITE_STRIPE_PUBLIC_KEY` | Removed | Removed | Current checkout is redirect-based through edge functions. Do not set this in Vercel production. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
@@ -49,7 +50,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | Admin payment switch | Admin Settings `Checkout availability` writes `app_settings.payment_controls`; checkout is enabled only when this and `PAYMENTS_ENABLED` are both on. | Same; use this first for curfew/operator stop-sale after the live window opens. |
 | WhatsApp status callback | Callback points to `/functions/v1/whatsapp-status-webhook`; token query matches `TWILIO_WEBHOOK_TOKEN` if configured. | Same with production Supabase URL. |
 | Resend webhook | Callback points to `/functions/v1/resend-email-webhook` if provider webhooks are enabled. | Same with production Supabase URL. |
-| Supabase Auth password recovery | Auth redirect allow-list includes the staging app `/#/reset-password` callback; send and redeem one reset email through the password form. | Auth redirect allow-list includes `https://skiip.vercel.app/#/reset-password` and any active custom product-app auth origin; custom production SMTP delivers one recovery email and its PKCE callback opens the password form for a controlled buyer account. |
+| Supabase Auth password recovery | `VITE_PUBLIC_APP_ORIGIN` and Auth redirect allow-list use the staging app `/#/reset-password` callback; send and redeem one reset email through the password form. | Site URL is `https://www.skiip.co.uk/`; Auth redirect allow-list and recovery template return to `https://www.skiip.co.uk/#/reset-password`; custom production SMTP delivers one recovery email whose first click opens the password form. |
 
 ## Pre-Test Verification
 
@@ -71,4 +72,4 @@ Before production launch:
 3. Do not switch Stripe keys without also checking webhook endpoints and connected-account mode.
 4. Confirm Web Analytics and Speed Insights are enabled on the production Vercel project.
 5. Confirm Search Console ownership, sitemap submission, and root URL inspection for the production domain.
-6. Confirm the production Supabase Auth callback URL and SMTP sender deliver a usable password recovery email.
+6. Confirm the production Supabase Auth email link visibly uses `https://www.skiip.co.uk`, and its first click delivers a usable password recovery form.

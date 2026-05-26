@@ -1,6 +1,11 @@
 const AUTH_ERROR_KEYS = ['error', 'error_code', 'error_description'];
 const PASSWORD_RECOVERY_REQUEST_KEY = 'skiip-password-recovery-request';
 const PASSWORD_RECOVERY_REQUEST_TTL_MS = 60 * 60 * 1000;
+export const CANONICAL_PRODUCTION_ORIGIN = 'https://www.skiip.co.uk';
+const NON_CANONICAL_PRODUCTION_ORIGINS = new Set([
+    'https://skiip.vercel.app',
+    'https://skiip.co.uk',
+]);
 
 function readCallbackValue(url, key) {
     const queryValue = url.searchParams.get(key);
@@ -25,6 +30,24 @@ export function getPasswordRecoveryErrorRoute(href) {
 
 export function getPkceCallbackCode(href) {
     return new URL(href).searchParams.get('code');
+}
+
+export function getCanonicalProductionRoute(href) {
+    const url = new URL(href);
+
+    if (!NON_CANONICAL_PRODUCTION_ORIGINS.has(url.origin)) {
+        return null;
+    }
+
+    return new URL(`${url.pathname}${url.search}${url.hash}`, CANONICAL_PRODUCTION_ORIGIN).toString();
+}
+
+export function routeCanonicalProductionOrigin() {
+    const canonicalRoute = getCanonicalProductionRoute(window.location.href);
+    if (!canonicalRoute) return false;
+
+    window.location.replace(canonicalRoute);
+    return true;
 }
 
 export function clearPkceCallbackCode() {
