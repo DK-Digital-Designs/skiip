@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { supabase } from '../supabase';
 import { hasPendingPasswordRecoveryRequest } from '../auth-callback';
@@ -19,6 +19,10 @@ describe('AuthService password recovery', () => {
         window.localStorage.clear();
     });
 
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
     it('requests a password reset back to the hash-routed update screen', async () => {
         supabase.auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
 
@@ -29,6 +33,28 @@ describe('AuthService password recovery', () => {
         });
         expect(window.localStorage.getItem('skiip-password-recovery-request')).not.toBeNull();
         expect(hasPendingPasswordRecoveryRequest()).toBe(true);
+    });
+
+    it('uses the configured canonical public origin for recovery email callbacks', async () => {
+        vi.stubEnv('VITE_PUBLIC_APP_ORIGIN', 'https://www.skiip.co.uk');
+        supabase.auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+        await AuthService.requestPasswordReset('buyer@example.com');
+
+        expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('buyer@example.com', {
+            redirectTo: 'https://www.skiip.co.uk/#/reset-password',
+        });
+    });
+
+    it('defaults production recovery email callbacks to the canonical origin', async () => {
+        vi.stubEnv('PROD', true);
+        supabase.auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+
+        await AuthService.requestPasswordReset('buyer@example.com');
+
+        expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('buyer@example.com', {
+            redirectTo: 'https://www.skiip.co.uk/#/reset-password',
+        });
     });
 
     it('updates the password through the authenticated recovery session', async () => {

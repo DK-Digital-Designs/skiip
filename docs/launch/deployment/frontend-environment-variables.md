@@ -8,10 +8,14 @@ Required:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_PUBLIC_APP_ORIGIN`
+  - Production: `https://www.skiip.co.uk`
+  - Staging/previews: set the exact approved app origin used for Supabase Auth callbacks.
 
 Launch note:
 
 - `VITE_VENDOR_INVITE_CODE` is not required for the May 2026 launch app because vendor onboarding is admin-created and `/vendor/signup` is not exposed.
+- Do not set production `VITE_PUBLIC_APP_ORIGIN` to `https://skiip.vercel.app`; password recovery PKCE callbacks must stay on the canonical custom-domain origin.
 
 Recommended:
 
