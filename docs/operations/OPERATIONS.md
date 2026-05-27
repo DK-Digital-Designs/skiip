@@ -10,6 +10,7 @@ This is the stable entrypoint for operations runbook documentation. The detailed
 - [Analytics And Client Reporting](./runbook/analytics-and-client-reporting.md)
 - [Incident Handling](./runbook/incident-handling.md)
 - [Refund Handling](./runbook/refund-handling.md)
+- [Support Issues](./runbook/support-issues.md)
 - [Admin Vendor Operations](./runbook/admin-vendor-operations.md)
 - [Vendor Onboarding](./runbook/vendor-onboarding.md)
 - [Marketing Site Operational Note](./runbook/marketing-site-operational-note.md)

@@ -6,6 +6,7 @@ import { useToast } from '../../components/ui/Toast';
 import { DEFAULT_LAUNCH_EVENT } from '../../lib/launch-event';
 import { AdminService } from '../../lib/services/admin.service';
 import { SettingsService } from '../../lib/services/settings.service';
+import { SupportService } from '../../lib/services/support.service';
 import { formatCurrency } from '../../lib/ui-format';
 
 const EMPTY_STATS = {
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(EMPTY_STATS);
     const [launchEvent, setLaunchEvent] = useState(DEFAULT_LAUNCH_EVENT);
     const [paymentControls, setPaymentControls] = useState(null);
+    const [issueCounts, setIssueCounts] = useState({ open: 0, high: 0 });
 
     useEffect(() => {
         async function loadDashboard() {
@@ -62,8 +64,21 @@ export default function AdminDashboard() {
             if (paymentResult.status === 'fulfilled') setPaymentControls(paymentResult.value);
         }
 
+        async function loadIssueCounts() {
+            try {
+                const issues = await SupportService.getAdminRequests();
+                setIssueCounts({
+                    open: issues.filter((issue) => ['open', 'in_review'].includes(issue.status)).length,
+                    high: issues.filter((issue) => ['open', 'in_review'].includes(issue.status) && ['high', 'urgent'].includes(issue.priority)).length,
+                });
+            } catch (error) {
+                console.error('Error fetching support request counts:', error);
+            }
+        }
+
         loadDashboard();
         loadStatusLinks();
+        loadIssueCounts();
     }, [addToast]);
 
     const metricCards = [
@@ -73,6 +88,8 @@ export default function AdminDashboard() {
         { label: 'Service Fees', value: formatCurrency(stats.serviceFeeRevenue), icon: 'tag' },
         { label: 'Failed Payments', value: stats.failedPayments, icon: 'bell', danger: stats.failedPayments > 0 },
         { label: 'Refunded Revenue', value: formatCurrency(stats.refundedRevenue), icon: 'arrowLeft' },
+        { label: 'Open Issues', value: issueCounts.open, icon: 'bell', danger: issueCounts.high > 0 },
+        { label: 'High Priority', value: issueCounts.high, icon: 'bell', danger: issueCounts.high > 0 },
     ];
 
     const statusCounts = Object.entries(stats.statusCounts);
@@ -139,6 +156,14 @@ export default function AdminDashboard() {
                                 <small>Review refunds and payment reconciliation</small>
                             </span>
                             <b>View orders</b>
+                        </Link>
+                        <Link to="/admin/issues" className="admin-status-row">
+                            <Icon name="bell" size={20} />
+                            <span>
+                                <strong>{issueCounts.open} active support cases</strong>
+                                <small>{issueCounts.high} high-priority cases need review</small>
+                            </span>
+                            <b>View issues</b>
                         </Link>
                         <Link to="/admin/settings" className="admin-status-row">
                             <Icon name="settings" size={20} />

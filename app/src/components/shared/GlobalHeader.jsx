@@ -117,6 +117,12 @@ export default function GlobalHeader() {
                                             {roleDetails.label}
                                         </Link>
                                     )}
+                                    {profile.role !== 'admin' && (
+                                        <Link to="/report-issue" onClick={() => setDropdownOpen(false)} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px' }}>
+                                            <Icon name="bell" size={16} />
+                                            Report an issue
+                                        </Link>
+                                    )}
                                     <button type="button" onClick={handleSignOut} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--red)' }}>
                                         Sign Out
                                     </button>

@@ -5,6 +5,7 @@ import Icon from '../ui/Icon';
 const ADMIN_NAV_ITEMS = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: 'home' },
     { to: '/admin/orders', label: 'Orders', icon: 'receipt' },
+    { to: '/admin/issues', label: 'Issues', icon: 'bell' },
     { to: '/admin/vendors', label: 'Vendors', icon: 'bag' },
     { to: '/admin/events', label: 'Event Setup', icon: 'calendar' },
     { to: '/admin/settings', label: 'Settings', icon: 'settings' },

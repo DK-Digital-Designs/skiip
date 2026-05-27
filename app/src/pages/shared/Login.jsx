@@ -5,6 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import SkiipLogo from '../../components/ui/SkiipLogo';
 import Icon from '../../components/ui/Icon';
+import { SESSION_EXPIRED_REASON } from '../../lib/session-timeout';
 
 function getDashboardRoute(role) {
     switch (role) {
@@ -23,13 +24,16 @@ export default function UnifiedLogin() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const from = location.state?.from?.pathname || null;
+    const from = location.state?.from
+        ? `${location.state.from.pathname}${location.state.from.search || ''}`
+        : null;
+    const sessionExpired = new URLSearchParams(location.search).get('reason') === SESSION_EXPIRED_REASON;
 
     useEffect(() => {
         if (user && profile) {
-            navigate(getDashboardRoute(profile.role), { replace: true });
+            navigate(from || getDashboardRoute(profile.role), { replace: true });
         }
-    }, [user, profile, navigate]);
+    }, [user, profile, navigate, from]);
 
     async function handleLogin(event) {
         event.preventDefault();
@@ -69,6 +73,11 @@ export default function UnifiedLogin() {
                     <p className="text-muted" style={{ marginBottom: '30px' }}>
                         Access your orders, or manage your store.
                     </p>
+                    {sessionExpired && (
+                        <p className="chip chip--accent" style={{ marginBottom: '22px', width: '100%' }}>
+                            Your session expired. Please sign in again.
+                        </p>
+                    )}
 
                     <form onSubmit={handleLogin} style={{ display: 'grid', gap: '20px' }}>
                         <div>

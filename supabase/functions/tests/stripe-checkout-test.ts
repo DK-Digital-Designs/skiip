@@ -1,8 +1,14 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import {
   buildCheckoutSessionIdempotencyKey,
+  calculateApplicationFeeAmount,
   getReusableCheckoutSession,
 } from "../_shared/stripe-checkout.ts";
+
+Deno.test("calculateApplicationFeeAmount retains ten percent of subtotal plus the GBP 1.50 service fee", () => {
+  assertEquals(calculateApplicationFeeAmount(20, 1.5, 0.10), 350);
+  assertEquals(calculateApplicationFeeAmount(20, 1.5, 0.05), 250);
+});
 
 Deno.test("buildCheckoutSessionIdempotencyKey is stable for a pending order", () => {
   assertEquals(

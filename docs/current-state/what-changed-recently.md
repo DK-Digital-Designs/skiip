@@ -13,6 +13,10 @@ Recent hardening work introduced:
 - payment failure fields on orders
 - queue-backed notification dispatch with richer delivery timestamps
 - Resend webhook ingestion
+- protected buyer/vendor issue reporting with admin triage
+- GBP 1.50 fixed buyer service fee while retaining the 10% Stripe Connect application fee
+- country-code based checkout phone capture and E.164 normalization for opted-in notifications
+- frontend-configurable per-role inactivity logout, defaulted to disabled
 - SEO/search assets, Vercel Analytics, Speed Insights, and privacy-conscious buyer-funnel event tracking
 - schema and auth-profile reconciliation migrations
 

@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 export interface RequestUser {
   id: string
   role: string
+  email: string | null
 }
 
 export class EdgeAuthError extends Error {
@@ -61,5 +62,9 @@ export async function requireUser(req: Request): Promise<RequestUser> {
     throw new EdgeAuthError('Unable to read user profile', 403, 'profile_unavailable')
   }
 
-  return { id: userData.user.id, role: profile?.role ?? 'buyer' }
+  return {
+    id: userData.user.id,
+    role: profile?.role ?? 'buyer',
+    email: userData.user.email || null,
+  }
 }

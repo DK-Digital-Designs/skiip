@@ -14,6 +14,7 @@ This matrix captures the May 2026 launch boundary after `20260428000001_launch_r
 | `notification_logs` | No direct access. | Read logs for owned-store orders. | Read all notification logs. | Manage queued notifications and delivery status. |
 | `notification_webhook_events` | No direct access. | No direct access. | Read webhook event records. | Manage provider webhook idempotency records. |
 | `audit_logs` | No direct access. | No direct access. | Read audit logs. | Write audit logs from trusted flows. |
+| `support_requests` | No direct read or write; submission goes through `support-request`. | No direct read or write; submission goes through `support-request`. | Read private cases; triage updates go through `admin-support-request`. | Create/update cases and audit triage through trusted functions. |
 | `stripe_processed_events` | No direct access. | No direct access. | Read processed Stripe event records. | Manage Stripe webhook idempotency records. |
 
 ## Launch Boundary Decisions
@@ -21,6 +22,7 @@ This matrix captures the May 2026 launch boundary after `20260428000001_launch_r
 - Vendor onboarding is admin-created for launch. Browser-side seller store insert/update policies are removed, and admin store/profile mutations go through `admin-store`.
 - Buyer signup is allowed, but new profiles are forced to `buyer`; role changes are admin/server operations.
 - Order creation is server-authoritative. Browser clients cannot insert `orders` directly.
+- Issue submissions are stored privately. Buyers and sellers receive a reference after an authenticated Edge Function submission but do not query case rows directly.
 - Protected edge functions use manual bearer validation with `requireUser()`; webhook and dispatch functions use signature or secret checks.
 
 ## Staging Validation

@@ -6,6 +6,7 @@ import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
 import { createStripeClient } from "../_shared/stripe-config.ts"
+import { buildFullDestinationChargeRefundParameters } from "../_shared/stripe-refund.ts"
 
 const log = logger('stripe-refund')
 
@@ -64,19 +65,11 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Only succeeded payments can be refunded once' }, 409, origin)
     }
 
-    const refund = await stripe.refunds.create(
-      order.payment_intent_id
-        ? {
-            payment_intent: order.payment_intent_id,
-            reason: 'requested_by_customer',
-            metadata: { order_id: order.id },
-          }
-        : {
-            charge: order.charge_id,
-            reason: 'requested_by_customer',
-            metadata: { order_id: order.id },
-          },
-    )
+    if (!order.payment_intent_id && !order.charge_id) {
+      return jsonResponse({ error: 'Refund requires a Stripe payment intent or charge id' }, 409, origin)
+    }
+
+    const refund = await stripe.refunds.create(buildFullDestinationChargeRefundParameters(order))
 
     const updates: Record<string, unknown> = {
       status: 'refunded',
@@ -114,6 +107,8 @@ serve(async (req: Request) => {
         refund_id: refund.id,
         amount: Number(order.total || 0),
         reason: body.reason?.trim() || 'Manual admin refund',
+        reverse_transfer: true,
+        refund_application_fee: true,
       },
     })
 

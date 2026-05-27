@@ -13,6 +13,9 @@ Do not treat an environment as launch-ready until all of the following are true:
 - notification provider accounts, webhook endpoints, and template IDs are configured for the target environment
 - WhatsApp cost gates are explicitly configured: `WHATSAPP_SEND_MODE`, E.164 allowlist if required, daily cap, per-dispatch cap, and non-production live-mode override policy
 - one full buyer -> Stripe test-mode payment -> reconciliation -> vendor -> refund rehearsal has passed with a Stripe-onboarded seller account
+- the rehearsal confirms the GBP 1.50 service fee, unchanged `10%` subtotal application-fee portion, refund transfer reversal, and paid vendor-cancellation review case
+- Stripe payout schedule, pending verification requirements, and any manual/Instant Payout availability are inspected before event-day settlement expectations are agreed
+- Admin Issues has an assigned monitor and refund approver during the pilot
 - Stripe checkout creation idempotency and existing-session reuse are verified so retry/double-tap requests do not create duplicate sessions
 - every visible launch vendor is verified in the live Stripe Dashboard; vendors that are not ready are hidden before go-live
 - Playwright smoke checks pass for public routes and configured role credentials

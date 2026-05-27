@@ -87,10 +87,12 @@ export default function BuyerAccountMenu() {
                             {portal.label}
                         </Link>
                     )}
-                    <button type="button" className="btn btn-ghost" disabled style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px', opacity: 0.62 }}>
-                        <Icon name="settings" size={16} />
-                        Settings soon
-                    </button>
+                    {profile?.role !== 'admin' && (
+                        <Link to="/report-issue" onClick={() => setOpen(false)} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '6px' }}>
+                            <Icon name="bell" size={16} />
+                            Report an issue
+                        </Link>
+                    )}
                     <button type="button" onClick={handleSignOut} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--red)' }}>
                         Sign Out
                     </button>

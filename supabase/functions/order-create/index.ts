@@ -4,6 +4,7 @@ import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
+import { normalizeSubmittedWhatsAppPhone } from "../_shared/phone.ts"
 import { normalizeScheduledCollection } from "../_shared/scheduled-collection.ts"
 import {
   type AggregatedOrderItem,
@@ -12,7 +13,7 @@ import {
 } from "./order-items.ts"
 
 const log = logger('order-create')
-const SERVICE_FEE_AMOUNT = 2
+const SERVICE_FEE_AMOUNT = 1.5
 
 interface CreateOrderRequest {
   items?: unknown
@@ -58,7 +59,10 @@ serve(async (req: Request) => {
     const body = (await req.json()) as CreateOrderRequest
     const tipAmount = roundMoney(Math.max(Number(body.tip_amount || 0), 0))
     const customerEmail = (body.customer_email || '').trim()
-    const customerPhone = (body.customer_phone || '').trim()
+    const submittedPhone = (body.customer_phone || '').trim()
+    const customerPhone = body.whatsapp_opt_in === true
+      ? normalizeSubmittedWhatsAppPhone(submittedPhone)
+      : null
     const scheduledCollection = normalizeScheduledCollection(body)
 
     let normalizedItems: AggregatedOrderItem[]
@@ -77,7 +81,7 @@ serve(async (req: Request) => {
 
     if (body.whatsapp_opt_in === true && !customerPhone) {
       return jsonResponse(
-        { error: 'Customer phone is required when WhatsApp updates are enabled' },
+        { error: 'A valid WhatsApp phone number including country code is required when WhatsApp updates are enabled' },
         400,
         origin,
       )
@@ -187,7 +191,7 @@ serve(async (req: Request) => {
         p_tip_amount: tipAmount,
         p_service_fee: serviceFee,
         p_customer_email: customerEmail,
-        p_customer_phone: customerPhone || null,
+        p_customer_phone: customerPhone,
         p_notes: body.notes?.trim() || null,
         p_whatsapp_opt_in: body.whatsapp_opt_in === true,
         p_scheduled_collection_at: scheduledCollection.scheduled_collection_at,

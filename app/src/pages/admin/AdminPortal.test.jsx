@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import AdminDashboard from './DashboardV2';
 import AdminEvents from './Events';
 import AdminOrders from './Orders';
+import AdminIssues from './Issues';
 import AdminSettings from './Settings';
 import AdminVendors from './Vendors';
 import { supabase } from '../../lib/supabase';
@@ -11,6 +12,7 @@ import { AdminService } from '../../lib/services/admin.service';
 import { AdminStoreService } from '../../lib/services/adminStore.service';
 import { RefundService } from '../../lib/services/refund.service';
 import { SettingsService } from '../../lib/services/settings.service';
+import { SupportService } from '../../lib/services/support.service';
 
 vi.mock('../../lib/supabase', () => ({
     supabase: { from: vi.fn() },
@@ -43,6 +45,13 @@ vi.mock('../../lib/services/settings.service', () => ({
         saveLaunchEvent: vi.fn(),
         getPaymentControls: vi.fn(),
         savePaymentControls: vi.fn(),
+    },
+}));
+
+vi.mock('../../lib/services/support.service', () => ({
+    SupportService: {
+        getAdminRequests: vi.fn(),
+        updateAdminRequest: vi.fn(),
     },
 }));
 
@@ -101,6 +110,23 @@ const orders = [
     },
 ];
 
+const issues = [{
+    id: 'issue-1',
+    reference_code: 'SUP-20260527-CASE0001',
+    source: 'buyer_submission',
+    reporter_role: 'buyer',
+    order_id: 'paid-1',
+    contact_name: 'Buyer Name',
+    contact_email: 'buyer@example.com',
+    issue_type: 'refund_request',
+    description: 'Please review my refund request.',
+    status: 'open',
+    priority: 'high',
+    created_at: '2026-05-27T10:00:00Z',
+    orders: { order_number: '101', total: 28.5, status: 'paid', payment_status: 'succeeded' },
+    stores: { name: 'Sunset Tacos' },
+}];
+
 function renderPage(page, path) {
     return render(<MemoryRouter initialEntries={[path]}>{page}</MemoryRouter>);
 }
@@ -130,6 +156,8 @@ beforeEach(() => {
         checkoutEnabled: false,
     });
     AdminStoreService.updateStoreStatus.mockResolvedValue({});
+    SupportService.getAdminRequests.mockResolvedValue(issues);
+    SupportService.updateAdminRequest.mockResolvedValue({ id: 'issue-1', status: 'in_review', priority: 'high', internal_notes: 'Contacted buyer' });
     supabase.from.mockImplementation((table) => {
         if (table === 'stores') {
             return resolvedQuery({
@@ -204,6 +232,23 @@ describe('admin operational surfaces', () => {
         expect(await screen.findByText('7 orders')).toBeInTheDocument();
         fireEvent.click(await screen.findByRole('button', { name: 'Suspend' }));
         await waitFor(() => expect(AdminStoreService.updateStoreStatus).toHaveBeenCalledWith('store-1', 'suspended'));
+    });
+
+    it('triages support issues and can launch an approved linked-order refund', async () => {
+        renderPage(<AdminIssues />, '/admin/issues');
+
+        expect((await screen.findAllByText('SUP-20260527-CASE0001')).length).toBeGreaterThan(0);
+        fireEvent.change(screen.getByLabelText('Case status'), { target: { value: 'in_review' } });
+        fireEvent.change(screen.getByLabelText('Internal notes'), { target: { value: 'Contacted buyer' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save triage' }));
+        await waitFor(() => expect(SupportService.updateAdminRequest).toHaveBeenCalledWith(
+            'issue-1',
+            expect.objectContaining({ status: 'in_review', internalNotes: 'Contacted buyer' }),
+        ));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Refund linked order' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Submit refund' }));
+        await waitFor(() => expect(RefundService.refundOrder).toHaveBeenCalledWith('paid-1', 'Support case SUP-20260527-CASE0001'));
     });
 
     it('keeps vendor management usable when optional performance data fails', async () => {

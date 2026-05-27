@@ -74,4 +74,11 @@ describe('Checkout cart controls', () => {
 
         expect(removeLineItem).toHaveBeenCalledWith('burger');
     });
+
+    it('defaults WhatsApp entry to the United Kingdom country code and displays the pilot fee', () => {
+        renderCheckout();
+
+        expect(screen.getByLabelText('WhatsApp country code')).toHaveValue('GB');
+        expect(screen.getByText('£1.50')).toBeInTheDocument();
+    });
 });

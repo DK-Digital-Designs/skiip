@@ -78,9 +78,9 @@ BEGIN
         v_buyer_id,
         v_store_id,
         20.00,
-        23.50,
+        23.00,
         1.50,
-        2.00,
+        1.50,
         'service-fee-buyer@example.com',
         NULL,
         NULL,
@@ -96,12 +96,12 @@ BEGIN
         )
     );
 
-    IF v_created_order.service_fee <> 2.00 THEN
-        RAISE EXCEPTION 'Expected service_fee 2.00, got %', v_created_order.service_fee;
+    IF v_created_order.service_fee <> 1.50 THEN
+        RAISE EXCEPTION 'Expected service_fee 1.50, got %', v_created_order.service_fee;
     END IF;
 
-    IF v_created_order.total <> 23.50 THEN
-        RAISE EXCEPTION 'Expected total 23.50, got %', v_created_order.total;
+    IF v_created_order.total <> 23.00 THEN
+        RAISE EXCEPTION 'Expected total 23.00, got %', v_created_order.total;
     END IF;
 
     BEGIN
@@ -113,7 +113,7 @@ BEGIN
             20.00,
             21.50,
             1.50,
-            2.00,
+            1.50,
             'service-fee-buyer@example.com',
             NULL,
             NULL,
