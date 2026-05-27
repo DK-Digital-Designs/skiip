@@ -23,11 +23,14 @@ Current payment specifics:
 - onboarding currently requests `card_payments` and `transfers`
 - vendor readiness is enforced through `stores.stripe_connect_status = 'ready'`
 - `stripe-connect-status` reconciles live Stripe account state after onboarding return
-- checkout includes a fixed GBP 2.00 `Service Fees` line on new orders
+- checkout includes a fixed GBP 1.50 `Service Fees` line on new orders for the 30 May 2026 pilot
 - service fees are computed server-side in `order-create`; browser values are display-only
-- application fees are calculated as `10%` of order subtotal plus GBP 2.00 in `stripe-checkout`
-- vendor revenue reporting must exclude the GBP 2.00 service fee
+- application fees remain calculated as `10%` of order subtotal plus GBP 1.50 in `stripe-checkout`
+- the `10%` Connect application-fee percentage remains unchanged pending the signed vendor agreement
+- Stripe processing cost is recorded separately as `orders.stripe_fee`
+- vendor revenue reporting must exclude the GBP 1.50 service fee
 - test-event full refunds include the service fee; partial/non-refundable service-fee handling is deferred
+- full refunds on destination charges set `reverse_transfer` and `refund_application_fee` so the vendor transfer and platform allocation are reversed with the buyer refund
 
 Important:
 
@@ -41,3 +44,4 @@ Important:
 - `account.updated` Connect events are matched to stores by `event.account` when present, otherwise by the account object's `id`
 - `charge.dispute.created` records an audit row and emits an alert-worthy warning for operator follow-up
 - seeded test seller accounts are not automatically Stripe-onboarded by the repo seeding scripts
+- payout timing, pending requirements, and manual or Instant Payout availability must be checked in the Stripe account before same-day settlement is promised

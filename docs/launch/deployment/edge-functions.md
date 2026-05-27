@@ -19,6 +19,14 @@ Current critical functions:
 - `notification-dispatch`
 - `resend-email-webhook`
 - `whatsapp-status-webhook`
+- `support-request`
+- `admin-support-request`
+
+Support request behavior:
+
+- `support-request` accepts authenticated buyer and seller submissions and validates role-specific issue types and owned order/store links
+- `admin-support-request` lists and updates private support cases for admin triage
+- paid vendor cancellation through `order-transition` creates one high-priority `vendor_cancellation` case for refund review; it does not issue a refund
 
 Current notification-dispatch behavior:
 

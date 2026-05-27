@@ -5,6 +5,7 @@ import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
 import { sendTransactionalNotificationsBestEffort } from "../_shared/notifications.ts"
+import { createSupportReferenceCode } from "../_shared/support-requests.ts"
 import {
   getAllowedOrderTransitions,
   isBuyerOwnedUnpaidCancellation,
@@ -53,7 +54,7 @@ serve(async (req: Request) => {
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, user_id, store_id, status, payment_status, inventory_committed_at, inventory_restocked_at')
+      .select('id, user_id, store_id, status, payment_status, customer_email, customer_phone, inventory_committed_at, inventory_restocked_at')
       .eq('id', body.orderId)
       .single()
 
@@ -143,6 +144,55 @@ serve(async (req: Request) => {
         new_status: body.status,
       },
     })
+
+    if (user.role === 'seller' && body.status === 'cancelled' && order.payment_status === 'succeeded') {
+      const { data: buyerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name, email')
+        .eq('id', order.user_id)
+        .maybeSingle()
+
+      const contactEmail = order.customer_email || buyerProfile?.email || 'unavailable@skiip.co.uk'
+      const { data: cancellationCase, error: cancellationError } = await supabase
+        .from('support_requests')
+        .insert({
+          reference_code: createSupportReferenceCode(),
+          source: 'vendor_cancellation',
+          reporter_user_id: user.id,
+          reporter_role: 'seller',
+          order_id: order.id,
+          store_id: order.store_id,
+          contact_name: buyerProfile?.full_name || contactEmail,
+          contact_email: contactEmail,
+          contact_phone: order.customer_phone || null,
+          issue_type: 'vendor_cancelled',
+          description: 'A vendor cancelled an already paid order. Admin refund review is required before this case is complete.',
+          status: 'open',
+          priority: 'high',
+        })
+        .select('id')
+        .maybeSingle()
+
+      if (cancellationError && cancellationError.code !== '23505') {
+        log.error('Failed to create paid cancellation refund-review case', {
+          orderId: order.id,
+          error: cancellationError.message,
+        })
+      } else if (cancellationCase) {
+        await supabase.from('audit_logs').insert({
+          event_type: 'support_request_created',
+          entity_type: 'support_request',
+          entity_id: cancellationCase.id,
+          actor_user_id: user.id,
+          actor_role: user.role,
+          payload: {
+            source: 'vendor_cancellation',
+            order_id: order.id,
+            priority: 'high',
+          },
+        })
+      }
+    }
 
     const notificationEvent = EVENT_MAP[body.status]
     if (notificationEvent) {

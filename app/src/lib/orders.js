@@ -2,7 +2,7 @@ export function roundCurrency(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
-export const SERVICE_FEE_AMOUNT = 2;
+export const SERVICE_FEE_AMOUNT = 1.5;
 
 export function calculateOrderSummary(items, tipAmount = 0) {
   const subtotal = roundCurrency(
@@ -247,6 +247,10 @@ export function getBuyerOrderStatusDescription(order) {
 
   if (order?.status === 'paid') {
     return 'Payment is complete. The vendor can start preparing your order.';
+  }
+
+  if (order?.status === 'cancelled' && order?.payment_status === 'succeeded') {
+    return 'This paid order was cancelled. Refund review is required and SKIIP will contact you.';
   }
 
   if (order?.status === 'cancelled') {

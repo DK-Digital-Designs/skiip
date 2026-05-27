@@ -157,10 +157,10 @@ export default function OrderTracker() {
                     order_number: 'ORD-20260512-DEMO',
                     status: 'preparing',
                     payment_status: 'succeeded',
-                    total: 39,
+                    total: 38.5,
                     subtotal: 37,
                     tip_amount: 0,
-                    service_fee: 2,
+                    service_fee: 1.5,
                     created_at: new Date().toISOString(),
                     whatsapp_opt_in: true,
                     order_items: [
@@ -294,6 +294,14 @@ export default function OrderTracker() {
                             {buyerStatusLabel}: {buyerStatusDescription}
                         </p>
                     )}
+                    <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => navigate(`/report-issue?order_id=${order.id}`)}
+                        style={{ marginTop: '20px' }}
+                    >
+                        Report an issue
+                    </button>
                 </section>
 
                 <section className="card">

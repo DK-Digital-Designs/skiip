@@ -204,6 +204,8 @@ async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event
       {
         payment_intent: reconciliation.paymentIntentId,
         reason: 'requested_by_customer',
+        reverse_transfer: true,
+        refund_application_fee: true,
         metadata: {
           order_id: orderId,
           auto_refund_reason: 'completed_after_order_cancelled',
@@ -291,6 +293,8 @@ async function handleCheckoutSessionCompleted(supabase: any, event: Stripe.Event
       {
         payment_intent: reconciliation.paymentIntentId,
         reason: 'requested_by_customer',
+        reverse_transfer: true,
+        refund_application_fee: true,
         metadata: { order_id: orderId, auto_refund_reason: 'inventory_unavailable' },
       },
       {

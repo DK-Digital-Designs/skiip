@@ -9,8 +9,10 @@ Read this when you need the what is working details from [Current State](../CURR
 - authenticated checkout only
 - cart to order creation
 - Stripe Checkout redirect
+- country-code based notification phone capture during checkout
 - order tracker with live updates
 - buyer order history view
+- authenticated issue reporting from account, order history, tracking, and footer entry points
 
 ### Vendor
 
@@ -22,11 +24,13 @@ Read this when you need the what is working details from [Current State](../CURR
 - `paid -> preparing -> ready -> collected`
 - cancellation path
 - Stripe onboarding link generation
+- authenticated issue reporting from the seller account menu
 
 ### Admin
 
 - admin operations navigation across dashboard, orders, vendors, event setup, and settings
 - read-only dashboard metrics and operational health overview
+- issue queue counts and triage controls for buyer/vendor support requests
 - recent order listing with refund and payment reconciliation actions in Admin Orders
 - vendor performance summary alongside vendor management
 - notification health summary
@@ -43,6 +47,7 @@ Read this when you need the what is working details from [Current State](../CURR
 - payment failure recording
 - payment reconciliation fields exposed in Admin Orders
 - refund recording
+- private support-request storage with admin-only read access and edge-function mediated submission/triage
 - audit logging for key order and payment events
 - user profile reconciliation trigger/backfill support
 - queue-backed notification dispatch with delivery webhooks

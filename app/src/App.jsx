@@ -15,6 +15,7 @@ import UnifiedLogin from './pages/shared/Login';
 import UnifiedSignup from './pages/shared/Signup';
 import ForgotPassword from './pages/shared/ForgotPassword';
 import ResetPassword from './pages/shared/ResetPassword';
+import ReportIssue from './pages/shared/ReportIssue';
 
 import VendorDashboard from './pages/vendor/Dashboard';
 import VendorProducts from './pages/vendor/Products';
@@ -25,6 +26,7 @@ import AdminOrders from './pages/admin/Orders';
 import AdminVendors from './pages/admin/Vendors';
 import AdminEvents from './pages/admin/Events';
 import AdminSettings from './pages/admin/Settings';
+import AdminIssues from './pages/admin/Issues';
 import NotFound from './pages/NotFound';
 
 import ProtectedRoute from './components/shared/ProtectedRoute';
@@ -53,6 +55,14 @@ function App() {
                 <Route path="/signup" element={<UnifiedSignup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                    path="/report-issue"
+                    element={
+                        <ProtectedRoute roles={['buyer', 'seller']}>
+                            <ReportIssue />
+                        </ProtectedRoute>
+                    }
+                />
                 {/* Legacy redirects keep old links from breaking */}
                 <Route path="/order/login" element={<UnifiedLogin />} />
                 <Route path="/vendor/login" element={<UnifiedLogin />} />
@@ -122,6 +132,14 @@ function App() {
                     element={
                         <ProtectedRoute roles={['admin']}>
                             <AdminEvents />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/issues"
+                    element={
+                        <ProtectedRoute roles={['admin']}>
+                            <AdminIssues />
                         </ProtectedRoute>
                     }
                 />

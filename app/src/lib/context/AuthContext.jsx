@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthService } from '../services/auth.service';
 import {
     clearPendingPasswordRecoveryRequest,
@@ -8,6 +8,14 @@ import {
     routeActivePasswordRecoverySession,
 } from '../auth-callback';
 import { supabase, isSupabaseConfigured } from '../supabase';
+import {
+    clearSessionActivity,
+    getSessionActivityStorageKey,
+    getSessionTimeoutHours,
+    isSessionInactive,
+    markSessionActivity,
+    SESSION_EXPIRED_REASON,
+} from '../session-timeout';
 
 const AuthContext = createContext({});
 const PASSWORD_RECOVERY_SESSION_KEY = 'skiip-password-recovery-session';
@@ -21,6 +29,7 @@ export const AuthProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [passwordRecoverySession, setPasswordRecoverySession] = useState(getStoredRecoverySession);
+    const expiringSession = useRef(false);
 
     useEffect(() => {
         if (!isSupabaseConfigured()) {
@@ -145,9 +154,80 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!user?.id || !profile?.role || !isSupabaseConfigured()) return undefined;
+
+        const timeoutHours = getSessionTimeoutHours(profile.role);
+        if (!timeoutHours) return undefined;
+
+        const storageKey = getSessionActivityStorageKey(user.id);
+        let lastWriteAt = 0;
+        expiringSession.current = false;
+
+        async function expireIfInactive() {
+            const storedActivity = window.localStorage.getItem(storageKey);
+            if (!storedActivity) {
+                markSessionActivity(user.id);
+                return;
+            }
+
+            if (!isSessionInactive(storedActivity, timeoutHours) || expiringSession.current) return;
+
+            expiringSession.current = true;
+            clearSessionActivity(user.id);
+            await AuthService.signOut();
+            window.location.hash = `/login?reason=${SESSION_EXPIRED_REASON}`;
+        }
+
+        function handleActivity() {
+            if (expiringSession.current) return;
+            const now = Date.now();
+            if (now - lastWriteAt < 30000) return;
+            lastWriteAt = now;
+            markSessionActivity(user.id, now);
+        }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'visible') expireIfInactive();
+        }
+
+        function handleStorage(event) {
+            if (event.key === storageKey) expireIfInactive();
+        }
+
+        expireIfInactive();
+        const timer = window.setInterval(expireIfInactive, Math.min(timeoutHours * 60 * 60 * 1000, 60000));
+        const activityEvents = ['pointerdown', 'keydown', 'touchstart'];
+        activityEvents.forEach((eventName) => window.addEventListener(eventName, handleActivity, { passive: true }));
+        window.addEventListener('storage', handleStorage);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.clearInterval(timer);
+            activityEvents.forEach((eventName) => window.removeEventListener(eventName, handleActivity));
+            window.removeEventListener('storage', handleStorage);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [user?.id, profile?.role]);
+
     function clearPasswordRecoverySession() {
         window.sessionStorage.removeItem(PASSWORD_RECOVERY_SESSION_KEY);
         setPasswordRecoverySession(false);
+    }
+
+    async function signIn(...args) {
+        const result = await AuthService.signIn(...args);
+        if (result?.user?.id) {
+            markSessionActivity(result.user.id);
+        }
+        return result;
+    }
+
+    async function signOut() {
+        if (user?.id) {
+            clearSessionActivity(user.id);
+        }
+        return AuthService.signOut();
     }
 
     const value = {
@@ -156,9 +236,9 @@ export const AuthProvider = ({ children }) => {
         loading,
         passwordRecoverySession,
         clearPasswordRecoverySession,
-        signIn: AuthService.signIn.bind(AuthService),
+        signIn,
         signUp: AuthService.signUp.bind(AuthService),
-        signOut: AuthService.signOut.bind(AuthService),
+        signOut,
     };
 
     return (

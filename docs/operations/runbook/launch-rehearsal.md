@@ -8,8 +8,11 @@ Before a real launch or high-confidence release:
 2. verify the seller has completed Stripe onboarding
 3. place a Stripe test-mode order
 4. verify the webhook changes the order to `paid`
-5. verify Admin Orders shows the Stripe payment intent, charge, platform fee, Stripe fee, and vendor net
+5. verify the new order has a GBP 1.50 service fee and Admin Orders shows the Stripe payment intent, charge, unchanged `10% of subtotal + GBP 1.50` application fee, Stripe fee, and vendor net
 6. verify the vendor can move to `preparing`, `ready`, and `collected`
-7. verify admin can refund a paid order from Admin Orders
-8. verify audit and notification records are written
-9. if notification retry recovery matters, verify who or what will invoke `notification-dispatch`
+7. cancel one already-paid order as the vendor and verify a high-priority Admin Issues refund-review case is created without automatically marking the order refunded
+8. verify admin can refund a paid order from Admin Orders or its linked case and the destination-charge fee/transfer allocation is reversed
+9. submit a buyer issue and a vendor issue, then verify Admin Issues triage status, priority, notes, and audit logging
+10. verify audit and notification records are written
+11. confirm connected-account payout schedule, pending requirements, and available manual/Instant Payout options in Stripe before stating settlement timing
+12. if notification retry recovery matters, verify who or what will invoke `notification-dispatch`

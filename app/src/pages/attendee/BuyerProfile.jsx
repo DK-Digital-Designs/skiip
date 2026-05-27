@@ -250,8 +250,9 @@ export default function BuyerProfile() {
                                         </div>
                                     </div>
 
-                                    {(canContinuePayment || canCancelOrder) && (
-                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} onClick={(event) => event.stopPropagation()}>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} onClick={(event) => event.stopPropagation()}>
+                                        {(canContinuePayment || canCancelOrder) && (
+                                            <>
                                             {canContinuePayment && (
                                                 <button type="button" className="btn btn-primary" disabled={Boolean(actionBusy)} onClick={(event) => handleContinuePayment(event, order)}>
                                                     {paymentBusy ? 'Opening payment...' : 'Continue payment'}
@@ -262,8 +263,16 @@ export default function BuyerProfile() {
                                                     {cancelBusy ? 'Cancelling...' : 'Cancel'}
                                                 </HoldToConfirmButton>
                                             )}
-                                        </div>
-                                    )}
+                                            </>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="btn btn-ghost"
+                                            onClick={() => navigate(`/report-issue?order_id=${order.id}`)}
+                                        >
+                                            Report an issue
+                                        </button>
+                                    </div>
                                 </article>
                             );
                         })}

@@ -56,8 +56,8 @@ Important: old failed rows may not automatically retry if they were marked as no
 3. Confirm checkout shows:
    - Items subtotal
    - Optional tip
-   - `Service Fees` = GBP 2.00
-   - Total = subtotal + tip + GBP 2.00
+   - `Service Fees` = GBP 1.50
+   - Total = subtotal + tip + GBP 1.50
 4. Pay in Stripe.
 5. Confirm Stripe Checkout has a separate `Service Fees` line item.
 6. Confirm order becomes `paid`.

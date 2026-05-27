@@ -7,6 +7,7 @@ import { logger } from "../_shared/logger.ts"
 import { createStripeClient, isPaymentsEnabled } from "../_shared/stripe-config.ts"
 import {
   buildCheckoutSessionIdempotencyKey,
+  calculateApplicationFeeAmount,
   getReusableCheckoutSession,
 } from "../_shared/stripe-checkout.ts"
 import { getPaymentControls } from "../_shared/payment-control.ts"
@@ -212,8 +213,7 @@ serve(async (req: Request) => {
       })
     }
 
-    const serviceFeeAmount = Math.round(serviceFee * 100)
-    const applicationFeeAmount = Math.round(storedSubtotal * PLATFORM_FEE_PERCENT * 100) + serviceFeeAmount
+    const applicationFeeAmount = calculateApplicationFeeAmount(storedSubtotal, serviceFee, PLATFORM_FEE_PERCENT)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,

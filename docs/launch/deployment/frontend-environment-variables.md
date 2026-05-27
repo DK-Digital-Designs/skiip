@@ -20,6 +20,15 @@ Launch note:
 Recommended:
 
 - `VITE_SENTRY_DSN`
+- `VITE_BUYER_SESSION_TIMEOUT_HOURS=0`
+- `VITE_VENDOR_SESSION_TIMEOUT_HOURS=0`
+- `VITE_ADMIN_SESSION_TIMEOUT_HOURS=0`
+
+Session timeout behavior:
+
+- each value is a number of inactive hours for that signed-in role; seller accounts use the vendor value
+- `0`, unset, or invalid values disable SKIIP-enforced idle sign-out
+- this is application-level unattended-browser control and does not replace Supabase project-wide Auth session settings
 
 No Vite environment variable is required for the current Vercel Web Analytics or Speed Insights integration. The repo-side requirement is that `@vercel/analytics`, `@vercel/speed-insights`, `<Analytics />`, and `<SpeedInsights />` are present in the product app. The hosted Vercel project still needs the corresponding dashboard features enabled.
 

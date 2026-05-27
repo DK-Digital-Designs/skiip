@@ -14,6 +14,7 @@ Review:
 - webhook processing errors
 - unexpected inventory changes
 - refund activity
+- active/high-priority cases in Admin Issues, with a named operator responsible for refund decisions
 - Stripe reconciliation fields on paid/refunded orders
 - whether any notification backlog is accumulating without a retry sweep
 
@@ -25,6 +26,7 @@ Useful tables:
 - `notification_webhook_events`
 - `audit_logs`
 - `stripe_processed_events`
+- `support_requests`
 
 Weekday staging smoke:
 

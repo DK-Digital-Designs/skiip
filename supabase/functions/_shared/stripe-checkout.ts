@@ -11,6 +11,14 @@ interface CheckoutSessionSnapshot {
   url?: string | null
 }
 
+export function calculateApplicationFeeAmount(
+  subtotal: number,
+  serviceFee: number,
+  platformFeePercent: number,
+) {
+  return Math.round(subtotal * platformFeePercent * 100) + Math.round(serviceFee * 100)
+}
+
 function normalizeIdempotencyPart(value: string | null | undefined) {
   return String(value || 'none').replace(/[^a-zA-Z0-9_.:-]/g, '_')
 }

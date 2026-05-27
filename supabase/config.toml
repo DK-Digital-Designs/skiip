@@ -472,3 +472,15 @@ entrypoint = "./functions/notification-dispatch/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/resend-email-webhook/index.ts"
+
+[functions.support-request]
+enabled = true
+verify_jwt = false
+import_map = "./functions/support-request/deno.json"
+entrypoint = "./functions/support-request/index.ts"
+
+[functions.admin-support-request]
+enabled = true
+verify_jwt = false
+import_map = "./functions/admin-support-request/deno.json"
+entrypoint = "./functions/admin-support-request/index.ts"
