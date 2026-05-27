@@ -22,7 +22,7 @@ export default function VendorProducts() {
         name: '',
         description: '',
         price: '',
-        category: 'Burgers',
+        category: 'Mains',
         images: [],
         inventory_quantity: 0,
     });
@@ -36,7 +36,7 @@ export default function VendorProducts() {
             if (!isSupabaseConfigured()) {
                 setStore({ id: '1', name: 'Burger Bliss (Demo)' });
                 setProducts([
-                    { id: '1', name: 'Classic Burger', price: 8.5, category: 'Burgers', description: 'Beef patty, lettuce, tomato, cheese', inventory_quantity: 18 },
+                    { id: '1', name: 'Classic Burger', price: 8.5, category: 'Mains', description: 'Beef patty, lettuce, tomato, cheese', inventory_quantity: 18 },
                 ]);
                 setLoading(false);
                 return;
@@ -83,7 +83,7 @@ export default function VendorProducts() {
             name: '',
             description: '',
             price: '',
-            category: 'Burgers',
+            category: 'Mains',
             images: [],
             inventory_quantity: 0,
         });
@@ -185,7 +185,7 @@ export default function VendorProducts() {
                             <div>
                                 <label htmlFor="product-category">Category</label>
                                 <select id="product-category" value={formData.category} onChange={(event) => setFormData({ ...formData, category: event.target.value })}>
-                                    <option>Burgers</option>
+                                    <option>Mains</option>
                                     <option>Pizza</option>
                                     <option>Sides</option>
                                     <option>Drinks</option>

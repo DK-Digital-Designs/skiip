@@ -21,7 +21,7 @@ const MOCK_VENDORS = [
         name: 'Burger Bliss',
         description: 'Gourmet burgers and loaded fries',
         pickup_location: 'Food Court A, Stall 3',
-        tags: ['Burgers', 'Budget'],
+        tags: ['Mains', 'Budget'],
         stripe_connect_status: 'ready',
     },
     {
@@ -204,7 +204,7 @@ export default function VendorList() {
                             aria-label="Search vendors"
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
-                            placeholder="Search burgers, bar, chicken..."
+                            placeholder="Search mains, bar, chicken..."
                         />
                         <select aria-label="Sort vendors" value={sortMode} onChange={handleSortModeChange}>
                             <option value="recommended">Recommended</option>

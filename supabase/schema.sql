@@ -134,9 +134,9 @@ SELECT v.id, item.name, item.description, item.price, item.category, true
 FROM vendors v
     CROSS JOIN (
         VALUES (
-                'Classic Burger', 'Beef patty, lettuce, tomato, cheese', 85.00, 'Burgers'
+                'Classic Burger', 'Beef patty, lettuce, tomato, cheese', 85.00, 'Mains'
             ), (
-                'BBQ Bacon Burger', 'Beef patty, bacon, BBQ sauce, onion rings', 95.00, 'Burgers'
+                'BBQ Bacon Burger', 'Beef patty, bacon, BBQ sauce, onion rings', 95.00, 'Mains'
             ), (
                 'Loaded Fries', 'Fries with cheese, bacon, sour cream', 55.00, 'Sides'
             ), (

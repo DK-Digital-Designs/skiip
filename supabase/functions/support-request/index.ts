@@ -4,6 +4,7 @@ import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http.ts"
 import { logger } from "../_shared/logger.ts"
 import { createServiceClient } from "../_shared/service.ts"
+import { sendSupportRequestAlertEmail } from "../_shared/support-alerts.ts"
 import {
   BUYER_ISSUE_TYPES,
   BUYER_ORDER_REQUIRED_ISSUE_TYPES,
@@ -187,6 +188,50 @@ serve(async (req: Request) => {
         priority,
       },
     })
+
+    try {
+      const alert = await sendSupportRequestAlertEmail({
+        id: supportRequest.id,
+        referenceCode: supportRequest.reference_code,
+        source,
+        reporterRole: user.role,
+        contactName: profile.full_name?.trim() || contactEmail,
+        contactEmail,
+        contactPhone,
+        issueType,
+        priority,
+        orderId,
+        storeId,
+        description,
+        createdAt: supportRequest.created_at || null,
+      })
+
+      log.info('Support request alert email sent', {
+        supportRequestId: supportRequest.id,
+        referenceCode: supportRequest.reference_code,
+        recipient: alert.recipient,
+        messageId: alert.messageId,
+      })
+    } catch (alertError: unknown) {
+      const message = alertError instanceof Error ? alertError.message : String(alertError)
+      log.error('Support request alert email failed', {
+        supportRequestId: supportRequest.id,
+        referenceCode: supportRequest.reference_code,
+        error: message,
+      })
+
+      await supabase.from('audit_logs').insert({
+        event_type: 'support_request_email_failed',
+        entity_type: 'support_request',
+        entity_id: supportRequest.id,
+        actor_user_id: user.id,
+        actor_role: user.role,
+        payload: {
+          reference_code: supportRequest.reference_code,
+          error: message,
+        },
+      })
+    }
 
     return jsonResponse({ request: supportRequest }, 201, origin)
   } catch (err: unknown) {

@@ -22,7 +22,7 @@ UPDATE public.stores AS stores
 SET tags = COALESCE(
         NULLIF(ARRAY_REMOVE(ARRAY[
             CASE WHEN classified.search_text ~ '(bar|beer|cocktail|mocktail|drink|wine|pour)' THEN 'Bar' END,
-            CASE WHEN classified.search_text ~ '(burger|fries|grill|kitchen)' THEN 'Burgers' END,
+            CASE WHEN classified.search_text ~ '(burger|fries|grill|kitchen)' THEN 'Mains' END,
             CASE WHEN classified.search_text ~ '(chicken|wing|peri)' THEN 'Chicken' END,
             CASE WHEN classified.search_text ~ '(taco|nacho|salsa)' THEN 'Tacos' END,
             CASE WHEN classified.search_text ~ '(sweet|dessert|ice|waffle)' THEN 'Sweet' END

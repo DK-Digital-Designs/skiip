@@ -15,7 +15,8 @@ These statements reflect the actual current implementation.
 - the buyer fixed service fee is GBP 1.50
 - Stripe Connect application fees remain 10% of subtotal plus the fixed service fee; Stripe processing fees are recorded separately
 - full admin-approved destination-charge refunds request transfer reversal and application-fee refund
-- buyer/vendor support requests are stored privately and surfaced only through admin triage
+- buyer/vendor support requests are stored privately, surfaced through admin triage, and send best-effort internal email alerts
+- buyer/vendor menu discovery uses the Mains category/tag label instead of Burgers; product names and descriptions can still mention burgers
 - app-controlled inactivity logout is frontend-configurable per role and defaults to disabled when timeout env vars are `0`, unset, or invalid
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`

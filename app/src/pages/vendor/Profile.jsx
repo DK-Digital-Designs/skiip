@@ -39,7 +39,7 @@ export default function VendorProfile() {
                     name: 'Burger Bliss',
                     description: 'Gourmet burgers, loaded fries, and quick festival pickups.',
                     pickup_location: 'Food Court A, Stall 3',
-                    tags: ['Burgers', 'Budget'],
+                    tags: ['Mains', 'Budget'],
                 };
                 setStore(demoStore);
                 setFormData(toFormData(demoStore));
@@ -194,7 +194,7 @@ export default function VendorProfile() {
                                 id="vendor-tags"
                                 value={formData.tags}
                                 onChange={(event) => updateField('tags', event.target.value)}
-                                placeholder="Burgers, Chicken, Bar"
+                                placeholder="Mains, Chicken, Bar"
                             />
                             <p className="text-muted" style={{ fontSize: '12px', marginTop: '6px' }}>
                                 Separate tags with commas. Keep them short and buyer-friendly.

@@ -23,6 +23,7 @@ Email:
 - `EMAIL_NOTIFICATION_EVENTS`
 - `RESEND_API_KEY`
 - `NOTIFICATION_FROM_EMAIL`
+- `SUPPORT_ALERT_EMAIL` defaults to `info@skiip.co.uk` if unset
 - `RESEND_WEBHOOK_SECRET`
 
 WhatsApp:

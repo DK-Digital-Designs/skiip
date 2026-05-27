@@ -25,6 +25,7 @@ Current critical functions:
 Support request behavior:
 
 - `support-request` accepts authenticated buyer and seller submissions and validates role-specific issue types and owned order/store links
+- `support-request` sends a best-effort internal Resend email alert to `SUPPORT_ALERT_EMAIL`, defaulting to `info@skiip.co.uk`
 - `admin-support-request` lists and updates private support cases for admin triage
 - paid vendor cancellation through `order-transition` creates one high-priority `vendor_cancellation` case for refund review; it does not issue a refund
 

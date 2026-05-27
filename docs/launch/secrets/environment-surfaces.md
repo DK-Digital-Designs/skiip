@@ -26,6 +26,7 @@ Read this when you need the environment surfaces details from [Secrets and Envir
 | Supabase functions | `SENTRY_DSN` | Recommended | Read by the shared logger for edge-function error reporting if configured. |
 | Supabase functions | `RESEND_API_KEY` | Required for email | Required for customer email notifications in any environment that should send them. |
 | Supabase functions | `NOTIFICATION_FROM_EMAIL` | Required for email | Must be a Resend-verified sender. |
+| Supabase functions | `SUPPORT_ALERT_EMAIL` | Optional | Internal issue-form alert recipient. Defaults to `info@skiip.co.uk`. |
 | Supabase functions | `RESEND_WEBHOOK_SECRET` | Required for email webhooks | Required for verifying incoming Resend delivery-status webhooks. |
 | Supabase functions | `EMAIL_PROVIDER` | Optional | Defaults to `resend`. |
 | Supabase functions | `EMAIL_NOTIFICATION_EVENTS` | Optional | Defaults to all transactional events. |

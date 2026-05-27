@@ -9,8 +9,8 @@ import {
 
 describe('vendor tag helpers', () => {
     it('normalizes comma separated vendor tags', () => {
-        expect(normalizeVendorTags('Burgers, Chicken, Burgers, A very long vendor tag')).toEqual([
-            'Burgers',
+        expect(normalizeVendorTags('Mains, Chicken, Mains, A very long vendor tag')).toEqual([
+            'Mains',
             'Chicken',
             'A very long vendor tag',
         ]);

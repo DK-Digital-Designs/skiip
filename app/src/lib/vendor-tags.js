@@ -1,5 +1,5 @@
 const FALLBACK_TAG_RULES = [
-    { tag: 'Burgers', terms: ['burger', 'fries', 'wagyu'] },
+    { tag: 'Mains', terms: ['burger', 'fries', 'wagyu', 'main', 'mains'] },
     { tag: 'Chicken', terms: ['chicken', 'wing', 'peri'] },
     { tag: 'Tacos', terms: ['taco', 'nacho', 'salsa'] },
     { tag: 'Bar', terms: ['bar', 'beer', 'cocktail', 'drink', 'mocktail'] },

@@ -39,6 +39,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `PAYMENTS_ENABLED` | `true` for rehearsals | `false` during cutover, then `true` at live-test window | Environment-level master switch for new Checkout Session creation. Keep live secrets in place for recovery/refunds. |
 | `NOTIFICATION_FROM_EMAIL` | Required for email | Required for email | Must use a verified sender/domain. |
 | `RESEND_API_KEY` | Test/staging key | Production key | Required for email notifications. |
+| `SUPPORT_ALERT_EMAIL` | Optional, defaults to `info@skiip.co.uk` | Optional, defaults to `info@skiip.co.uk` | Internal recipient for new issue-form alerts. |
 | `TWILIO_ACCOUNT_SID` | Test/staging account | Production account | Required for WhatsApp notifications if enabled. |
 | `TWILIO_AUTH_TOKEN` | Test/staging token | Production token | Required for WhatsApp notifications if enabled. |
 | `TWILIO_WHATSAPP_FROM` | Test/staging sender | Production sender | Must match approved Twilio sender. |

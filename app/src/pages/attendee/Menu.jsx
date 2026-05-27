@@ -14,8 +14,8 @@ import { trackSkiipEvent } from '../../lib/analytics';
 
 const MOCK_MENU = {
     '1': [
-        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 8.5, category: 'Burgers', store_id: '1' },
-        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 9.5, category: 'Burgers', store_id: '1' },
+        { id: '1', name: 'Classic Burger', description: 'Beef patty, lettuce, tomato, cheese', price: 8.5, category: 'Mains', store_id: '1' },
+        { id: '2', name: 'BBQ Bacon Burger', description: 'Beef patty, bacon, BBQ sauce, onion rings', price: 9.5, category: 'Mains', store_id: '1' },
         { id: '3', name: 'Loaded Fries', description: 'Fries with cheese, bacon, sour cream', price: 5.5, category: 'Sides', store_id: '1' },
         { id: '4', name: 'Cola', description: 'Ice-cold soft drink', price: 2.5, category: 'Drinks', store_id: '1' },
     ],

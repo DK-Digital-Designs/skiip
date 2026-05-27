@@ -7,6 +7,7 @@ Customer and vendor entry points:
 - buyers and sellers can use **Report an issue** from their account menu
 - buyers can also use **Issue with your order** in the footer or report against an item in My Orders/order tracking
 - submissions are authenticated; buyers and vendors receive a case reference and are contacted externally
+- each successful submission sends a best-effort internal email alert to `SUPPORT_ALERT_EMAIL`, defaulting to `info@skiip.co.uk`; email failure does not block case creation
 
 Admin process:
 

@@ -14,6 +14,8 @@ Recent hardening work introduced:
 - queue-backed notification dispatch with richer delivery timestamps
 - Resend webhook ingestion
 - protected buyer/vendor issue reporting with admin triage
+- internal email alerts for new issue-form submissions
+- Mains category/tag label for former Burgers menu discovery
 - GBP 1.50 fixed buyer service fee while retaining the 10% Stripe Connect application fee
 - country-code based checkout phone capture and E.164 normalization for opted-in notifications
 - frontend-configurable per-role inactivity logout, defaulted to disabled

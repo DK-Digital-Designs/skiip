@@ -640,7 +640,7 @@ VALUES
         'Beef patty, lettuce, tomato, cheese.',
         85.00,
         100,
-        'Burgers',
+        'Mains',
         'active',
         ARRAY['beef', 'cheese']
     ),
