@@ -13,7 +13,7 @@ import {
 } from "./order-items.ts"
 
 const log = logger('order-create')
-const SERVICE_FEE_AMOUNT = 1.5
+const SERVICE_FEE_AMOUNT = 0
 
 interface CreateOrderRequest {
   items?: unknown

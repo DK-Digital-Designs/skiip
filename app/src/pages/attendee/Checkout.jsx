@@ -407,7 +407,7 @@ export default function Checkout() {
                                 </div>
                             )}
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span className="text-muted">Service Fees</span>
+                                <span className="text-muted">{serviceFee > 0 ? 'Service Fees' : 'Service fee waived'}</span>
                                 <strong>{formatCurrency(serviceFee)}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--stroke)', paddingTop: '14px', fontSize: '20px' }}>

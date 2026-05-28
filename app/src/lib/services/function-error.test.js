@@ -68,6 +68,16 @@ describe('checkout function error mapping', () => {
     expect(error.buyerMessage).toBe('Payments are temporarily unavailable. No payment has been taken. Please try again shortly.');
   });
 
+  it('maps stale fee-window orders to a recreate-cart message', async () => {
+    const error = await createCheckoutFunctionError(functionError({
+      error: 'ORDER_REQUIRES_REFRESH',
+      message: 'This order was created before the current zero-fee checkout window. Please recreate your cart before paying.',
+    }, 409));
+
+    expect(error.code).toBe('ORDER_REQUIRES_REFRESH');
+    expect(error.buyerMessage).toBe('This order was created before the current zero-fee checkout window. Please recreate your cart before paying.');
+  });
+
   it('keeps unknown failures generic', async () => {
     const error = await createCheckoutFunctionError(functionError({
       error: 'database statement timeout at internal.stack.trace',

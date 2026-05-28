@@ -2,7 +2,7 @@ export function roundCurrency(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
-export const SERVICE_FEE_AMOUNT = 1.5;
+export const SERVICE_FEE_AMOUNT = 0;
 
 export function calculateOrderSummary(items, tipAmount = 0) {
   const subtotal = roundCurrency(

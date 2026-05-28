@@ -157,10 +157,10 @@ export default function OrderTracker() {
                     order_number: 'ORD-20260512-DEMO',
                     status: 'preparing',
                     payment_status: 'succeeded',
-                    total: 38.5,
+                    total: 37,
                     subtotal: 37,
                     tip_amount: 0,
-                    service_fee: 1.5,
+                    service_fee: 0,
                     created_at: new Date().toISOString(),
                     whatsapp_opt_in: true,
                     order_items: [

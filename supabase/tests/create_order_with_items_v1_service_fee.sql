@@ -1,5 +1,5 @@
--- Verifies that create_order_with_items_v1 stores the platform service fee
--- and rejects totals that do not include it. Run against a reset local Supabase DB.
+-- Verifies that create_order_with_items_v1 accepts the first-event zero service fee
+-- and still rejects totals that do not reconcile. Run against a reset local Supabase DB.
 
 BEGIN;
 
@@ -78,9 +78,9 @@ BEGIN
         v_buyer_id,
         v_store_id,
         20.00,
-        23.00,
-        1.50,
-        1.50,
+        20.00,
+        0.00,
+        0.00,
         'service-fee-buyer@example.com',
         NULL,
         NULL,
@@ -96,12 +96,12 @@ BEGIN
         )
     );
 
-    IF v_created_order.service_fee <> 1.50 THEN
-        RAISE EXCEPTION 'Expected service_fee 1.50, got %', v_created_order.service_fee;
+    IF v_created_order.service_fee <> 0.00 THEN
+        RAISE EXCEPTION 'Expected service_fee 0.00, got %', v_created_order.service_fee;
     END IF;
 
-    IF v_created_order.total <> 23.00 THEN
-        RAISE EXCEPTION 'Expected total 23.00, got %', v_created_order.total;
+    IF v_created_order.total <> 20.00 THEN
+        RAISE EXCEPTION 'Expected total 20.00, got %', v_created_order.total;
     END IF;
 
     BEGIN
@@ -111,9 +111,9 @@ BEGIN
             v_buyer_id,
             v_store_id,
             20.00,
-            21.50,
+            20.00,
             1.50,
-            1.50,
+            0.00,
             'service-fee-buyer@example.com',
             NULL,
             NULL,
@@ -129,7 +129,7 @@ BEGIN
             )
         );
 
-        RAISE EXCEPTION 'Expected create_order_with_items_v1 to reject missing service fee total';
+        RAISE EXCEPTION 'Expected create_order_with_items_v1 to reject mismatched total';
     EXCEPTION
         WHEN raise_exception THEN
             IF SQLERRM <> 'ORDER_TOTAL_MISMATCH' THEN

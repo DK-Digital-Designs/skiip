@@ -13,7 +13,7 @@ import {
 import { getPaymentControls } from "../_shared/payment-control.ts"
 
 const log = logger('stripe-checkout')
-const PLATFORM_FEE_PERCENT = 0.10
+const PLATFORM_FEE_PERCENT = 0
 
 const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
 if (!stripeSecretKey) {
@@ -144,6 +144,18 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order service fee is invalid' }, 409, origin)
     }
 
+    if (serviceFee > 0) {
+      log.warn('Order has retired service fee during first-event fee holiday', { orderId, serviceFee })
+      return jsonResponse(
+        {
+          error: 'ORDER_REQUIRES_REFRESH',
+          message: 'This order was created before the current zero-fee checkout window. Please recreate your cart before paying.',
+        },
+        409,
+        origin,
+      )
+    }
+
     if (Math.abs(storedTotal - (storedSubtotal + tipAmount + serviceFee)) > 0.01) {
       log.warn('Order total mismatch detected', { orderId, storedTotal, computed: storedSubtotal + tipAmount + serviceFee })
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
@@ -214,6 +226,24 @@ serve(async (req: Request) => {
     }
 
     const applicationFeeAmount = calculateApplicationFeeAmount(storedSubtotal, serviceFee, PLATFORM_FEE_PERCENT)
+    const paymentIntentData: {
+      application_fee_amount?: number
+      transfer_data: { destination: string }
+      metadata: { order_id: string; store_id: string }
+    } = {
+      transfer_data: {
+        destination: store.stripe_account_id,
+      },
+      metadata: {
+        order_id: orderId,
+        store_id: order.store_id,
+      },
+    }
+
+    if (applicationFeeAmount > 0) {
+      paymentIntentData.application_fee_amount = applicationFeeAmount
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -224,16 +254,7 @@ serve(async (req: Request) => {
         order_id: orderId,
         store_id: order.store_id,
       },
-      payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
-        transfer_data: {
-          destination: store.stripe_account_id,
-        },
-        metadata: {
-          order_id: orderId,
-          store_id: order.store_id,
-        },
-      },
+      payment_intent_data: paymentIntentData,
     }, {
       idempotencyKey: buildCheckoutSessionIdempotencyKey(order),
     })

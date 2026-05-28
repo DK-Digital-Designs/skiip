@@ -28,7 +28,7 @@ describe('order utilities', () => {
     expect(roundCurrency('2.499')).toBe(2.5);
   });
 
-  it('calculates subtotal, service fee, tip, and total', () => {
+  it('calculates subtotal, zero service fee, tip, and total', () => {
     const summary = calculateOrderSummary(
       [
         { price: 8.5, quantity: 2 },
@@ -40,8 +40,8 @@ describe('order utilities', () => {
     expect(summary).toEqual({
       subtotal: 20.25,
       tip: 1.75,
-      serviceFee: 1.5,
-      total: 23.5,
+      serviceFee: 0,
+      total: 22,
     });
   });
 

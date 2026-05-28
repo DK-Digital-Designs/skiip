@@ -97,11 +97,10 @@ For each staging payment rehearsal, compare:
 Operational notes:
 
 - the 30 May 2026 pilot rehearsal must remain in Stripe test mode until live-money approval and the controlled live test window
-- checkout includes a fixed GBP 1.50 `Service Fees` line for the 30 May 2026 pilot
-- the service fee is platform-retained and is included in Stripe `application_fee_amount`
-- `application_fee_amount` is calculated as `10%` of order subtotal plus GBP 1.50, not as `10%` of the full buyer total
-- vendor gross revenue excludes service fees and should use order subtotal plus tip
-- `vendor_net` is calculated from buyer total minus platform fee and Stripe fee after the webhook retrieves the expanded balance transaction
+- checkout has a first-event fee holiday: the buyer service fee is GBP 0 and no service-fee line is sent to Stripe Checkout
+- Stripe Connect `application_fee_amount` is omitted when the calculated application fee is GBP 0
+- vendor gross revenue should use order subtotal plus tip
+- `vendor_net` is calculated from buyer total minus the recorded application fee and actual Stripe fee after the webhook retrieves the expanded balance transaction
 - older orders may show missing fee values if they were paid before reconciliation fields were populated
 
 ### Vendor cannot change order status
