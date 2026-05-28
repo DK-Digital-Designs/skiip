@@ -22,7 +22,8 @@ Historical progress logs:
 | Dean Gibson | ~0.75 hours | 2026/05/27 | Final pilot feedback hotfix: renamed the Burgers category/tag label to Mains across buyer/vendor displays and seed/reset data, added a production data migration for existing product categories/store tags, and added best-effort internal support-request email alerts to `info@skiip.co.uk`/`SUPPORT_ALERT_EMAIL`. Automated verification tests intentionally skipped for client manual verification. |
 | Dean Gibson | ~1.0 hours | 2026/05/28 | Completed launch environment parity signoff: verified the production domain and deployed `0.30.0` bundle, confirmed runtime Supabase project `jmqjuvfjthwbsbelgccs`, removed stale production CORS exposure by setting explicit production `ALLOWED_ORIGINS`, set `WHATSAPP_SEND_MODE=disabled` and `SKIIP_ENVIRONMENT=production`, retested launch-critical function CORS, ran a focused live buyer smoke against real vendor data, recorded GitHub closure evidence, closed #17/#16/#39, and deferred WhatsApp verification #18 plus DB cleanup #55 out of launch scope. |
 | Dean Gibson | ~1.0 hours | 2026/05/28 | Applied first-event fee holiday: set new buyer service fees to GBP 0, set the Stripe Connect application-fee percentage to 0, omitted zero application fees from new Checkout Sessions, blocked stale pending orders carrying retired service fees from payment, updated checkout UI/tests, and corrected active launch/runtime documentation. Stripe processing fees remain recorded through reconciliation. |
-| **TOTAL** | **~14.75 hours** | | |
+| Dean Gibson | ~0.25 hours | 2026/05/28 | Marked the launch-ready release baseline as `1.0.0`: updated the canonical `VERSION`, ran the version sync script for app package metadata and footer version export, and updated launch release tracking. |
+| **TOTAL** | **~15.0 hours** | | |
 
 ## Tracking Rules
 

@@ -406,10 +406,12 @@ export default function Checkout() {
                                     <strong>{formatCurrency(tip)}</strong>
                                 </div>
                             )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span className="text-muted">{serviceFee > 0 ? 'Service Fees' : 'Service fee waived'}</span>
-                                <strong>{formatCurrency(serviceFee)}</strong>
-                            </div>
+                            {serviceFee > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span className="text-muted">Service Fees</span>
+                                    <strong>{formatCurrency(serviceFee)}</strong>
+                                </div>
+                            )}
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--stroke)', paddingTop: '14px', fontSize: '20px' }}>
                                 <strong>Total</strong>
                                 <strong className="text-accent">{formatCurrency(total)}</strong>
