@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { APP_VERSION_LABEL } from '../../lib/version';
 
 const footerLinks = [
-    { label: 'Who we are', href: 'https://www.skiip.co.uk' },
-    { label: 'Cookies', href: 'https://www.skiip.co.uk/cookies' },
-    { label: 'Privacy', href: 'https://www.skiip.co.uk/privacy' },
-    { label: 'Terms and Conditions', href: 'https://www.skiip.co.uk/terms' },
+    { label: 'Who we are', href: 'https://business.skiip.co.uk/experience' },
+    { label: 'Cookies', href: 'https://business.skiip.co.uk/cookies' },
+    { label: 'Privacy', href: 'https://business.skiip.co.uk/privacy' },
+    { label: 'Terms and Conditions', href: 'https://business.skiip.co.uk/terms' },
     { label: 'Issue with your order', to: '/report-issue' },
 ];
 
