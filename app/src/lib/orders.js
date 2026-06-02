@@ -23,8 +23,8 @@ export function getAllowedOrderTransitions(status) {
   const transitions = {
     pending: ['cancelled'],
     paid: ['preparing', 'cancelled'],
-    preparing: ['ready', 'cancelled'],
-    ready: ['collected', 'cancelled'],
+    preparing: ['ready'],
+    ready: ['collected'],
     collected: [],
     cancelled: [],
     refunded: [],

@@ -338,7 +338,7 @@ export default function OrderTracker() {
                         )}
                         {Number(order.service_fee || 0) > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
-                                <span className="text-muted">Service Fees</span>
+                                <span className="text-muted">Service Fee</span>
                                 <span>{formatCurrency(order.service_fee)}</span>
                             </div>
                         )}

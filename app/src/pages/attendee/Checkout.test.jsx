@@ -91,7 +91,7 @@ describe('Checkout cart controls', () => {
 
         expect(screen.getByLabelText('WhatsApp country code')).toHaveValue('GB');
         expect(screen.queryByText('Service fee waived')).not.toBeInTheDocument();
-        expect(screen.queryByText('Service Fees')).not.toBeInTheDocument();
+        expect(screen.queryByText('Service Fee')).not.toBeInTheDocument();
     });
 
     it('shows the service fee row when a fee is present', () => {
@@ -104,7 +104,7 @@ describe('Checkout cart controls', () => {
 
         renderCheckout();
 
-        expect(screen.getByText('Service Fees')).toBeInTheDocument();
+        expect(screen.getByText('Service Fee')).toBeInTheDocument();
         expect(screen.getByText(/1\.50/)).toBeInTheDocument();
     });
 });

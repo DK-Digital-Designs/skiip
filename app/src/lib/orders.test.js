@@ -45,9 +45,11 @@ describe('order utilities', () => {
     });
   });
 
-  it('returns production-safe order transitions', () => {
+  it('returns pre-prep-only cancellation transitions', () => {
     expect(getAllowedOrderTransitions('paid')).toEqual(['preparing', 'cancelled']);
     expect(getAllowedOrderTransitions('pending')).toEqual(['cancelled']);
+    expect(getAllowedOrderTransitions('preparing')).toEqual(['ready']);
+    expect(getAllowedOrderTransitions('ready')).toEqual(['collected']);
   });
 
   it('detects unpaid pending orders that buyers can recover or cancel', () => {

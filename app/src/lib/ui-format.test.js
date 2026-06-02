@@ -23,8 +23,10 @@ describe('ui formatting helpers', () => {
     ]);
   });
 
-  it('keeps ready orders from showing cancel actions', () => {
+  it('hides cancel actions once preparation starts', () => {
+    expect(shouldShowVendorCancel({ status: 'preparing', payment_status: 'succeeded' })).toBe(false);
     expect(shouldShowVendorCancel({ status: 'ready', payment_status: 'succeeded' })).toBe(false);
+    expect(shouldShowVendorCancel({ status: 'collected', payment_status: 'succeeded' })).toBe(false);
     expect(shouldShowVendorCancel({ status: 'paid', payment_status: 'succeeded' })).toBe(true);
     expect(shouldShowVendorCancel({ status: 'pending', payment_status: 'succeeded' })).toBe(false);
   });

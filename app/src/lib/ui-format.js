@@ -43,8 +43,7 @@ export function getQueueVisual(status) {
 
 export function shouldShowVendorCancel(order) {
     const allowedTransitions = getAllowedOrderTransitions(order?.status);
-    return order?.status !== 'ready'
-        && allowedTransitions.includes('cancelled')
+    return allowedTransitions.includes('cancelled')
         && (order?.status !== 'pending' || canCancelUnpaidOrder(order));
 }
 

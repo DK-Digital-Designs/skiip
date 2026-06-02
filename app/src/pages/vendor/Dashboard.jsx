@@ -137,7 +137,7 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                         type="button"
                         className={`btn ${getVendorActionClass(primaryTransition.status)}`}
                         disabled={isBusy}
-                        onClick={() => onTransition(order.id, primaryTransition.status)}
+                        onClick={() => onTransition(order, primaryTransition.status)}
                         style={{ minHeight: '40px', padding: '9px 13px' }}
                     >
                         {isBusy ? 'Updating...' : primaryTransition.label}
@@ -146,7 +146,7 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                 {canCancel && (
                     <HoldToConfirmButton
                         disabled={isBusy}
-                        onConfirm={() => onTransition(order.id, 'cancelled')}
+                        onConfirm={() => onTransition(order, 'cancelled')}
                         style={{ minHeight: '40px', padding: '9px 13px' }}
                     >
                         {isBusy ? 'Updating...' : 'Cancel'}
@@ -290,15 +290,20 @@ export default function VendorDashboard() {
         }
     }
 
-    async function updateOrderStatus(orderId, newStatus) {
+    async function updateOrderStatus(order, newStatus) {
+        if (newStatus === 'cancelled' && ['preparing', 'ready', 'collected'].includes(order?.status)) {
+            addToast('Orders cannot be cancelled once preparation has started.', 'error');
+            return;
+        }
+
         if (!isSupabaseConfigured()) {
             addToast('Demo mode: status update simulated', 'info');
             return;
         }
 
-        setTransitioningOrderId(orderId);
+        setTransitioningOrderId(order.id);
         updateOrderStatusMutation.mutate(
-            { orderId, status: newStatus },
+            { orderId: order.id, status: newStatus },
             {
                 onSuccess: () => addToast(getVendorTransitionSuccessMessage(newStatus), 'success'),
                 onError: (error) => {
