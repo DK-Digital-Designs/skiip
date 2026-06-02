@@ -6,6 +6,7 @@ export const useStoreOrders = (storeId, filter = 'active') => {
         queryKey: ['storeOrders', storeId, filter],
         queryFn: () => OrderService.getStoreOrders(storeId, filter),
         enabled: !!storeId, // Only run if we have a storeId
+        refetchInterval: filter === 'active' ? 15000 : false,
     });
 };
 

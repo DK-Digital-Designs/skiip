@@ -27,7 +27,9 @@ Deno.test("order paid email renders branded HTML and text fallback", () => {
   assertStringIncludes(content.html, "Track your order");
   assertStringIncludes(content.html, "Total paid");
   assertStringIncludes(content.html, "GBP 42.00");
+  assertStringIncludes(content.html, "Orders cannot be cancelled once the vendor has started preparing the food.");
   assertStringIncludes(content.text, "SKIIP");
+  assertStringIncludes(content.text, "Orders cannot be cancelled once the vendor has started preparing the food.");
   assertStringIncludes(content.text, "Track your order: https://www.skiip.co.uk/#/order/profile");
 });
 

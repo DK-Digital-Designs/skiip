@@ -2,7 +2,7 @@ export function roundCurrency(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
-export const SERVICE_FEE_AMOUNT = 0;
+export const SERVICE_FEE_AMOUNT = 1.5;
 
 export function calculateOrderSummary(items, tipAmount = 0) {
   const subtotal = roundCurrency(
@@ -23,8 +23,8 @@ export function getAllowedOrderTransitions(status) {
   const transitions = {
     pending: ['cancelled'],
     paid: ['preparing', 'cancelled'],
-    preparing: ['ready', 'cancelled'],
-    ready: ['collected', 'cancelled'],
+    preparing: ['ready'],
+    ready: ['collected'],
     collected: [],
     cancelled: [],
     refunded: [],
@@ -51,8 +51,8 @@ export function canCancelUnpaidOrder(order) {
 export const VENDOR_ORDER_LANE_DEFINITIONS = [
   {
     id: 'attention',
-    title: 'Needs review',
-    description: 'Payment or order states that need a quick check before prep.',
+    title: 'Awaiting Customer Payments',
+    description: 'Orders waiting for customer payment confirmation.',
   },
   {
     id: 'paid',
@@ -85,7 +85,7 @@ export const VENDOR_ACTIVE_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', '
 export const VENDOR_ALL_ORDER_LANE_IDS = ['attention', 'paid', 'preparing', 'ready', 'done', 'closed'];
 
 export const VENDOR_ORDER_FILTERS = [
-  { id: 'attention', label: 'Needs review', laneIds: ['attention'], queryFilter: 'active' },
+  { id: 'attention', label: 'Awaiting Customer Payments', laneIds: ['attention'], queryFilter: 'active' },
   { id: 'paid', label: 'New', laneIds: ['paid'], queryFilter: 'active' },
   { id: 'preparing', label: 'Preparing', laneIds: ['preparing'], queryFilter: 'active' },
   { id: 'ready', label: 'Ready', laneIds: ['ready'], queryFilter: 'active' },
@@ -93,7 +93,7 @@ export const VENDOR_ORDER_FILTERS = [
 ];
 
 export const VENDOR_LANE_EMPTY_MESSAGES = {
-  attention: 'No orders need review.',
+  attention: 'No orders are awaiting customer payment confirmation.',
   paid: 'No paid orders waiting to start.',
   preparing: 'No orders are currently being prepared.',
   ready: 'No orders are waiting for collection.',

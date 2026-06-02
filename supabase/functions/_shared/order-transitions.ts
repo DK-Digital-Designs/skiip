@@ -1,8 +1,8 @@
 export const ALLOWED_ORDER_TRANSITIONS: Record<string, string[]> = {
   pending: ["cancelled"],
   paid: ["preparing", "cancelled"],
-  preparing: ["ready", "cancelled"],
-  ready: ["collected", "cancelled"],
+  preparing: ["ready"],
+  ready: ["collected"],
   collected: [],
   cancelled: [],
   refunded: [],

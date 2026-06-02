@@ -18,6 +18,6 @@ Paid vendor cancellations:
 - cancellation restocks inventory where appropriate, but is not a completed refund until an admin refund succeeds
 - monitor the Issues queue during the pilot and record the refund decision in internal case notes
 
-For the first event, the buyer service fee and Connect application fee are both GBP 0. Full refunds still reverse the destination-charge transfer path, and Stripe processing-fee handling remains subject to Stripe's actual fee behavior.
+For the current event, the buyer service fee is GBP 1.50 per order while the percentage Connect application fee remains 0. Full refunds still reverse the destination-charge transfer path, and Stripe processing-fee handling remains subject to Stripe's actual fee behavior.
 
 Refunds should be treated as financial operations, not simple UI status changes.

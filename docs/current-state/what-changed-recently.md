@@ -16,7 +16,7 @@ Recent hardening work introduced:
 - protected buyer/vendor issue reporting with admin triage
 - internal email alerts for new issue-form submissions
 - Mains category/tag label for former Burgers menu discovery
-- first-event fee holiday: GBP 0 buyer service fee and GBP 0 Stripe Connect application fee, with Stripe processing fees still recorded separately
+- event-readiness update: restored the fixed GBP 1.50 buyer service fee, kept the percentage Connect application fee at GBP 0, and tightened cancellation so orders cannot be cancelled once preparation starts
 - country-code based checkout phone capture and E.164 normalization for opted-in notifications
 - frontend-configurable per-role inactivity logout, defaulted to disabled
 - SEO/search assets, Vercel Analytics, Speed Insights, and privacy-conscious buyer-funnel event tracking

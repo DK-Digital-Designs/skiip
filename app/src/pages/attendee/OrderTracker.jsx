@@ -143,7 +143,7 @@ export default function OrderTracker() {
             addToast('Order cancelled.', 'success');
         } catch (error) {
             console.error('Cancel order failed:', error);
-            addToast('Could not cancel this order. Refresh and try again.', 'error');
+            addToast(error.buyerMessage || 'Could not cancel this order. Refresh and try again.', 'error');
         } finally {
             setActionBusy(null);
         }
@@ -338,7 +338,7 @@ export default function OrderTracker() {
                         )}
                         {Number(order.service_fee || 0) > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
-                                <span className="text-muted">Service Fees</span>
+                                <span className="text-muted">Service Fee</span>
                                 <span>{formatCurrency(order.service_fee)}</span>
                             </div>
                         )}

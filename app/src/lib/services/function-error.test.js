@@ -78,6 +78,16 @@ describe('checkout function error mapping', () => {
     expect(error.buyerMessage).toBe('This order was created before the current zero-fee checkout window. Please recreate your cart before paying.');
   });
 
+  it('maps closed cancellation windows to a buyer-safe message', async () => {
+    const error = await createCheckoutFunctionError(functionError({
+      error: 'ORDER_CANCELLATION_CLOSED',
+      message: 'Orders cannot be cancelled once preparation has started.',
+    }, 409));
+
+    expect(error.code).toBe('ORDER_CANCELLATION_CLOSED');
+    expect(error.buyerMessage).toBe('Orders cannot be cancelled once the vendor has started preparing the food.');
+  });
+
   it('keeps unknown failures generic', async () => {
     const error = await createCheckoutFunctionError(functionError({
       error: 'database statement timeout at internal.stack.trace',

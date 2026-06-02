@@ -12,8 +12,8 @@ These statements reflect the actual current implementation.
 - admin vendor/store mutations go through `admin-store`
 - protected edge functions intentionally use manual bearer validation for the May 2026 launch posture rather than Supabase gateway JWT enforcement
 - checkout currency is GBP
-- the buyer fixed service fee is GBP 0 for the first-event fee holiday
-- Stripe Connect application fees are GBP 0 for the first-event fee holiday; Stripe processing fees are recorded separately
+- the buyer fixed service fee is GBP 1.50 per order
+- Stripe Connect application fees are percentage-disabled for the current event, while the fixed GBP 1.50 buyer service fee is retained through the Connect application-fee path; Stripe processing fees are recorded separately
 - full admin-approved destination-charge refunds request transfer reversal and application-fee refund
 - buyer/vendor support requests are stored privately, surfaced through admin triage, and send best-effort internal email alerts
 - buyer/vendor menu discovery uses the Mains category/tag label instead of Burgers; product names and descriptions can still mention burgers

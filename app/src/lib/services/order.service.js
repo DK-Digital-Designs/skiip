@@ -78,7 +78,7 @@ export const OrderService = {
                 .order('scheduled_collection_at', { ascending: true });
         } else if (filter === 'active') {
             query = query.in('status', ['pending', 'paid', 'processing', 'preparing', 'ready']);
-            query = query.order('created_at', { ascending: false });
+            query = query.order('created_at', { ascending: true });
         } else {
             query = query.order('created_at', { ascending: false });
         }
@@ -105,7 +105,7 @@ export const OrderService = {
             },
         });
 
-        if (error) throw error;
+        if (error) throw await createCheckoutFunctionError(error);
         return data?.order;
     },
 

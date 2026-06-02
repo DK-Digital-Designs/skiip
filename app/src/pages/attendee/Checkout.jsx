@@ -408,7 +408,7 @@ export default function Checkout() {
                             )}
                             {serviceFee > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span className="text-muted">Service Fees</span>
+                                    <span className="text-muted">Service Fee</span>
                                     <strong>{formatCurrency(serviceFee)}</strong>
                                 </div>
                             )}
