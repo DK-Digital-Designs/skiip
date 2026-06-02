@@ -52,6 +52,10 @@ function getLaneDefinitions(filter) {
         .filter(Boolean);
 }
 
+function isActiveIncomingOrder(order) {
+    return ['pending', 'paid', 'processing', 'preparing', 'ready'].includes(order?.status);
+}
+
 function VendorOrderCard({ order, isBusy, onTransition }) {
     const scheduledCollectionLabel = getScheduledCollectionLabel(order);
     const allowedTransitions = getAllowedOrderTransitions(order.status);
@@ -221,7 +225,7 @@ export default function VendorDashboard() {
 
         const currentIds = new Set(orders.map((order) => order.id));
         const newOrderIds = orders
-            .filter((order) => !previousOrderIdsRef.current.has(order.id))
+            .filter((order) => isActiveIncomingOrder(order) && !previousOrderIdsRef.current.has(order.id))
             .map((order) => order.id);
 
         if (previousOrderIdsRef.current.size > 0 && newOrderIds.length > 0) {

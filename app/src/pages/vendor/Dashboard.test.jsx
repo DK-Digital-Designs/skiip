@@ -133,4 +133,61 @@ describe('VendorDashboard new order banner', () => {
             expect(screen.queryByText('1 new order')).not.toBeInTheDocument();
         });
     });
+
+    it('does not count historical done or closed orders as new when all orders load', async () => {
+        mockOrders = [
+            {
+                id: 'pending-1',
+                status: 'pending',
+                payment_status: 'pending',
+                created_at: '2026-06-02T10:00:00.000Z',
+                total: 1,
+                subtotal: 1,
+                tip_amount: 0,
+                service_fee: 0,
+                order_items: [{ quantity: 1, price: 1, product_snapshot: { name: 'Chakalaka' } }],
+            },
+        ];
+
+        const view = renderDashboard();
+
+        await screen.findByText('Burger Bliss');
+        expect(screen.queryByText(/new order/i)).not.toBeInTheDocument();
+
+        mockOrders = [
+            ...mockOrders,
+            {
+                id: 'done-1',
+                status: 'collected',
+                payment_status: 'succeeded',
+                created_at: '2026-06-01T10:00:00.000Z',
+                total: 10,
+                subtotal: 8.5,
+                tip_amount: 0,
+                service_fee: 1.5,
+                order_items: [{ quantity: 1, price: 8.5, product_snapshot: { name: 'Past order' } }],
+            },
+            {
+                id: 'closed-1',
+                status: 'cancelled',
+                payment_status: 'pending',
+                created_at: '2026-06-01T11:00:00.000Z',
+                total: 10,
+                subtotal: 8.5,
+                tip_amount: 0,
+                service_fee: 1.5,
+                order_items: [{ quantity: 1, price: 8.5, product_snapshot: { name: 'Cancelled order' } }],
+            },
+        ];
+
+        view.rerender(
+            <MemoryRouter>
+                <VendorDashboard />
+            </MemoryRouter>
+        );
+
+        await screen.findByText('Burger Bliss');
+        expect(screen.queryByText(/new order/i)).not.toBeInTheDocument();
+        expect(mockAddToast).not.toHaveBeenCalledWith(expect.stringMatching(/new order/i), 'success');
+    });
 });
