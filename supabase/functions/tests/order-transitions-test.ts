@@ -76,7 +76,9 @@ Deno.test("buyers can only repeat unpaid cancellation for their own orders", () 
   );
 });
 
-Deno.test("standard vendor transitions are unchanged", () => {
+Deno.test("vendor transitions close cancellation once preparation starts", () => {
   assertEquals(getAllowedOrderTransitions("paid"), ["preparing", "cancelled"]);
+  assertEquals(getAllowedOrderTransitions("preparing"), ["ready"]);
+  assertEquals(getAllowedOrderTransitions("ready"), ["collected"]);
   assertEquals(getAllowedOrderTransitions("cancelled"), []);
 });

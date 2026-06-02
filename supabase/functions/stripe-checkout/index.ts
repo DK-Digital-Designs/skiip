@@ -144,18 +144,6 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Order service fee is invalid' }, 409, origin)
     }
 
-    if (serviceFee > 0) {
-      log.warn('Order has retired service fee during first-event fee holiday', { orderId, serviceFee })
-      return jsonResponse(
-        {
-          error: 'ORDER_REQUIRES_REFRESH',
-          message: 'This order was created before the current zero-fee checkout window. Please recreate your cart before paying.',
-        },
-        409,
-        origin,
-      )
-    }
-
     if (Math.abs(storedTotal - (storedSubtotal + tipAmount + serviceFee)) > 0.01) {
       log.warn('Order total mismatch detected', { orderId, storedTotal, computed: storedSubtotal + tipAmount + serviceFee })
       return jsonResponse({ error: 'Order total mismatch' }, 409, origin)
@@ -218,7 +206,7 @@ serve(async (req: Request) => {
       lineItems.push({
         price_data: {
           currency: 'gbp',
-          product_data: { name: 'Service Fees' },
+          product_data: { name: 'Service Fee' },
           unit_amount: Math.round(serviceFee * 100),
         },
         quantity: 1,

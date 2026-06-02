@@ -14,6 +14,7 @@ import {
 } from "../_shared/order-transitions.ts"
 
 const log = logger('order-transition')
+const ORDER_CANCELLATION_CLOSED_MESSAGE = 'Orders cannot be cancelled once preparation has started.'
 
 const EVENT_MAP: Record<string, 'order_preparing' | 'order_ready' | 'order_cancelled' | undefined> = {
   preparing: 'order_preparing',
@@ -87,6 +88,17 @@ serve(async (req: Request) => {
       return jsonResponse(
         { order: { id: order.id, status: order.status } },
         200,
+        origin,
+      )
+    }
+
+    if (body.status === 'cancelled' && ['preparing', 'ready', 'collected'].includes(order.status)) {
+      return jsonResponse(
+        {
+          error: 'ORDER_CANCELLATION_CLOSED',
+          message: ORDER_CANCELLATION_CLOSED_MESSAGE,
+        },
+        409,
         origin,
       )
     }

@@ -198,6 +198,7 @@ export default function VendorDashboard() {
     const [filter, setFilter] = useState('paid');
     const [transitioningOrderId, setTransitioningOrderId] = useState(null);
     const previousOrderIdsRef = useRef(new Set());
+    const [unseenOrderIds, setUnseenOrderIds] = useState([]);
     const { addToast } = useToast();
 
     const queryFilter = getVendorOrderQueryFilter(filter);
@@ -209,6 +210,7 @@ export default function VendorDashboard() {
         [orders, lanes],
     );
     const visibleOrderCount = lanes.reduce((count, lane) => count + (groupedOrders[lane.id]?.length || 0), 0);
+    const unseenOrderCount = unseenOrderIds.filter((orderId) => orders.some((order) => order.id === orderId)).length;
 
     useEffect(() => {
         checkAuth();
@@ -218,9 +220,13 @@ export default function VendorDashboard() {
         if (!orders.length) return;
 
         const currentIds = new Set(orders.map((order) => order.id));
-        const hasNewOrder = orders.some((order) => !previousOrderIdsRef.current.has(order.id));
-        if (previousOrderIdsRef.current.size > 0 && hasNewOrder) {
-            addToast('New order received.', 'success');
+        const newOrderIds = orders
+            .filter((order) => !previousOrderIdsRef.current.has(order.id))
+            .map((order) => order.id);
+
+        if (previousOrderIdsRef.current.size > 0 && newOrderIds.length > 0) {
+            setUnseenOrderIds((current) => [...new Set([...current, ...newOrderIds])]);
+            addToast(newOrderIds.length === 1 ? 'New order received.' : `${newOrderIds.length} new orders received.`, 'success');
             playNotificationSound();
         }
         previousOrderIdsRef.current = currentIds;
@@ -308,7 +314,7 @@ export default function VendorDashboard() {
                 onSuccess: () => addToast(getVendorTransitionSuccessMessage(newStatus), 'success'),
                 onError: (error) => {
                     console.error('Error updating status:', error);
-                    addToast('Could not update the order. Refresh the queue and try again.', 'error');
+                    addToast(error.buyerMessage || 'Could not update the order. Refresh the queue and try again.', 'error');
                 },
                 onSettled: () => setTransitioningOrderId(null),
             },
@@ -352,6 +358,11 @@ export default function VendorDashboard() {
         } finally {
             setLoading(false);
         }
+    }
+
+    async function acknowledgeNewOrders() {
+        await fetchOrders();
+        setUnseenOrderIds([]);
     }
 
     if (loading) {
@@ -423,6 +434,20 @@ export default function VendorDashboard() {
                         </div>
                     </div>
                 </section>
+
+                {unseenOrderCount > 0 && (
+                    <section className="surface" style={{ padding: '16px 18px', borderRadius: '20px', border: '1px solid rgba(59,130,246,0.25)', background: 'rgba(59,130,246,0.08)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <div>
+                                <strong style={{ color: 'var(--ink)' }}>{unseenOrderCount} new {unseenOrderCount === 1 ? 'order' : 'orders'}</strong>
+                                <p className="text-muted" style={{ fontSize: '13px', marginTop: '4px' }}>Refresh the queue to acknowledge the latest incoming orders.</p>
+                            </div>
+                            <button type="button" className="btn btn-primary" onClick={acknowledgeNewOrders}>
+                                Refresh orders
+                            </button>
+                        </div>
+                    </section>
+                )}
 
                 {ordersLoading && (
                     <div className="surface empty-state">

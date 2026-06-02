@@ -9,7 +9,7 @@ After any meaningful backend or frontend deploy:
 3. confirm Web Analytics and Speed Insights are enabled on the matching Vercel project
 4. sign in as a buyer
 5. open a tagged URL such as `/?utm_source=smoke&utm_medium=manual&utm_campaign=deploy_check#/order`
-6. create a test order and confirm its service fee is GBP 0
+6. create a test order and confirm its service fee is GBP 1.50
 7. complete Stripe Checkout in test mode
 8. confirm the order flips to `paid`
 9. confirm vendor can move the order through statuses

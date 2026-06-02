@@ -5,8 +5,8 @@ import {
   getReusableCheckoutSession,
 } from "../_shared/stripe-checkout.ts";
 
-Deno.test("calculateApplicationFeeAmount returns zero during the first-event fee holiday", () => {
-  assertEquals(calculateApplicationFeeAmount(20, 0, 0), 0);
+Deno.test("calculateApplicationFeeAmount retains the fixed service fee when platform percent is zero", () => {
+  assertEquals(calculateApplicationFeeAmount(20, 1.5, 0), 150);
   assertEquals(calculateApplicationFeeAmount(0, 0, 0), 0);
 });
 

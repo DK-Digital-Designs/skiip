@@ -23,12 +23,12 @@ Current payment specifics:
 - onboarding currently requests `card_payments` and `transfers`
 - vendor readiness is enforced through `stores.stripe_connect_status = 'ready'`
 - `stripe-connect-status` reconciles live Stripe account state after onboarding return
-- checkout has a first-event fee holiday: the buyer service fee is GBP 0 and no service-fee line is sent to Stripe Checkout
+- checkout includes a fixed buyer service fee of GBP 1.50 and sends a separate `Service Fee` line to Stripe Checkout
 - service fees are still computed server-side in `order-create`; browser values are display-only
-- Connect application fees are GBP 0 for the first event and `application_fee_amount` is omitted when the calculated fee is zero
+- Connect percentage application fees remain GBP 0 for the event, while the fixed GBP 1.50 service fee is still retained through `application_fee_amount`
 - Stripe processing cost is recorded separately as `orders.stripe_fee`
-- vendor revenue reporting should use subtotal plus tip while service fees remain zero
-- test-event full refunds include item total and tips; partial/non-refundable service-fee handling is deferred
+- vendor revenue reporting should use subtotal plus tip, while service-fee retention is tracked separately
+- test-event full refunds include item total, tips, and the retained service-fee allocation through the existing full destination-charge refund path
 - full refunds on destination charges set `reverse_transfer` and `refund_application_fee` so the vendor transfer and platform allocation are reversed with the buyer refund
 
 Important:

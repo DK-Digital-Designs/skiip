@@ -13,8 +13,6 @@ Current intended operational flow:
 Allowed side paths:
 
 - `paid -> cancelled`
-- `preparing -> cancelled`
-- `ready -> cancelled`
 - `paid -> refunded`
 - `preparing -> refunded`
 - `ready -> refunded`

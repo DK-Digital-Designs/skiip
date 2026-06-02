@@ -143,7 +143,7 @@ export default function OrderTracker() {
             addToast('Order cancelled.', 'success');
         } catch (error) {
             console.error('Cancel order failed:', error);
-            addToast('Could not cancel this order. Refresh and try again.', 'error');
+            addToast(error.buyerMessage || 'Could not cancel this order. Refresh and try again.', 'error');
         } finally {
             setActionBusy(null);
         }

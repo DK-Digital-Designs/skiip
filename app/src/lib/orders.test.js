@@ -28,7 +28,7 @@ describe('order utilities', () => {
     expect(roundCurrency('2.499')).toBe(2.5);
   });
 
-  it('calculates subtotal, zero service fee, tip, and total', () => {
+  it('calculates subtotal, fixed service fee, tip, and total', () => {
     const summary = calculateOrderSummary(
       [
         { price: 8.5, quantity: 2 },
@@ -40,8 +40,8 @@ describe('order utilities', () => {
     expect(summary).toEqual({
       subtotal: 20.25,
       tip: 1.75,
-      serviceFee: 0,
-      total: 22,
+      serviceFee: 1.5,
+      total: 23.5,
     });
   });
 
@@ -156,6 +156,7 @@ describe('order utilities', () => {
   });
 
   it('keeps vendor lane and transition copy buyer-safe and non-raw', () => {
+    expect(getVendorLaneEmptyMessage('attention')).toBe('No orders are awaiting customer payment confirmation.');
     expect(getVendorLaneEmptyMessage('paid')).toBe('No paid orders waiting to start.');
     expect(getVendorLaneEmptyMessage('missing')).toBe('No orders in this lane.');
     expect(getVendorPrimaryTransition('preparing')).toEqual({ status: 'ready', label: 'Mark ready' });

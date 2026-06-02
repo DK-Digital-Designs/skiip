@@ -6,6 +6,7 @@ const SCHEDULED_COLLECTION_MESSAGE = 'Choose a valid scheduled collection time b
 const SESSION_EXPIRED_MESSAGE = 'Your session expired. Please sign in again before checking out.';
 const PAYMENTS_PAUSED_MESSAGE = 'Payments are temporarily unavailable. No payment has been taken. Please try again shortly.';
 const ORDER_REQUIRES_REFRESH_MESSAGE = 'This order was created before the current zero-fee checkout window. Please recreate your cart before paying.';
+const ORDER_CANCELLATION_CLOSED_MESSAGE = 'Orders cannot be cancelled once the vendor has started preparing the food.';
 
 export class CheckoutFunctionError extends Error {
     constructor(message, { code = null, status = null, payload = null, buyerMessage = GENERIC_CHECKOUT_ERROR_MESSAGE, cause = null } = {}) {
@@ -86,6 +87,10 @@ export function getCheckoutBuyerMessage({ code, status, payload }) {
 
     if (code === 'ORDER_REQUIRES_REFRESH') {
         return ORDER_REQUIRES_REFRESH_MESSAGE;
+    }
+
+    if (code === 'ORDER_CANCELLATION_CLOSED') {
+        return ORDER_CANCELLATION_CLOSED_MESSAGE;
     }
 
     if (status === 401) {
