@@ -27,6 +27,7 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
+- `1.6.0` is the current post-launch feature baseline for the 2026-06-02 event-readiness work: restored service fee handling, tighter cancellation enforcement, vendor queue wording/ordering updates, persistent new-order banner behavior, buyer confirmation notice updates, and the historical-order banner-count fix.
 - `1.0.0` is the first public launch-ready release baseline after final launch checkout and fee-display polish on 2026-05-28.
 - `0.29.5` was the previous hotfix testing candidate for canonical-domain password-recovery redirects after repeated live PKCE cross-origin failure.
 - `0.29.4` was the previous hotfix testing candidate for the May 26 valid password-recovery PKCE callback routing fix.
