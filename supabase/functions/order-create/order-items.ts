@@ -25,9 +25,14 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function cleanOptionalText(value: unknown, maxLength: number, label: string) {
+function cleanOptionalText(
+  value: unknown,
+  maxLength: number,
+  label: string,
+  { truncate = false }: { truncate?: boolean } = {},
+) {
   const cleaned = String(value || '').trim().replace(/\s+/g, ' ')
-  if (cleaned.length > maxLength) {
+  if (!truncate && cleaned.length > maxLength) {
     throw new OrderItemValidationError(`${label} is too long`)
   }
   return cleaned ? cleaned.slice(0, maxLength) : null
@@ -79,7 +84,10 @@ export function parseOrderItemLines(items: unknown): ParsedOrderItemLine[] {
 
     const selectedOptionIds = parseSelectedOptionIds(item.selected_option_ids ?? item.selectedOptionIds)
     const lineNote = cleanOptionalText(item.line_note ?? item.lineNote, MAX_LINE_NOTE_LENGTH, 'Line note')
-    const clientLineId = cleanOptionalText(item.client_line_id ?? item.clientLineId ?? item.lineId, 180, 'Client line ID')
+    // Non-authoritative dedup hint (the RPC ignores it); the frontend lineId
+    // concatenates product + option UUIDs + note and can exceed the cap, so
+    // truncate rather than reject an otherwise-valid configured cart.
+    const clientLineId = cleanOptionalText(item.client_line_id ?? item.clientLineId ?? item.lineId, 180, 'Client line ID', { truncate: true })
 
     parsedItems.push({
       product_id: productId,

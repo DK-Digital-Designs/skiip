@@ -184,6 +184,13 @@ function ProductConfigurationDialog({ item, groups, onAddConfigured, onClose }) 
     const [lineNote, setLineNote] = React.useState('');
     const closeButtonRef = React.useRef(null);
 
+    // The dialog stays mounted, so clear prior choices/notes whenever the
+    // configured item changes (or closes) to avoid prefilling a new line.
+    React.useEffect(() => {
+        setSelections({});
+        setLineNote('');
+    }, [item]);
+
     React.useEffect(() => {
         if (!item) return undefined;
         closeButtonRef.current?.focus();

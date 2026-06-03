@@ -101,8 +101,14 @@ function cleanGroups(value: unknown) {
       }
     })
 
-    if (required && options.length === 0) {
-      throw new Error('Required modifier groups need at least one option')
+    // A required group is only satisfiable if it has enough *active* options;
+    // counting inactive ones would let buyers reach a group they can never
+    // fulfil (the menu hides inactive options, but checkout still requires it).
+    if (required) {
+      const activeOptionCount = options.filter((option) => option.active).length
+      if (activeOptionCount < minSelect) {
+        throw new Error('Required modifier groups need at least as many active options as the minimum selection')
+      }
     }
 
     return {
