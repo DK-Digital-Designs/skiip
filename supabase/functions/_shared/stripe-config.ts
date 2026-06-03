@@ -20,6 +20,18 @@ export class StripeModeMismatchError extends Error {
   }
 }
 
+export class StripeKeyModeMismatchError extends Error {
+  expectedMode: StripeMode
+  actualMode: StripeMode
+
+  constructor(expectedMode: StripeMode, actualMode: StripeMode) {
+    super(`Stripe secret key mode mismatch: expected ${expectedMode}, received ${actualMode}`)
+    this.name = 'StripeKeyModeMismatchError'
+    this.expectedMode = expectedMode
+    this.actualMode = actualMode
+  }
+}
+
 export function getRequiredStripeMode(env: EnvReader = Deno.env): StripeMode {
   const rawMode = env.get('STRIPE_MODE')?.trim().toLowerCase()
 
@@ -28,6 +40,38 @@ export function getRequiredStripeMode(env: EnvReader = Deno.env): StripeMode {
   }
 
   throw new Error('STRIPE_MODE must be set to "test" or "live"')
+}
+
+export function getStripeSecretKeyMode(secretKey: string): StripeMode | null {
+  const trimmedKey = secretKey.trim()
+
+  if (/^(sk|rk)_test_/.test(trimmedKey)) {
+    return 'test'
+  }
+
+  if (/^(sk|rk)_live_/.test(trimmedKey)) {
+    return 'live'
+  }
+
+  return null
+}
+
+export function assertStripeSecretKeyMatchesMode(
+  secretKey: string,
+  env: EnvReader = Deno.env,
+) {
+  const expectedMode = getRequiredStripeMode(env)
+  const actualMode = getStripeSecretKeyMode(secretKey)
+
+  if (!actualMode) {
+    throw new Error(
+      `STRIPE_SECRET_KEY must start with sk_${expectedMode}_ or rk_${expectedMode}_`,
+    )
+  }
+
+  if (actualMode !== expectedMode) {
+    throw new StripeKeyModeMismatchError(expectedMode, actualMode)
+  }
 }
 
 export function assertStripeLivemode(
@@ -75,8 +119,10 @@ export async function constructWithWebhookSecrets<T>(
   throw new Error(errors[0] || 'Stripe webhook signature verification failed')
 }
 
-export function createStripeClient(secretKey: string) {
-  return new Stripe(secretKey, {
+export function createStripeClient(secretKey: string, env: EnvReader = Deno.env) {
+  assertStripeSecretKeyMatchesMode(secretKey, env)
+
+  return new Stripe(secretKey.trim(), {
     apiVersion: STRIPE_API_VERSION,
     httpClient: Stripe.createFetchHttpClient(),
   })
