@@ -8,7 +8,7 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.product_modifier_groups (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     required BOOLEAN NOT NULL DEFAULT false,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.product_modifier_groups (
 );
 
 CREATE TABLE IF NOT EXISTS public.product_modifier_options (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES public.product_modifier_groups(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     price_delta NUMERIC(10, 2) NOT NULL DEFAULT 0,
@@ -49,7 +49,7 @@ ALTER TABLE public.order_items
 ADD COLUMN IF NOT EXISTS line_note TEXT;
 
 CREATE TABLE IF NOT EXISTS public.order_item_modifier_selections (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     order_item_id UUID NOT NULL REFERENCES public.order_items(id) ON DELETE CASCADE,
     product_modifier_group_id UUID REFERENCES public.product_modifier_groups(id) ON DELETE SET NULL,
     product_modifier_option_id UUID REFERENCES public.product_modifier_options(id) ON DELETE SET NULL,
