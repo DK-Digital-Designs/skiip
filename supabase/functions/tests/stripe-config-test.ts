@@ -7,6 +7,7 @@ import {
   assertStripeSecretKeyMatchesMode,
   assertStripeLivemode,
   constructWithWebhookSecrets,
+  createStripeClient,
   getStripeSecretKeyMode,
   getRequiredStripeMode,
   isPaymentsEnabled,
@@ -90,6 +91,15 @@ Deno.test("assertStripeSecretKeyMatchesMode rejects non-secret Stripe keys", () 
     Error,
     "STRIPE_SECRET_KEY must start with sk_test_ or rk_test_",
   );
+});
+
+Deno.test("createStripeClient enforces STRIPE_MODE against the key prefix", () => {
+  const error = assertThrows(
+    () => createStripeClient("sk_live_123", env({ STRIPE_MODE: "test" })),
+    StripeKeyModeMismatchError,
+  );
+  assertEquals(error.expectedMode, "test");
+  assertEquals(error.actualMode, "live");
 });
 
 Deno.test("isPaymentsEnabled only accepts exact true", () => {
