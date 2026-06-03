@@ -16,6 +16,7 @@ import {
 
 const log = logger('order-create')
 const SERVICE_FEE_AMOUNT = 1.5
+const PRODUCT_MODIFIER_BACKEND_ENABLED = Deno.env.get('PRODUCT_MODIFIER_BACKEND_ENABLED') === 'true'
 
 interface CreateOrderRequest {
   items?: unknown
@@ -253,41 +254,61 @@ serve(async (req: Request) => {
       )
     }
 
-    const { data: modifierGroups, error: groupsError } = await supabase
-      .from('product_modifier_groups')
-      .select('id, product_id, name, required, min_select, max_select, sort_order')
-      .in('product_id', productIds)
-      .eq('status', 'active')
-      .is('deleted_at', null)
-      .order('sort_order', { ascending: true })
+    // Modifier support is dark-launchable: until PRODUCT_MODIFIER_BACKEND_ENABLED is
+    // set, the function does not touch the modifier tables (so it can be deployed
+    // ahead of the migration) and rejects any line that carries option selections
+    // rather than silently dropping their price deltas.
+    const hasConfiguredLines = parsedLines.some((line) => line.selected_option_ids.length > 0)
 
-    if (groupsError) {
-      throw groupsError
+    if (!PRODUCT_MODIFIER_BACKEND_ENABLED && hasConfiguredLines) {
+      return jsonResponse(
+        { error: 'Product modifiers are not enabled for checkout yet' },
+        400,
+        origin,
+      )
     }
 
-    const groups = (modifierGroups || []) as ModifierGroupRow[]
-    const groupIds = groups.map((group) => group.id)
-    const { data: modifierOptions, error: optionsError } = groupIds.length > 0
-      ? await supabase
-        .from('product_modifier_options')
-        .select('id, group_id, name, price_delta, sort_order')
-        .in('group_id', groupIds)
+    const groupsByProduct = new Map<string, ModifierGroupRow[]>()
+    const optionsById = new Map<string, ModifierOptionRow & { group: ModifierGroupRow }>()
+
+    if (PRODUCT_MODIFIER_BACKEND_ENABLED) {
+      const { data: modifierGroups, error: groupsError } = await supabase
+        .from('product_modifier_groups')
+        .select('id, product_id, name, required, min_select, max_select, sort_order')
+        .in('product_id', productIds)
         .eq('status', 'active')
         .is('deleted_at', null)
         .order('sort_order', { ascending: true })
-      : { data: [], error: null }
 
-    if (optionsError) {
-      throw optionsError
-    }
+      if (groupsError) {
+        throw groupsError
+      }
 
-    const groupsByProduct = groupByProduct(groups)
-    const groupsById = new Map(groups.map((group) => [group.id, group]))
-    const optionsById = new Map<string, ModifierOptionRow & { group: ModifierGroupRow }>()
-    for (const option of (modifierOptions || []) as ModifierOptionRow[]) {
-      const group = groupsById.get(option.group_id)
-      if (!group) continue
-      optionsById.set(option.id, { ...option, group })
+      const groups = (modifierGroups || []) as ModifierGroupRow[]
+      const groupIds = groups.map((group) => group.id)
+      const { data: modifierOptions, error: optionsError } = groupIds.length > 0
+        ? await supabase
+          .from('product_modifier_options')
+          .select('id, group_id, name, price_delta, sort_order')
+          .in('group_id', groupIds)
+          .eq('status', 'active')
+          .is('deleted_at', null)
+          .order('sort_order', { ascending: true })
+        : { data: [], error: null }
+
+      if (optionsError) {
+        throw optionsError
+      }
+
+      for (const [productId, productGroups] of groupByProduct(groups)) {
+        groupsByProduct.set(productId, productGroups)
+      }
+      const groupsById = new Map(groups.map((group) => [group.id, group]))
+      for (const option of (modifierOptions || []) as ModifierOptionRow[]) {
+        const group = groupsById.get(option.group_id)
+        if (!group) continue
+        optionsById.set(option.id, { ...option, group })
+      }
     }
 
     const orderItems = parsedLines.map((item) => {

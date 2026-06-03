@@ -2,10 +2,9 @@ import { supabase } from '../supabase';
 import { canUseRealProductModifiers } from '../features/productModifiers';
 import { getFunctionAuthHeaders } from './function-auth';
 
-const PRODUCT_SELECT = '*, stores(name, slug)';
-const PRODUCT_SELECT_WITH_MODIFIERS = `
-    *,
-    stores(name, slug),
+const STORES_FRAGMENT = 'stores(name, slug)';
+const STORES_FRAGMENT_WITH_LOGO = 'stores(name, slug, logo_url)';
+const MODIFIER_GROUPS_FRAGMENT = `
     product_modifier_groups(
         id,
         name,
@@ -25,6 +24,14 @@ const PRODUCT_SELECT_WITH_MODIFIERS = `
         )
     )
 `;
+
+function buildProductSelect({ withLogo = false } = {}) {
+    const stores = withLogo ? STORES_FRAGMENT_WITH_LOGO : STORES_FRAGMENT;
+    if (!canUseRealProductModifiers()) {
+        return `*, ${stores}`;
+    }
+    return `*, ${stores}, ${MODIFIER_GROUPS_FRAGMENT}`;
+}
 
 function mapModifierOption(option) {
     return {
@@ -82,7 +89,7 @@ export const ProductService = {
 
         let query = supabase
             .from('products')
-            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS : PRODUCT_SELECT, { count: 'exact' })
+            .select(buildProductSelect(), { count: 'exact' })
             .eq('status', 'active')
             .is('deleted_at', null);
 
@@ -119,7 +126,7 @@ export const ProductService = {
 
         const { data, error } = await supabase
             .from('products')
-            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS.replace('stores(name, slug)', 'stores(name, slug, logo_url)') : '*, stores(name, slug, logo_url)')
+            .select(buildProductSelect({ withLogo: true }))
             .eq('slug', slug)
             .single();
 
@@ -136,7 +143,7 @@ export const ProductService = {
 
         const { data, error } = await supabase
             .from('products')
-            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS.replace('stores(name, slug)', 'stores(name, slug, logo_url)') : '*, stores(name, slug, logo_url)')
+            .select(buildProductSelect({ withLogo: true }))
             .eq('id', id)
             .single();
 

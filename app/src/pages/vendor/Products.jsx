@@ -133,7 +133,7 @@ export default function VendorProducts() {
             ...groups,
             {
                 ...EMPTY_MODIFIER_GROUP,
-                id: `draft-group-${Date.now()}`,
+                id: `draft-group-${crypto.randomUUID()}`,
                 sortOrder: groups.length + 1,
             },
         ]);
@@ -158,7 +158,7 @@ export default function VendorProducts() {
                         ...group.options,
                         {
                             ...EMPTY_MODIFIER_OPTION,
-                            id: `draft-option-${Date.now()}`,
+                            id: `draft-option-${crypto.randomUUID()}`,
                             sortOrder: group.options.length + 1,
                         },
                     ],
