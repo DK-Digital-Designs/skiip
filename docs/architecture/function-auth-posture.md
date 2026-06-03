@@ -20,6 +20,7 @@ Protected functions using this model:
 - `admin-store`
 - `stripe-refund`
 - `stripe-onboarding-link`
+- `vendor-product-modifiers` (seller/admin only; writes go through the `replace_product_modifiers_v1()` `SECURITY DEFINER` RPC)
 
 Functions that must remain unauthenticated at the gateway:
 

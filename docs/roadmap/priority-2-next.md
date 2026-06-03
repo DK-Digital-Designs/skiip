@@ -33,3 +33,14 @@ These items matter, but they do not block a safe first launch if Priority 1 is c
   - auth failure paths
   - notification dispatch behavior
 - Add stronger CI checks for docs, tests, and release consistency.
+
+### Product Modifiers (Issue 87) Follow-ups
+
+Deferred from the combo-able products build; see [Issue 87 Follow-ups](../issue-87-follow-ups.md) for detail and file references.
+
+- Confirm hosted `PRODUCT_MODIFIER_BACKEND_ENABLED` and `ALLOWED_ORIGINS`, then run one real configured order all the way through Stripe Checkout.
+- Remove the feature-branch preview origin from `ALLOWED_ORIGINS` after the Issue 87 branch merges.
+- Surface user-facing errors when a vendor modifier save fails after the product itself saves, instead of the current silent partial save.
+- Add edge-function tests for the server-side modifier validation and re-pricing in `order-create` (only the `replace_product_modifiers_v1` RPC has SQL coverage today).
+- Align the `maxSelect` fallback between `getSelectionValidity` and `toggleOption` in the buyer menu configuration dialog.
+- Once `ALLOWED_ORIGINS` is explicitly set in every hosted environment, close the standing P1 gap and make the in-code fallback localhost-only.

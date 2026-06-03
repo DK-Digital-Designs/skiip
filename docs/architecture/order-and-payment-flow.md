@@ -40,3 +40,23 @@ Legacy order statuses still exist in the schema:
 - `delivered`
 
 They are not part of the current UI or edge-function flow.
+
+## Product Modifiers (configured items)
+
+Buyers can configure products that have modifier groups (see [Core Data Model](./core-data-model.md)). The flow stays server-authoritative:
+
+1. The buyer opens a configurable product on the menu, picks options, and optionally adds a line note. [`buildConfiguredCartLine`](../../app/src/lib/cart/cartLineIdentity.js) creates a cart line keyed by `productId::optionIds::note`, so the same product with different choices becomes distinct cart lines while identical choices merge.
+2. Checkout submits only `product_id`, `quantity`, `selected_option_ids`, and `line_note` per line (via `toOrderCreateItemPayload`) — never prices. The browser preview price is display-only.
+3. [`order-create`](../../supabase/functions/order-create/index.ts) re-loads the product's active groups/options, **re-validates** the selection server-side (rejects unknown/cross-product options, enforces `required` and `max_select`), and **re-prices** each line as `base_price + Σ price_delta`. It then persists the line, its modifier-selection snapshot, and the note through `create_order_with_items_v1()`.
+4. Vendors edit modifiers from the product form; saves go through the [`vendor-product-modifiers`](../../supabase/functions/vendor-product-modifiers/index.ts) edge function → `replace_product_modifiers_v1()`.
+
+### Feature flags
+
+The feature is dark-launchable. Frontend flags are build-time (`import.meta.env`):
+
+- `VITE_PRODUCT_MODIFIERS_UI_ENABLED` — master gate for any modifier UI
+- `VITE_PRODUCT_MODIFIER_EDITOR_UI_ENABLED` — vendor modifier editor on the product form
+- `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED` — real reads/writes and configured checkout (vs. mock/preview)
+- `VITE_PRODUCT_MODIFIER_MOCK_DATA_ENABLED` — preview fixtures only; keep `false` in hosted environments
+
+The backend has a matching guard: `order-create` only touches the modifier tables when the Supabase function secret `PRODUCT_MODIFIER_BACKEND_ENABLED=true`, and otherwise rejects any line that carries option selections. The frontend `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED` and the backend secret must be enabled together, or configured checkouts are rejected.

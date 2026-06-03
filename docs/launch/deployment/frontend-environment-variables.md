@@ -24,6 +24,20 @@ Recommended:
 - `VITE_VENDOR_SESSION_TIMEOUT_HOURS=0`
 - `VITE_ADMIN_SESSION_TIMEOUT_HOURS=0`
 
+Product modifiers (combo-able products), default `false`:
+
+- `VITE_PRODUCT_MODIFIERS_UI_ENABLED` — master gate for any modifier UI
+- `VITE_PRODUCT_MODIFIER_EDITOR_UI_ENABLED` — vendor modifier editor on the product form
+- `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED` — real reads/writes and configured checkout; must be enabled together with the backend `PRODUCT_MODIFIER_BACKEND_ENABLED` function secret
+- `VITE_PRODUCT_MODIFIER_MOCK_DATA_ENABLED` — preview fixtures only; keep `false` in hosted environments
+
+Modifier flag notes:
+
+- these are build-time (`import.meta.env`); changing them requires a redeploy/rebuild, not just a dashboard edit
+- if `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED` is on while the backend secret is off, configured checkouts are rejected by `order-create`
+- the test suite pins these off in [`app/vitest.config.js`](../../../app/vitest.config.js), so local `.env` flag values do not affect test results
+- see [Order and Payment Flow](../../architecture/order-and-payment-flow.md#feature-flags)
+
 Session timeout behavior:
 
 - each value is a number of inactive hours for that signed-in role; seller accounts use the vendor value
