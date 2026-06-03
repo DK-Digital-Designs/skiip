@@ -13,6 +13,7 @@ import {
 import { AdminService } from '../../lib/services/admin.service';
 import { RefundService } from '../../lib/services/refund.service';
 import { formatCurrency, formatOrderCode } from '../../lib/ui-format';
+import OrderItemSummary from '../../components/orders/OrderItemSummary';
 
 function hasValue(value) {
     return value !== null && value !== undefined;
@@ -182,12 +183,22 @@ export default function AdminOrders() {
                                     {expandedOrderId === order.id && hasPaymentDetails(order) && (
                                         <tr className="admin-order-detail-row">
                                             <td colSpan="8">
-                                                <div className="admin-order-details">
-                                                    <div><span>Platform fee</span><strong>{formatMoney(order.platform_fee)}</strong></div>
-                                                    <div><span>Stripe fee</span><strong>{formatMoney(order.stripe_fee)}</strong></div>
-                                                    <div><span>Vendor net</span><strong>{formatMoney(order.vendor_net)}</strong></div>
-                                                    <div><span>Payment intent</span><strong>{order.payment_intent_id || 'Not recorded'}</strong></div>
-                                                    <div><span>Charge ID</span><strong>{order.charge_id || 'Not recorded'}</strong></div>
+                                                <div style={{ display: 'grid', gap: '16px' }}>
+                                                    <div className="admin-order-details">
+                                                        <div><span>Platform fee</span><strong>{formatMoney(order.platform_fee)}</strong></div>
+                                                        <div><span>Stripe fee</span><strong>{formatMoney(order.stripe_fee)}</strong></div>
+                                                        <div><span>Vendor net</span><strong>{formatMoney(order.vendor_net)}</strong></div>
+                                                        <div><span>Payment intent</span><strong>{order.payment_intent_id || 'Not recorded'}</strong></div>
+                                                        <div><span>Charge ID</span><strong>{order.charge_id || 'Not recorded'}</strong></div>
+                                                    </div>
+                                                    {(order.order_items || []).length > 0 && (
+                                                        <div style={{ display: 'grid', gap: '10px' }}>
+                                                            <strong style={{ color: '#151b2d' }}>Order items</strong>
+                                                            {(order.order_items || []).map((item, index) => (
+                                                                <OrderItemSummary key={`${order.id}-item-${index}`} item={item} compact />
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

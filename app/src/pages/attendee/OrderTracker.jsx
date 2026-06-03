@@ -10,6 +10,7 @@ import StatusTimeline from '../../components/ui/StatusTimeline';
 import BottomNav from '../../components/ui/BottomNav';
 import Icon from '../../components/ui/Icon';
 import BackButton from '../../components/ui/BackButton';
+import OrderItemSummary from '../../components/orders/OrderItemSummary';
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 import {
     canCancelUnpaidOrder,
@@ -321,12 +322,7 @@ export default function OrderTracker() {
 
                     <div style={{ display: 'grid', gap: '12px' }}>
                         {orderItems.map((item, index) => (
-                            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', gap: '14px' }}>
-                                <span>
-                                    <strong>{item.quantity}x</strong> {item.product_snapshot?.name || 'Item'}
-                                </span>
-                                <span>{formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}</span>
-                            </div>
+                            <OrderItemSummary key={index} item={item} compact />
                         ))}
                     </div>
                     <div style={{ display: 'grid', gap: '10px', marginTop: '18px', paddingTop: '18px', borderTop: '2px solid var(--stroke)' }}>

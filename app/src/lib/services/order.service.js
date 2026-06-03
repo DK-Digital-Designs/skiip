@@ -21,7 +21,7 @@ export const OrderService = {
 
         const payload = {
             items: items.map((item) => ({
-                product_id: item.id,
+                product_id: item.productId || item.product_id || item.id,
                 quantity: item.quantity,
             })),
             customer_email,
