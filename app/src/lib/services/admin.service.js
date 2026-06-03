@@ -1,5 +1,10 @@
 import { supabase } from '../supabase';
 import { getFunctionAuthHeaders } from './function-auth';
+import { canUseRealProductModifiers } from '../features/productModifiers';
+
+const ADMIN_ORDER_ITEMS_SELECT = canUseRealProductModifiers()
+    ? 'order_items(*, order_item_modifier_selections(*))'
+    : 'order_items(*)';
 
 export const AdminService = {
     async getDashboardMetrics() {
@@ -15,7 +20,7 @@ export const AdminService = {
 
         const { data, error } = await supabase
             .from('orders')
-            .select('id, order_number, created_at, subtotal, tip_amount, service_fee, total, status, payment_status, payment_failed_at, payment_failure_code, payment_failure_message, payment_intent_id, charge_id, checkout_session_id, paid_at, platform_fee, stripe_fee, vendor_net, customer_email, customer_phone, refund_amount, scheduled_collection_at, scheduled_collection_timezone, stores(name)')
+            .select(`id, order_number, created_at, subtotal, tip_amount, service_fee, total, status, payment_status, payment_failed_at, payment_failure_code, payment_failure_message, payment_intent_id, charge_id, checkout_session_id, paid_at, platform_fee, stripe_fee, vendor_net, customer_email, customer_phone, refund_amount, scheduled_collection_at, scheduled_collection_timezone, stores(name), ${ADMIN_ORDER_ITEMS_SELECT}`)
             .order('created_at', { ascending: false })
             .limit(limit);
 

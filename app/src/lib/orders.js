@@ -6,7 +6,7 @@ export const SERVICE_FEE_AMOUNT = 1.5;
 
 export function calculateOrderSummary(items, tipAmount = 0) {
   const subtotal = roundCurrency(
-    (items || []).reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0)
+    (items || []).reduce((sum, item) => sum + Number(item.displayUnitPrice ?? item.price ?? 0) * Number(item.quantity || 0), 0)
   );
   const tip = roundCurrency(Math.max(Number(tipAmount || 0), 0));
   const serviceFee = SERVICE_FEE_AMOUNT;

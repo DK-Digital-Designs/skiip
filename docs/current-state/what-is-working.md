@@ -12,6 +12,7 @@ Read this when you need the what is working details from [Current State](../CURR
 - country-code based notification phone capture during checkout
 - order tracker with live updates
 - buyer order history view
+- configuring combo-able products (modifier options + line notes) on the menu, gated by the product-modifier feature flags
 - authenticated issue reporting from account, order history, tracking, and footer entry points
 
 ### Vendor
@@ -20,6 +21,7 @@ Read this when you need the what is working details from [Current State](../CURR
 - admin-created vendor onboarding for launch
 - store lookup from authenticated seller
 - product management
+- product modifier editor on the product form (combo groups/options), gated by the modifier feature flags
 - kanban-style order queue with active, scheduled, and all-order filtering
 - `paid -> preparing -> ready -> collected`
 - cancellation path
@@ -41,6 +43,8 @@ Read this when you need the what is working details from [Current State](../CURR
 ### Backend
 
 - server-authoritative order creation
+- server-side product-modifier validation and re-pricing during order creation, with modifier-selection snapshots persisted per line
+- atomic vendor modifier replacement via `replace_product_modifiers_v1()` behind the `vendor-product-modifiers` edge function
 - Stripe webhook idempotency tracking
 - inventory finalization on successful payment
 - automatic refund on paid-order inventory failure

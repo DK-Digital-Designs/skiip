@@ -21,6 +21,7 @@ Recent hardening work introduced:
 - frontend-configurable per-role inactivity logout, defaulted to disabled
 - SEO/search assets, Vercel Analytics, Speed Insights, and privacy-conscious buyer-funnel event tracking
 - schema and auth-profile reconciliation migrations
+- product modifiers (combo-able products): vendor modifier editor, buyer configuration UI with line-aware cart identity, server-side modifier validation/re-pricing in `order-create`, modifier-selection snapshots on order items, and a `vendor-product-modifiers` edge function — dark-launchable behind the `VITE_PRODUCT_MODIFIER_*` flags and the `PRODUCT_MODIFIER_BACKEND_ENABLED` function secret
 
 The repo now represents a first operational baseline. It does not yet represent a finished platform or a fully hardened open-launch posture.
 

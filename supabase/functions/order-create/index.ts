@@ -9,11 +9,14 @@ import { normalizeScheduledCollection } from "../_shared/scheduled-collection.ts
 import {
   type AggregatedOrderItem,
   OrderItemValidationError,
-  parseAndAggregateOrderItems,
+  type ParsedOrderItemLine,
+  aggregateOrderItemQuantities,
+  parseOrderItemLines,
 } from "./order-items.ts"
 
 const log = logger('order-create')
 const SERVICE_FEE_AMOUNT = 1.5
+const PRODUCT_MODIFIER_BACKEND_ENABLED = Deno.env.get('PRODUCT_MODIFIER_BACKEND_ENABLED') === 'true'
 
 interface CreateOrderRequest {
   items?: unknown
@@ -31,8 +34,97 @@ interface CreatedOrder {
   store_id: string
 }
 
+interface ProductRow {
+  id: string
+  store_id: string
+  name: string
+  price: number | string
+  images?: string[] | null
+  status: string
+  deleted_at?: string | null
+  inventory_quantity?: number | null
+}
+
+interface ModifierGroupRow {
+  id: string
+  product_id: string
+  name: string
+  required: boolean
+  min_select: number
+  max_select: number
+  sort_order: number
+}
+
+interface ModifierOptionRow {
+  id: string
+  group_id: string
+  name: string
+  price_delta: number | string
+  sort_order: number
+}
+
+interface SelectedModifier {
+  group: ModifierGroupRow
+  option: ModifierOptionRow
+}
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function groupByProduct(groups: ModifierGroupRow[]) {
+  const grouped = new Map<string, ModifierGroupRow[]>()
+  for (const group of groups) {
+    const currentGroups = grouped.get(group.product_id) || []
+    currentGroups.push(group)
+    grouped.set(group.product_id, currentGroups)
+  }
+
+  for (const productGroups of grouped.values()) {
+    productGroups.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+  }
+
+  return grouped
+}
+
+function validateAndBuildSelectedModifiers(
+  line: ParsedOrderItemLine,
+  groupsByProduct: Map<string, ModifierGroupRow[]>,
+  optionsById: Map<string, ModifierOptionRow & { group: ModifierGroupRow }>,
+) {
+  const productGroups = groupsByProduct.get(line.product_id) || []
+  const selectedModifiers: SelectedModifier[] = []
+  const selectedCountByGroup = new Map<string, number>()
+
+  for (const optionId of line.selected_option_ids) {
+    const option = optionsById.get(optionId)
+    if (!option || option.group.product_id !== line.product_id) {
+      throw new OrderItemValidationError('One or more selected options are no longer available')
+    }
+
+    selectedModifiers.push({ group: option.group, option })
+    selectedCountByGroup.set(option.group.id, (selectedCountByGroup.get(option.group.id) || 0) + 1)
+  }
+
+  for (const group of productGroups) {
+    const selectedCount = selectedCountByGroup.get(group.id) || 0
+    const minSelect = Number(group.min_select || 0)
+    const maxSelect = Number(group.max_select || 1)
+
+    if (group.required && selectedCount < Math.max(minSelect, 1)) {
+      throw new OrderItemValidationError(`Choose an option for ${group.name}`)
+    }
+
+    if (selectedCount > maxSelect) {
+      throw new OrderItemValidationError(`Too many options selected for ${group.name}`)
+    }
+  }
+
+  return selectedModifiers.sort((a, b) => {
+    const groupSort = Number(a.group.sort_order || 0) - Number(b.group.sort_order || 0)
+    if (groupSort !== 0) return groupSort
+    return Number(a.option.sort_order || 0) - Number(b.option.sort_order || 0)
+  })
 }
 
 serve(async (req: Request) => {
@@ -65,9 +157,11 @@ serve(async (req: Request) => {
       : null
     const scheduledCollection = normalizeScheduledCollection(body)
 
-    let normalizedItems: AggregatedOrderItem[]
+    let parsedLines: ParsedOrderItemLine[]
+    let inventoryItems: AggregatedOrderItem[]
     try {
-      normalizedItems = parseAndAggregateOrderItems(body.items)
+      parsedLines = parseOrderItemLines(body.items)
+      inventoryItems = aggregateOrderItemQuantities(parsedLines)
     } catch (err: unknown) {
       if (err instanceof OrderItemValidationError) {
         return jsonResponse({ error: err.message }, 400, origin)
@@ -87,7 +181,7 @@ serve(async (req: Request) => {
       )
     }
 
-    const productIds = normalizedItems.map((item) => item.product_id)
+    const productIds = [...new Set(parsedLines.map((item) => item.product_id))]
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('id, store_id, name, price, images, status, deleted_at, inventory_quantity')
@@ -106,7 +200,7 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'All items must belong to the same store' }, 400, origin)
     }
 
-    const productMap = new Map(products.map((product) => [product.id, product]))
+    const productMap = new Map((products as ProductRow[]).map((product) => [product.id, product]))
     const unavailableItems: string[] = []
     const insufficientItems: Array<{
       product_id: string
@@ -115,7 +209,7 @@ serve(async (req: Request) => {
       available: number
     }> = []
 
-    for (const item of normalizedItems) {
+    for (const item of inventoryItems) {
       const product = productMap.get(item.product_id)
       if (!product || product.deleted_at || product.status !== 'active') {
         unavailableItems.push(item.product_id)
@@ -160,18 +254,102 @@ serve(async (req: Request) => {
       )
     }
 
-    const orderItems = normalizedItems.map((item) => {
+    // Modifier support is dark-launchable: until PRODUCT_MODIFIER_BACKEND_ENABLED is
+    // set, the function does not touch the modifier tables (so it can be deployed
+    // ahead of the migration) and rejects any line that carries option selections
+    // rather than silently dropping their price deltas.
+    const hasConfiguredLines = parsedLines.some((line) => line.selected_option_ids.length > 0)
+
+    if (!PRODUCT_MODIFIER_BACKEND_ENABLED && hasConfiguredLines) {
+      return jsonResponse(
+        { error: 'Product modifiers are not enabled for checkout yet' },
+        400,
+        origin,
+      )
+    }
+
+    const groupsByProduct = new Map<string, ModifierGroupRow[]>()
+    const optionsById = new Map<string, ModifierOptionRow & { group: ModifierGroupRow }>()
+
+    if (PRODUCT_MODIFIER_BACKEND_ENABLED) {
+      const { data: modifierGroups, error: groupsError } = await supabase
+        .from('product_modifier_groups')
+        .select('id, product_id, name, required, min_select, max_select, sort_order')
+        .in('product_id', productIds)
+        .eq('status', 'active')
+        .is('deleted_at', null)
+        .order('sort_order', { ascending: true })
+
+      if (groupsError) {
+        throw groupsError
+      }
+
+      const groups = (modifierGroups || []) as ModifierGroupRow[]
+      const groupIds = groups.map((group) => group.id)
+      const { data: modifierOptions, error: optionsError } = groupIds.length > 0
+        ? await supabase
+          .from('product_modifier_options')
+          .select('id, group_id, name, price_delta, sort_order')
+          .in('group_id', groupIds)
+          .eq('status', 'active')
+          .is('deleted_at', null)
+          .order('sort_order', { ascending: true })
+        : { data: [], error: null }
+
+      if (optionsError) {
+        throw optionsError
+      }
+
+      for (const [productId, productGroups] of groupByProduct(groups)) {
+        groupsByProduct.set(productId, productGroups)
+      }
+      const groupsById = new Map(groups.map((group) => [group.id, group]))
+      for (const option of (modifierOptions || []) as ModifierOptionRow[]) {
+        const group = groupsById.get(option.group_id)
+        if (!group) continue
+        optionsById.set(option.id, { ...option, group })
+      }
+    }
+
+    const orderItems = parsedLines.map((item) => {
       const product = productMap.get(item.product_id)!
-      const unitPrice = roundMoney(Number(product.price))
+      const selectedModifiers = validateAndBuildSelectedModifiers(item, groupsByProduct, optionsById)
+      const basePrice = roundMoney(Number(product.price))
+      const modifierTotal = selectedModifiers.reduce((sum, selection) => (
+        sum + Number(selection.option.price_delta || 0)
+      ), 0)
+      const unitPrice = roundMoney(basePrice + modifierTotal)
+      const modifierDisplay = selectedModifiers.map((selection) => ({
+        groupName: selection.group.name,
+        optionName: selection.option.name,
+        priceDelta: roundMoney(Number(selection.option.price_delta || 0)),
+      }))
+
       return {
         product_id: product.id,
         quantity: item.quantity,
         price: unitPrice,
         total: roundMoney(unitPrice * item.quantity),
+        line_note: item.line_note,
+        client_line_id: item.client_line_id,
+        modifier_selections: selectedModifiers.map((selection) => ({
+          product_modifier_group_id: selection.group.id,
+          product_modifier_option_id: selection.option.id,
+          group_name: selection.group.name,
+          option_name: selection.option.name,
+          price_delta: roundMoney(Number(selection.option.price_delta || 0)),
+          sort_order: Number(selection.group.sort_order || 0) * 1000 + Number(selection.option.sort_order || 0),
+        })),
         product_snapshot: {
           name: product.name,
           price: unitPrice,
+          base_price: basePrice,
+          basePrice,
+          final_unit_price: unitPrice,
+          finalUnitPrice: unitPrice,
           image: product.images?.[0] || null,
+          modifierDisplay,
+          lineNote: item.line_note,
         },
       }
     })
@@ -201,6 +379,9 @@ serve(async (req: Request) => {
           quantity: item.quantity,
           price: item.price,
           total: item.total,
+          line_note: item.line_note,
+          client_line_id: item.client_line_id,
+          modifier_selections: item.modifier_selections,
           product_snapshot: item.product_snapshot,
         })),
       })

@@ -7,16 +7,54 @@ import { ProductService } from '../../lib/services/product.service';
 import ProductImageUpload from '../../components/vendor/ProductImageUpload';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
+import { useToast } from '../../components/ui/Toast';
 import { formatCurrency, getInitials } from '../../lib/ui-format';
+import { canPersistProductModifierEditor, canShowProductModifierEditor } from '../../lib/features/productModifiers';
+
+const EMPTY_MODIFIER_GROUP = {
+    name: '',
+    required: false,
+    minSelect: 0,
+    maxSelect: 1,
+    active: true,
+    options: [],
+};
+
+const EMPTY_MODIFIER_OPTION = {
+    name: '',
+    priceDelta: 0,
+    active: true,
+};
+
+function toModifierDraftGroups(product) {
+    return (product?.modifierGroups || []).map((group, groupIndex) => ({
+        id: group.id || `draft-group-${groupIndex + 1}`,
+        name: group.name || '',
+        required: Boolean(group.required),
+        minSelect: group.required ? Math.max(Number(group.minSelect || 1), 1) : 0,
+        maxSelect: Math.max(Number(group.maxSelect || 1), 1),
+        sortOrder: Number(group.sortOrder || groupIndex + 1),
+        active: group.active !== false && group.status !== 'inactive',
+        options: (group.options || []).map((option, optionIndex) => ({
+            id: option.id || `draft-option-${groupIndex + 1}-${optionIndex + 1}`,
+            name: option.name || '',
+            priceDelta: Number(option.priceDelta || 0),
+            sortOrder: Number(option.sortOrder || optionIndex + 1),
+            active: option.active !== false && option.status !== 'inactive',
+        })),
+    }));
+}
 
 export default function VendorProducts() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [modifierDraftGroups, setModifierDraftGroups] = useState([]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -55,7 +93,7 @@ export default function VendorProducts() {
             }
             setStore(storeData);
 
-            const { data } = await ProductService.getProducts({ storeId: storeData.id, limit: 100 });
+            const { data } = await ProductService.getProducts({ storeId: storeData.id }, 1, 100);
             setProducts(data || []);
         } catch (error) {
             console.error('Error:', error);
@@ -74,6 +112,7 @@ export default function VendorProducts() {
             images: product.images || [],
             inventory_quantity: product.inventory_quantity || 0,
         });
+        setModifierDraftGroups(toModifierDraftGroups(product));
         setIsEditing(true);
     }
 
@@ -87,7 +126,68 @@ export default function VendorProducts() {
             images: [],
             inventory_quantity: 0,
         });
+        setModifierDraftGroups([]);
         setIsEditing(true);
+    }
+
+    function addModifierGroup() {
+        setModifierDraftGroups((groups) => [
+            ...groups,
+            {
+                ...EMPTY_MODIFIER_GROUP,
+                id: `draft-group-${crypto.randomUUID()}`,
+                sortOrder: groups.length + 1,
+            },
+        ]);
+    }
+
+    function updateModifierGroup(groupId, updates) {
+        setModifierDraftGroups((groups) => groups.map((group) => (
+            group.id === groupId ? { ...group, ...updates } : group
+        )));
+    }
+
+    function removeModifierGroup(groupId) {
+        setModifierDraftGroups((groups) => groups.filter((group) => group.id !== groupId));
+    }
+
+    function addModifierOption(groupId) {
+        setModifierDraftGroups((groups) => groups.map((group) => (
+            group.id === groupId
+                ? {
+                    ...group,
+                    options: [
+                        ...group.options,
+                        {
+                            ...EMPTY_MODIFIER_OPTION,
+                            id: `draft-option-${crypto.randomUUID()}`,
+                            sortOrder: group.options.length + 1,
+                        },
+                    ],
+                }
+                : group
+        )));
+    }
+
+    function updateModifierOption(groupId, optionId, updates) {
+        setModifierDraftGroups((groups) => groups.map((group) => (
+            group.id === groupId
+                ? {
+                    ...group,
+                    options: group.options.map((option) => (
+                        option.id === optionId ? { ...option, ...updates } : option
+                    )),
+                }
+                : group
+        )));
+    }
+
+    function removeModifierOption(groupId, optionId) {
+        setModifierDraftGroups((groups) => groups.map((group) => (
+            group.id === groupId
+                ? { ...group, options: group.options.filter((option) => option.id !== optionId) }
+                : group
+        )));
     }
 
     async function handleSubmit(event) {
@@ -108,16 +208,25 @@ export default function VendorProducts() {
             };
 
             if (currentProduct) {
-                await ProductService.updateProduct(currentProduct.id, payload);
+                const savedProduct = await ProductService.updateProduct(currentProduct.id, payload);
+                if (canPersistProductModifierEditor()) {
+                    await ProductService.saveProductModifiers(savedProduct.id, modifierDraftGroups);
+                }
             } else {
-                await ProductService.createProduct(payload);
+                const savedProduct = await ProductService.createProduct(payload);
+                setCurrentProduct(savedProduct);
+                if (canPersistProductModifierEditor()) {
+                    await ProductService.saveProductModifiers(savedProduct.id, modifierDraftGroups);
+                }
             }
 
-            const { data } = await ProductService.getProducts({ storeId: store.id, limit: 100 });
+            const { data } = await ProductService.getProducts({ storeId: store.id }, 1, 100);
             setProducts(data || []);
             setIsEditing(false);
+            addToast('Product saved.', 'success');
         } catch (error) {
             console.error('Error saving product:', error);
+            addToast(error.message || 'Could not save product.', 'error');
         }
     }
 
@@ -202,6 +311,120 @@ export default function VendorProducts() {
                                 currentImageUrl={formData.images?.[0]}
                                 storeId={store?.id}
                             />
+                            {canShowProductModifierEditor() && (
+                                <section style={{ display: 'grid', gap: '14px', padding: '16px', border: '1px solid var(--stroke)', borderRadius: '18px', background: 'var(--surface-muted)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <div>
+                                            <h3 style={{ color: 'var(--ink)', fontSize: '18px' }}>Modifier editor</h3>
+                                            <p className="text-muted" style={{ fontSize: '13px' }}>
+                                                {canPersistProductModifierEditor() ? 'Saved separately from product details.' : 'UI preview only. Backend modifier save is not enabled yet.'}
+                                            </p>
+                                        </div>
+                                        <button type="button" className="btn btn-ghost" onClick={addModifierGroup}>
+                                            <Icon name="plus" size={16} />
+                                            Add group
+                                        </button>
+                                    </div>
+
+                                    {modifierDraftGroups.length === 0 ? (
+                                        <div className="empty-state" style={{ minHeight: '110px', padding: '20px' }}>
+                                            <p>Add a group to draft required choices or optional extras.</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'grid', gap: '12px' }}>
+                                            {modifierDraftGroups.map((group) => (
+                                                <div key={group.id} className="card" style={{ display: 'grid', gap: '12px', boxShadow: 'none' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', alignItems: 'end' }}>
+                                                        <div>
+                                                            <label htmlFor={`${group.id}-name`}>Group name</label>
+                                                            <input
+                                                                id={`${group.id}-name`}
+                                                                value={group.name}
+                                                                onChange={(event) => updateModifierGroup(group.id, { name: event.target.value })}
+                                                                placeholder="Choose a drink"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label htmlFor={`${group.id}-min`}>Min</label>
+                                                            <input
+                                                                id={`${group.id}-min`}
+                                                                type="number"
+                                                                min="0"
+                                                                value={group.minSelect}
+                                                                onChange={(event) => updateModifierGroup(group.id, { minSelect: Number(event.target.value || 0) })}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label htmlFor={`${group.id}-max`}>Max</label>
+                                                            <input
+                                                                id={`${group.id}-max`}
+                                                                type="number"
+                                                                min="1"
+                                                                value={group.maxSelect}
+                                                                onChange={(event) => updateModifierGroup(group.id, { maxSelect: Number(event.target.value || 1) })}
+                                                            />
+                                                        </div>
+                                                        <label style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: 0 }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={group.required}
+                                                                onChange={(event) => updateModifierGroup(group.id, { required: event.target.checked, minSelect: event.target.checked ? Math.max(group.minSelect, 1) : 0 })}
+                                                                style={{ width: '18px' }}
+                                                            />
+                                                            Required
+                                                        </label>
+                                                        <button type="button" className="btn btn-ghost" onClick={() => removeModifierGroup(group.id)} style={{ color: 'var(--red)' }}>
+                                                            Remove
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ display: 'grid', gap: '8px' }}>
+                                                        {group.options.map((option) => (
+                                                            <div key={option.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', alignItems: 'end' }}>
+                                                                <div>
+                                                                    <label htmlFor={`${option.id}-name`}>Option name</label>
+                                                                    <input
+                                                                        id={`${option.id}-name`}
+                                                                        value={option.name}
+                                                                        onChange={(event) => updateModifierOption(group.id, option.id, { name: event.target.value })}
+                                                                        placeholder="Coke"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label htmlFor={`${option.id}-price`}>Delta</label>
+                                                                    <input
+                                                                        id={`${option.id}-price`}
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={option.priceDelta}
+                                                                        onChange={(event) => updateModifierOption(group.id, option.id, { priceDelta: Number(event.target.value || 0) })}
+                                                                    />
+                                                                </div>
+                                                                <label style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: 0 }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={option.active}
+                                                                        onChange={(event) => updateModifierOption(group.id, option.id, { active: event.target.checked })}
+                                                                        style={{ width: '18px' }}
+                                                                    />
+                                                                    Active
+                                                                </label>
+                                                                <button type="button" className="btn btn-ghost" onClick={() => removeModifierOption(group.id, option.id)} style={{ color: 'var(--red)' }}>
+                                                                    Remove
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        <button type="button" className="btn btn-ghost" onClick={() => addModifierOption(group.id)} style={{ width: 'fit-content' }}>
+                                                            <Icon name="plus" size={16} />
+                                                            Add option
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            )}
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                 <button type="button" onClick={() => setIsEditing(false)} className="btn btn-ghost">Cancel</button>
                                 <button type="submit" className="btn btn-primary">Save Product</button>

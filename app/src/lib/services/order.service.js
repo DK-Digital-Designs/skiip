@@ -1,6 +1,12 @@
 import { supabase } from '../supabase';
 import { getFunctionAuthHeaders } from './function-auth';
 import { createCheckoutFunctionError } from './function-error';
+import { toOrderCreateItemPayload } from '../cart/cartLineIdentity';
+import { canUseRealProductModifiers } from '../features/productModifiers';
+
+const ORDER_ITEMS_SELECT = canUseRealProductModifiers()
+    ? 'order_items(*, order_item_modifier_selections(*))'
+    : 'order_items(*)';
 
 export const OrderService = {
     /**
@@ -20,10 +26,7 @@ export const OrderService = {
         const headers = await getFunctionAuthHeaders();
 
         const payload = {
-            items: items.map((item) => ({
-                product_id: item.id,
-                quantity: item.quantity,
-            })),
+            items: items.map((item) => toOrderCreateItemPayload(item)),
             customer_email,
             customer_phone,
             notes,
@@ -68,7 +71,7 @@ export const OrderService = {
 
         let query = supabase
             .from('orders')
-            .select('*, order_items(*)')
+            .select(`*, ${ORDER_ITEMS_SELECT}`)
             .eq('store_id', storeId);
 
         if (filter === 'scheduled') {
@@ -118,7 +121,7 @@ export const OrderService = {
 
         const { data, error } = await supabase
             .from('orders')
-            .select('*, stores(name, pickup_location), order_items(*)')
+            .select(`*, stores(name, pickup_location), ${ORDER_ITEMS_SELECT}`)
             .eq('id', id)
             .single();
 

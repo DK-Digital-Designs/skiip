@@ -15,6 +15,10 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `VITE_ADMIN_SESSION_TIMEOUT_HOURS` | `0` unless testing expiry | `0` until an idle policy is approved | App-controlled admin inactivity sign-out in hours; `0` disables. |
 | `VITE_STRIPE_PUBLIC_KEY` | Removed | Removed | Current checkout is redirect-based through edge functions. Do not set this in Vercel production. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
+| `VITE_PRODUCT_MODIFIERS_UI_ENABLED` | `false` until tested | `false` until rollout approved | Master gate for combo-able product UI. Build-time; redeploy to change. |
+| `VITE_PRODUCT_MODIFIER_EDITOR_UI_ENABLED` | `false` until tested | `false` until rollout approved | Vendor modifier editor on the product form. |
+| `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED` | Match backend secret | Match backend secret | Real reads/writes + configured checkout. Enable together with the `PRODUCT_MODIFIER_BACKEND_ENABLED` function secret or configured checkouts are rejected. |
+| `VITE_PRODUCT_MODIFIER_MOCK_DATA_ENABLED` | `false` | `false` | Preview fixtures only; never enable in hosted environments. |
 
 ## Vercel Project Features
 
@@ -32,7 +36,8 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `SUPABASE_URL` | Required | Required | Same project as the deployed functions. |
 | `SUPABASE_ANON_KEY` | Required | Required | Used by `requireUser()` token validation. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Required | Required | Server-side writes only. Never expose to browser runtime. |
-| `ALLOWED_ORIGINS` | Required | Required | Comma-separated exact frontend origins. Do not rely on code fallback for hosted envs. |
+| `ALLOWED_ORIGINS` | Required | Required | Comma-separated exact frontend origins. Do not rely on code fallback for hosted envs. Remove branch-preview origins after their PR merges. |
+| `PRODUCT_MODIFIER_BACKEND_ENABLED` | Match frontend flag | Match frontend flag | `true` enables modifier validation/re-pricing in `order-create`; requires migration `20260603000000` applied first. Pair with `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED`. |
 | `STRIPE_SECRET_KEY` | Test mode | Live mode | Must match webhook/account environment. |
 | `STRIPE_WEBHOOK_SECRET` | Test endpoint | Live endpoint | Must match the deployed `stripe-webhook` endpoint. |
 | `STRIPE_MODE` | `test` | `live` | Webhooks whose `event.livemode` does not match are rejected before event claiming. |

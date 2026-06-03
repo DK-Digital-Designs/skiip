@@ -11,7 +11,15 @@ import { useToast } from '../../components/ui/Toast';
 import BottomNav from '../../components/ui/BottomNav';
 import QuantityControl from '../../components/ui/QuantityControl';
 import Icon from '../../components/ui/Icon';
+import OrderItemSummary from '../../components/orders/OrderItemSummary';
 import { formatCurrency } from '../../lib/ui-format';
+import {
+    getCartLineDisplayName,
+    hasConfiguredCartLines,
+    hasNonUuidSelectedOptionIds,
+    normalizeCartLine,
+} from '../../lib/cart/cartLineIdentity';
+import { canCheckoutConfiguredProductModifiers } from '../../lib/features/productModifiers';
 import {
     collectionInputToIso,
     getMinimumScheduledCollectionInputValue,
@@ -101,6 +109,16 @@ export default function Checkout() {
         }
 
         try {
+            if (hasConfiguredCartLines(items) && !canCheckoutConfiguredProductModifiers()) {
+                stopCheckout('configured_checkout_not_enabled', 'Checkout for configured products is not enabled yet.');
+                return;
+            }
+
+            if (hasConfiguredCartLines(items) && hasNonUuidSelectedOptionIds(items)) {
+                stopCheckout('configured_checkout_mock_options', 'This cart contains preview modifier choices. Remove and re-add those items before checkout.');
+                return;
+            }
+
             if (!isSupabaseConfigured()) {
                 stopCheckout('demo_mode', 'Demo mode: Connect Supabase to place real orders.', 'info');
                 return;
@@ -340,34 +358,32 @@ export default function Checkout() {
                         <h2 style={{ color: 'var(--ink)', marginBottom: '6px' }}>Order summary</h2>
                         {vendor && <p className="text-accent" style={{ fontWeight: 800, marginBottom: '16px' }}>{vendor.name}</p>}
                         <div style={{ display: 'grid', gap: '14px', marginBottom: '18px' }}>
-                            {items.map((item) => (
-                                <div key={item.id} style={{ display: 'grid', gap: '10px', paddingBottom: '14px', borderBottom: '1px solid var(--stroke)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                                        <div>
-                                            <strong style={{ color: 'var(--ink)' }}>{item.name}</strong>
-                                            <p className="text-muted" style={{ fontSize: '13px' }}>
-                                                {formatCurrency(item.price)} each
-                                            </p>
-                                        </div>
-                                        <strong>{formatCurrency(item.price * item.quantity)}</strong>
+                            {items.map((item) => {
+                                const line = normalizeCartLine(item);
+                                const lineName = getCartLineDisplayName(line);
+                                const lineId = line.lineId || line.id;
+
+                                return (
+                                    <div key={lineId} style={{ display: 'grid', gap: '10px', paddingBottom: '14px', borderBottom: '1px solid var(--stroke)' }}>
+                                        <OrderItemSummary item={line} />
+                                        <QuantityControl
+                                            value={line.quantity}
+                                            onIncrement={() => addItem(line)}
+                                            onDecrement={() => removeItem(lineId)}
+                                            label={`${lineName} checkout quantity`}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="btn btn-ghost"
+                                            onClick={() => removeLineItem(lineId)}
+                                            aria-label={`Remove ${lineName} from cart`}
+                                            style={{ width: 'fit-content', minHeight: '36px', color: 'var(--red)' }}
+                                        >
+                                            Remove
+                                        </button>
                                     </div>
-                                    <QuantityControl
-                                        value={item.quantity}
-                                        onIncrement={() => addItem(item)}
-                                        onDecrement={() => removeItem(item.id)}
-                                        label={`${item.name} checkout quantity`}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="btn btn-ghost"
-                                        onClick={() => removeLineItem(item.id)}
-                                        aria-label={`Remove ${item.name} from cart`}
-                                        style={{ width: 'fit-content', minHeight: '36px', color: 'var(--red)' }}
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <section style={{ marginBottom: '18px' }}>

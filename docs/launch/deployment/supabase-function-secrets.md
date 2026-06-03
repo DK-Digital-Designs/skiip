@@ -17,6 +17,10 @@ Recommended for function error visibility:
 
 - `SENTRY_DSN`
 
+Product modifiers (combo-able products):
+
+- `PRODUCT_MODIFIER_BACKEND_ENABLED` — when `true`, `order-create` reads/validates/re-prices modifier selections; when unset/`false` it skips the modifier tables and rejects configured lines. Must be enabled together with the frontend `VITE_PRODUCT_MODIFIER_BACKEND_ENABLED`. Keep `false` until migration `20260603000000_product_modifiers_v1.sql` is applied.
+
 Email:
 
 - `EMAIL_PROVIDER`

@@ -5,6 +5,9 @@ import Checkout from './Checkout';
 import { useCart } from '../../lib/hooks/useCart';
 import { useAuth } from '../../lib/context/AuthContext';
 import { calculateOrderSummary } from '../../lib/orders';
+import { OrderService } from '../../lib/services/order.service';
+
+const addToast = vi.fn();
 
 vi.mock('../../lib/context/AuthContext', () => ({
     useAuth: vi.fn(),
@@ -31,7 +34,14 @@ vi.mock('../../lib/analytics', () => ({
 }));
 
 vi.mock('../../components/ui/Toast', () => ({
-    useToast: () => ({ addToast: vi.fn() }),
+    useToast: () => ({ addToast }),
+}));
+
+vi.mock('../../lib/services/order.service', () => ({
+    OrderService: {
+        createOrder: vi.fn(),
+        updateOrderStatus: vi.fn(),
+    },
 }));
 
 function renderCheckout(cartOverrides = {}) {
@@ -65,6 +75,7 @@ describe('Checkout cart controls', () => {
     beforeEach(async () => {
         const actual = await vi.importActual('../../lib/orders');
         vi.clearAllMocks();
+        addToast.mockClear();
         calculateOrderSummary.mockImplementation(actual.calculateOrderSummary);
     });
 
@@ -107,5 +118,27 @@ describe('Checkout cart controls', () => {
 
         expect(screen.getByText('Service Fee')).toBeInTheDocument();
         expect(screen.getByText(/1\.50/)).toBeInTheDocument();
+    });
+
+    it('blocks configured cart checkout before backend order creation', () => {
+        renderCheckout({
+            items: [{
+                id: 'burger',
+                productId: 'burger',
+                lineId: 'burger::cheese::no onions',
+                name: 'Classic Burger',
+                price: 9,
+                displayUnitPrice: 9,
+                quantity: 1,
+                selectedOptionIds: ['cheese'],
+                lineNote: 'No onions',
+                modifierDisplay: [{ groupName: 'Extras', optionName: 'Extra cheese', priceDelta: 0.5 }],
+            }],
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+        expect(addToast).toHaveBeenCalledWith('Checkout for configured products is not enabled yet.', 'error');
+        expect(OrderService.createOrder).not.toHaveBeenCalled();
     });
 });

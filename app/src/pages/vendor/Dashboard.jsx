@@ -9,6 +9,7 @@ import { useStoreOrders, useUpdateOrderStatus } from '../../lib/hooks/useOrders'
 import { getScheduledCollectionLabel } from '../../lib/scheduledCollection';
 import HoldToConfirmButton from '../../components/ui/HoldToConfirmButton';
 import Icon from '../../components/ui/Icon';
+import OrderItemSummary from '../../components/orders/OrderItemSummary';
 import {
     VENDOR_ORDER_FILTERS,
     VENDOR_ORDER_LANE_DEFINITIONS,
@@ -94,12 +95,7 @@ function VendorOrderCard({ order, isBusy, onTransition }) {
                     <p className="text-muted" style={{ fontSize: '13px' }}>Item details are not available for this order.</p>
                 ) : (
                     (order.order_items || []).map((item, index) => (
-                        <div key={`${order.id || 'order'}-${index}`} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '8px', fontSize: '14px' }}>
-                            <span style={{ overflowWrap: 'anywhere' }}>
-                                <strong>{item.quantity}x</strong> {item.product_snapshot?.name || 'Item'}
-                            </span>
-                            <span>{formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}</span>
-                        </div>
+                        <OrderItemSummary key={`${order.id || 'order'}-${index}`} item={item} compact />
                     ))
                 )}
                 {order.notes && (

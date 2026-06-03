@@ -107,6 +107,14 @@ const orders = [
         status: 'pending',
         payment_status: 'pending',
         checkout_session_id: 'cs_reconcile',
+        order_items: [
+            {
+                quantity: 1,
+                price: 16,
+                total: 16,
+                product_snapshot: { name: 'Bao Bun', price: 16 },
+            },
+        ],
     },
 ];
 
@@ -189,7 +197,7 @@ describe('admin operational surfaces', () => {
         renderPage(<AdminOrders />, '/admin/orders');
 
         await screen.findByText('Sunset Tacos');
-        fireEvent.click(screen.getByRole('button', { name: 'Payment details' }));
+        fireEvent.click(screen.getAllByRole('button', { name: 'Details' })[0]);
         expect(screen.getByText('pi_paid')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Refund' }));
@@ -199,6 +207,17 @@ describe('admin operational surfaces', () => {
         await waitFor(() => expect(RefundService.refundOrder).toHaveBeenCalledWith('paid-1', 'Customer request'));
         fireEvent.click(screen.getByRole('button', { name: 'Reconcile payment' }));
         await waitFor(() => expect(AdminService.reconcileOrderPayment).toHaveBeenCalledWith('reconcile-1'));
+    });
+
+    it('shows admin order items even when payment metadata is absent', async () => {
+        renderPage(<AdminOrders />, '/admin/orders');
+
+        await screen.findByText('Bao Brothers');
+        fireEvent.click(screen.getAllByRole('button', { name: 'Details' })[1]);
+
+        expect(screen.getByText('Order items')).toBeInTheDocument();
+        expect(screen.getByText('1x Bao Bun')).toBeInTheDocument();
+        expect(screen.queryByText('Payment intent')).not.toBeInTheDocument();
     });
 
     it('previews and saves launch-event content from Event Setup', async () => {

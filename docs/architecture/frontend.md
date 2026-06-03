@@ -40,3 +40,10 @@ Legacy files still exist in the repo but are not part of the routed app today, i
 - [`app/src/pages/attendee/BuyerLogin.jsx`](../../app/src/pages/attendee/BuyerLogin.jsx)
 - [`app/src/pages/attendee/BuyerSignup.jsx`](../../app/src/pages/attendee/BuyerSignup.jsx)
 - [`app/src/pages/admin/Dashboard.jsx`](../../app/src/pages/admin/Dashboard.jsx)
+
+Product modifiers (combo-able products):
+
+- cart lines are identified by [`cartLineIdentity.js`](../../app/src/lib/cart/cartLineIdentity.js) as `productId::optionIds::note`, so a configured product is a distinct line from the same product with different choices; simple products keep their bare `productId` for backward compatibility
+- the buyer menu, sticky cart preview, checkout summary, order tracker, and admin order details render line modifiers/notes through [`OrderItemSummary`](../../app/src/components/orders/OrderItemSummary.jsx); vendors edit modifiers on the product form in [`Products.jsx`](../../app/src/pages/vendor/Products.jsx)
+- the feature is gated by the `VITE_PRODUCT_MODIFIER_*` flags in [`features/productModifiers.js`](../../app/src/lib/features/productModifiers.js) (see [Order and Payment Flow](./order-and-payment-flow.md#feature-flags))
+- test runs pin these flags off in [`vitest.config.js`](../../app/vitest.config.js) so the suite is independent of a developer's local `.env`
