@@ -2,6 +2,8 @@ export function normalizeLineNote(note) {
   return String(note || '').trim().replace(/\s+/g, ' ');
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function normalizeIdentityNote(note) {
   return normalizeLineNote(note).toLowerCase();
 }
@@ -31,11 +33,25 @@ export function getCartLineDisplayName(line) {
 }
 
 export function getCartLineDisplayUnitPrice(line) {
-  return Number(line?.displayUnitPrice ?? line?.price ?? line?.productSnapshot?.basePrice ?? line?.product_snapshot?.price ?? 0);
+  return Number(
+    line?.displayUnitPrice
+    ?? line?.price
+    ?? line?.productSnapshot?.finalUnitPrice
+    ?? line?.product_snapshot?.finalUnitPrice
+    ?? line?.product_snapshot?.final_unit_price
+    ?? line?.productSnapshot?.basePrice
+    ?? line?.product_snapshot?.price
+    ?? 0
+  );
 }
 
 export function getCartLineModifierDisplay(line) {
-  return line?.modifierDisplay || line?.modifier_display || line?.product_snapshot?.modifierDisplay || line?.product_snapshot?.modifiers || [];
+  return line?.modifierDisplay
+    || line?.modifier_display
+    || line?.product_snapshot?.modifierDisplay
+    || line?.product_snapshot?.modifiers
+    || line?.order_item_modifier_selections
+    || [];
 }
 
 export function getCartLineNote(line) {
@@ -126,4 +142,27 @@ export function buildConfiguredCartLine(product, selectedOptions = [], lineNote 
 
 export function hasConfiguredCartLines(items = []) {
   return (items || []).some((item) => isConfiguredCartLine(item));
+}
+
+export function hasNonUuidSelectedOptionIds(items = []) {
+  return (items || []).some((item) => (
+    normalizeSelectedOptionIds(item?.selectedOptionIds || item?.selected_option_ids)
+      .some((optionId) => !UUID_PATTERN.test(optionId))
+  ));
+}
+
+export function toOrderCreateItemPayload(line) {
+  const normalizedLine = normalizeCartLine(line);
+  const payload = {
+    product_id: normalizedLine.productId || normalizedLine.id,
+    quantity: normalizedLine.quantity,
+  };
+
+  if (isConfiguredCartLine(normalizedLine)) {
+    payload.selected_option_ids = normalizeSelectedOptionIds(normalizedLine.selectedOptionIds);
+    payload.line_note = normalizeLineNote(normalizedLine.lineNote) || null;
+    payload.client_line_id = normalizedLine.lineId;
+  }
+
+  return payload;
 }

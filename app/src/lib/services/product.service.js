@@ -1,4 +1,74 @@
 import { supabase } from '../supabase';
+import { canUseRealProductModifiers } from '../features/productModifiers';
+import { getFunctionAuthHeaders } from './function-auth';
+
+const PRODUCT_SELECT = '*, stores(name, slug)';
+const PRODUCT_SELECT_WITH_MODIFIERS = `
+    *,
+    stores(name, slug),
+    product_modifier_groups(
+        id,
+        name,
+        required,
+        min_select,
+        max_select,
+        sort_order,
+        status,
+        deleted_at,
+        product_modifier_options(
+            id,
+            name,
+            price_delta,
+            sort_order,
+            status,
+            deleted_at
+        )
+    )
+`;
+
+function mapModifierOption(option) {
+    return {
+        id: option.id,
+        name: option.name,
+        priceDelta: Number(option.price_delta || 0),
+        sortOrder: Number(option.sort_order || 0),
+        status: option.status || 'active',
+        active: option.status !== 'inactive' && !option.deleted_at,
+    };
+}
+
+function mapModifierGroup(group) {
+    const options = (group.product_modifier_options || [])
+        .filter((option) => !option.deleted_at)
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map(mapModifierOption);
+
+    return {
+        id: group.id,
+        name: group.name,
+        required: Boolean(group.required),
+        minSelect: Number(group.min_select || 0),
+        maxSelect: Number(group.max_select || 1),
+        sortOrder: Number(group.sort_order || 0),
+        status: group.status || 'active',
+        active: group.status !== 'inactive' && !group.deleted_at,
+        options,
+    };
+}
+
+function mapProductModifiers(product) {
+    if (!product?.product_modifier_groups) return product;
+
+    const modifierGroups = product.product_modifier_groups
+        .filter((group) => !group.deleted_at)
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map(mapModifierGroup);
+
+    return {
+        ...product,
+        modifierGroups,
+    };
+}
 
 export const ProductService = {
     /**
@@ -12,7 +82,7 @@ export const ProductService = {
 
         let query = supabase
             .from('products')
-            .select('*, stores(name, slug)', { count: 'exact' })
+            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS : PRODUCT_SELECT, { count: 'exact' })
             .eq('status', 'active')
             .is('deleted_at', null);
 
@@ -37,7 +107,7 @@ export const ProductService = {
 
         if (error) throw error;
 
-        return { data, count };
+        return { data: (data || []).map(mapProductModifiers), count };
     },
 
     /**
@@ -49,12 +119,12 @@ export const ProductService = {
 
         const { data, error } = await supabase
             .from('products')
-            .select('*, stores(name, slug, logo_url)')
+            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS.replace('stores(name, slug)', 'stores(name, slug, logo_url)') : '*, stores(name, slug, logo_url)')
             .eq('slug', slug)
             .single();
 
         if (error) throw error;
-        return data;
+        return mapProductModifiers(data);
     },
 
     /**
@@ -66,12 +136,12 @@ export const ProductService = {
 
         const { data, error } = await supabase
             .from('products')
-            .select('*, stores(name, slug, logo_url)')
+            .select(canUseRealProductModifiers() ? PRODUCT_SELECT_WITH_MODIFIERS.replace('stores(name, slug)', 'stores(name, slug, logo_url)') : '*, stores(name, slug, logo_url)')
             .eq('id', id)
             .single();
 
         if (error) throw error;
-        return data;
+        return mapProductModifiers(data);
     },
 
     /**
@@ -124,5 +194,21 @@ export const ProductService = {
 
         if (error) throw error;
         return true;
+    },
+
+    async saveProductModifiers(productId, groups = []) {
+        if (!supabase) throw new Error('Supabase not configured');
+        const headers = await getFunctionAuthHeaders();
+
+        const { data, error } = await supabase.functions.invoke('vendor-product-modifiers', {
+            headers,
+            body: {
+                productId,
+                groups,
+            },
+        });
+
+        if (error) throw new Error(error.message || 'Failed to save product modifiers');
+        return data?.groups || [];
     }
 };

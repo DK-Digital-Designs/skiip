@@ -8,7 +8,7 @@ import ProductImageUpload from '../../components/vendor/ProductImageUpload';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
 import { formatCurrency, getInitials } from '../../lib/ui-format';
-import { canShowProductModifierEditor } from '../../lib/features/productModifiers';
+import { canPersistProductModifierEditor, canShowProductModifierEditor } from '../../lib/features/productModifiers';
 
 const EMPTY_MODIFIER_GROUP = {
     name: '',
@@ -24,6 +24,25 @@ const EMPTY_MODIFIER_OPTION = {
     priceDelta: 0,
     active: true,
 };
+
+function toModifierDraftGroups(product) {
+    return (product?.modifierGroups || []).map((group, groupIndex) => ({
+        id: group.id || `draft-group-${groupIndex + 1}`,
+        name: group.name || '',
+        required: Boolean(group.required),
+        minSelect: group.required ? Math.max(Number(group.minSelect || 1), 1) : 0,
+        maxSelect: Math.max(Number(group.maxSelect || 1), 1),
+        sortOrder: Number(group.sortOrder || groupIndex + 1),
+        active: group.active !== false && group.status !== 'inactive',
+        options: (group.options || []).map((option, optionIndex) => ({
+            id: option.id || `draft-option-${groupIndex + 1}-${optionIndex + 1}`,
+            name: option.name || '',
+            priceDelta: Number(option.priceDelta || 0),
+            sortOrder: Number(option.sortOrder || optionIndex + 1),
+            active: option.active !== false && option.status !== 'inactive',
+        })),
+    }));
+}
 
 export default function VendorProducts() {
     const navigate = useNavigate();
@@ -72,7 +91,7 @@ export default function VendorProducts() {
             }
             setStore(storeData);
 
-            const { data } = await ProductService.getProducts({ storeId: storeData.id, limit: 100 });
+            const { data } = await ProductService.getProducts({ storeId: storeData.id }, 1, 100);
             setProducts(data || []);
         } catch (error) {
             console.error('Error:', error);
@@ -91,7 +110,7 @@ export default function VendorProducts() {
             images: product.images || [],
             inventory_quantity: product.inventory_quantity || 0,
         });
-        setModifierDraftGroups([]);
+        setModifierDraftGroups(toModifierDraftGroups(product));
         setIsEditing(true);
     }
 
@@ -187,12 +206,18 @@ export default function VendorProducts() {
             };
 
             if (currentProduct) {
-                await ProductService.updateProduct(currentProduct.id, payload);
+                const savedProduct = await ProductService.updateProduct(currentProduct.id, payload);
+                if (canPersistProductModifierEditor()) {
+                    await ProductService.saveProductModifiers(savedProduct.id, modifierDraftGroups);
+                }
             } else {
-                await ProductService.createProduct(payload);
+                const savedProduct = await ProductService.createProduct(payload);
+                if (canPersistProductModifierEditor()) {
+                    await ProductService.saveProductModifiers(savedProduct.id, modifierDraftGroups);
+                }
             }
 
-            const { data } = await ProductService.getProducts({ storeId: store.id, limit: 100 });
+            const { data } = await ProductService.getProducts({ storeId: store.id }, 1, 100);
             setProducts(data || []);
             setIsEditing(false);
         } catch (error) {
@@ -286,7 +311,9 @@ export default function VendorProducts() {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                                         <div>
                                             <h3 style={{ color: 'var(--ink)', fontSize: '18px' }}>Modifier editor</h3>
-                                            <p className="text-muted" style={{ fontSize: '13px' }}>UI preview only. Modifier drafts are not saved yet.</p>
+                                            <p className="text-muted" style={{ fontSize: '13px' }}>
+                                                {canPersistProductModifierEditor() ? 'Saved separately from product details.' : 'UI preview only. Backend modifier save is not enabled yet.'}
+                                            </p>
                                         </div>
                                         <button type="button" className="btn btn-ghost" onClick={addModifierGroup}>
                                             <Icon name="plus" size={16} />
@@ -336,7 +363,7 @@ export default function VendorProducts() {
                                                             <input
                                                                 type="checkbox"
                                                                 checked={group.required}
-                                                                onChange={(event) => updateModifierGroup(group.id, { required: event.target.checked, minSelect: event.target.checked ? Math.max(group.minSelect, 1) : group.minSelect })}
+                                                                onChange={(event) => updateModifierGroup(group.id, { required: event.target.checked, minSelect: event.target.checked ? Math.max(group.minSelect, 1) : 0 })}
                                                                 style={{ width: '18px' }}
                                                             />
                                                             Required

@@ -13,7 +13,13 @@ import QuantityControl from '../../components/ui/QuantityControl';
 import Icon from '../../components/ui/Icon';
 import OrderItemSummary from '../../components/orders/OrderItemSummary';
 import { formatCurrency } from '../../lib/ui-format';
-import { getCartLineDisplayName, hasConfiguredCartLines, normalizeCartLine } from '../../lib/cart/cartLineIdentity';
+import {
+    getCartLineDisplayName,
+    hasConfiguredCartLines,
+    hasNonUuidSelectedOptionIds,
+    normalizeCartLine,
+} from '../../lib/cart/cartLineIdentity';
+import { canCheckoutConfiguredProductModifiers } from '../../lib/features/productModifiers';
 import {
     collectionInputToIso,
     getMinimumScheduledCollectionInputValue,
@@ -103,8 +109,13 @@ export default function Checkout() {
         }
 
         try {
-            if (hasConfiguredCartLines(items)) {
+            if (hasConfiguredCartLines(items) && !canCheckoutConfiguredProductModifiers()) {
                 stopCheckout('configured_checkout_not_enabled', 'Checkout for configured products is not enabled yet.');
+                return;
+            }
+
+            if (hasConfiguredCartLines(items) && hasNonUuidSelectedOptionIds(items)) {
+                stopCheckout('configured_checkout_mock_options', 'This cart contains preview modifier choices. Remove and re-add those items before checkout.');
                 return;
             }
 

@@ -4,8 +4,10 @@ import {
   buildConfiguredCartLine,
   buildSimpleCartLine,
   hasConfiguredCartLines,
+  hasNonUuidSelectedOptionIds,
   normalizeCartLine,
   normalizeLineNote,
+  toOrderCreateItemPayload,
 } from './cartLineIdentity';
 
 const burger = {
@@ -57,5 +59,37 @@ describe('cart line identity helpers', () => {
     expect(cheeseLine.price).toBe(9);
     expect(hasConfiguredCartLines([cheeseLine])).toBe(true);
     expect(hasConfiguredCartLines([buildSimpleCartLine(burger)])).toBe(false);
+  });
+
+  it('keeps simple order payloads minimal and configured payloads line-aware', () => {
+    const optionId = '33333333-3333-4333-8333-333333333333';
+    const simpleLine = buildSimpleCartLine(burger);
+    const configuredLine = buildConfiguredCartLine(
+      burger,
+      [{ id: optionId, name: 'Extra cheese', groupName: 'Extras', priceDelta: 0.5 }],
+      'No onions'
+    );
+
+    expect(toOrderCreateItemPayload({ ...simpleLine, quantity: 1 })).toEqual({
+      product_id: 'burger',
+      quantity: 1,
+    });
+    expect(toOrderCreateItemPayload({ ...configuredLine, quantity: 2 })).toEqual({
+      product_id: 'burger',
+      quantity: 2,
+      selected_option_ids: [optionId],
+      line_note: 'No onions',
+      client_line_id: configuredLine.lineId,
+    });
+  });
+
+  it('detects preview-only option IDs before backend checkout', () => {
+    const mockConfiguredLine = buildConfiguredCartLine(
+      burger,
+      [{ id: 'cheese', name: 'Extra cheese', groupName: 'Extras', priceDelta: 0.5 }],
+      ''
+    );
+
+    expect(hasNonUuidSelectedOptionIds([mockConfiguredLine])).toBe(true);
   });
 });

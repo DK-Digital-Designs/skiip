@@ -11,7 +11,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
 import { formatCurrency, getInitials, getVendorImage } from '../../lib/ui-format';
 import { trackSkiipEvent } from '../../lib/analytics';
-import { canUseMockProductModifiers } from '../../lib/features/productModifiers';
+import { canUseMockProductModifiers, canUseRealProductModifiers } from '../../lib/features/productModifiers';
 import { getMockProductModifierGroups } from '../../lib/product-modifier-fixtures';
 import {
     buildConfiguredCartLine,
@@ -150,6 +150,16 @@ function MenuItemDetailsDialog({ item, quantity, onAdd, onRemove, onClose }) {
 }
 
 function getModifierGroupsForProduct(item) {
+    if (canUseRealProductModifiers()) {
+        return (item?.modifierGroups || [])
+            .filter((group) => group.active !== false && group.status !== 'inactive')
+            .map((group) => ({
+                ...group,
+                options: (group.options || []).filter((option) => option.active !== false && option.status !== 'inactive'),
+            }))
+            .filter((group) => group.options.length > 0);
+    }
+
     if (!canUseMockProductModifiers()) return [];
     return getMockProductModifierGroups(item);
 }
