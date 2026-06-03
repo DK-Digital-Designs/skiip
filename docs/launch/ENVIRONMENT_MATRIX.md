@@ -71,7 +71,7 @@ Before May 12 staging testing:
 4. Confirm Stripe dashboard webhook endpoint and secret match the deployed staging function.
 5. Confirm notification provider sender/callback settings match staging function URLs.
 6. Confirm Supabase Auth password recovery callback and email delivery with one test account.
-7. Run one immediate order and one scheduled order through Stripe test checkout.
+7. Run one immediate buyer order through Stripe test checkout. Buyer-facing scheduled-order controls are currently hidden from checkout; verify scheduled collection display only if seeded or legacy scheduled orders are in scope.
 8. Confirm webhook marks payment succeeded, inventory finalizes, notifications queue, and vendor/admin views show the order.
 9. Set each session timeout variable to `1` in a test deployment in turn and verify inactivity expiry messaging before returning values to `0` for the pilot baseline.
 

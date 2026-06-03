@@ -5,6 +5,7 @@ Read this when you need the current runtime truth details from [Current State](.
 These statements reflect the actual current implementation.
 
 - buyer checkout is authenticated only
+- buyer checkout currently creates immediate-collection orders only; scheduled-order controls are hidden from the checkout screen, while backend/vendor/admin scheduled collection support remains present
 - order totals are computed on the server
 - payment finalization is webhook-driven
 - vendor/admin order status changes go through edge functions

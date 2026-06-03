@@ -106,6 +106,14 @@ describe('Checkout cart controls', () => {
         expect(screen.getByText(/1\.50/)).toBeInTheDocument();
     });
 
+    it('does not show scheduled collection controls on checkout', () => {
+        renderCheckout();
+
+        expect(screen.queryByText('Collection time')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Scheduled' })).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Collection date and time')).not.toBeInTheDocument();
+    });
+
     it('shows the service fee row when a fee is present', () => {
         calculateOrderSummary.mockReturnValue({
             subtotal: 8.5,

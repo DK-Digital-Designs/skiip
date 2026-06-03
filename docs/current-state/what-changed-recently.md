@@ -23,6 +23,8 @@ Recent hardening work introduced:
 - schema and auth-profile reconciliation migrations
 - product modifiers (combo-able products): vendor modifier editor, buyer configuration UI with line-aware cart identity, server-side modifier validation/re-pricing in `order-create`, modifier-selection snapshots on order items, and a `vendor-product-modifiers` edge function — dark-launchable behind the `VITE_PRODUCT_MODIFIER_*` flags and the `PRODUCT_MODIFIER_BACKEND_ENABLED` function secret
 
+- buyer checkout UI cleanup: scheduled-order controls are hidden from checkout, immediate collection remains the buyer-facing path, and configurable menu item CTAs now read `Build my plate`
+
 The repo now represents a first operational baseline. It does not yet represent a finished platform or a fully hardened open-launch posture.
 
 ---

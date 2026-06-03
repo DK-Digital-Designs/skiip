@@ -87,7 +87,7 @@ describe('Menu product configuration dialog', () => {
     it('caps line notes at 240 characters', async () => {
         renderMenu();
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Configure Combo Burger' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Build my plate for Combo Burger' }));
         const noteField = screen.getByLabelText('Line note');
         fireEvent.change(noteField, { target: { value: 'x'.repeat(260) } });
 
@@ -98,7 +98,7 @@ describe('Menu product configuration dialog', () => {
     it('clears optional single-select modifiers but keeps required single-select choices', async () => {
         renderMenu();
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Configure Combo Burger' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Build my plate for Combo Burger' }));
         const requiredOption = await screen.findByRole('radio', { name: /Fries/ });
         const optionalOption = screen.getByRole('checkbox', { name: /Aioli/ });
 

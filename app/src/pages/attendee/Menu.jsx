@@ -120,10 +120,10 @@ function MenuItemDetailsDialog({ item, quantity, onAdd, onRemove, onClose }) {
                             type="button"
                             onClick={() => onAdd(item)}
                             className="btn btn-primary"
-                            aria-label={`Configure ${item.name} from details`}
+                            aria-label={`Build my plate for ${item.name} from details`}
                         >
                             <Icon name="settings" size={17} />
-                            Configure
+                            Build my plate
                         </button>
                     ) : quantity > 0 ? (
                         <QuantityControl
@@ -517,11 +517,11 @@ export default function Menu() {
                                                 type="button"
                                                 onClick={() => handleAddItem(item)}
                                                 className="btn btn-primary"
-                                                aria-label={soldOut ? `${item.name} is out of stock` : `Configure ${item.name}`}
+                                                aria-label={soldOut ? `${item.name} is out of stock` : `Build my plate for ${item.name}`}
                                                 disabled={soldOut}
                                             >
                                                 <Icon name="settings" size={17} />
-                                                {soldOut ? 'Out of Stock' : 'Configure'}
+                                                {soldOut ? 'Out of Stock' : 'Build my plate'}
                                             </button>
                                         ) : quantity > 0 ? (
                                             <QuantityControl

@@ -21,9 +21,6 @@ import {
 } from '../../lib/cart/cartLineIdentity';
 import { canCheckoutConfiguredProductModifiers } from '../../lib/features/productModifiers';
 import {
-    collectionInputToIso,
-    getMinimumScheduledCollectionInputValue,
-    getScheduledCollectionLabel,
     toScheduledCollectionPayload,
 } from '../../lib/scheduledCollection';
 import { trackSkiipEvent } from '../../lib/analytics';
@@ -43,8 +40,6 @@ export default function Checkout() {
     const [notes, setNotes] = useState('');
     const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
-    const [collectionMode, setCollectionMode] = useState('immediate');
-    const [scheduledCollection, setScheduledCollection] = useState('');
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
     const [selectedTipPercent, setSelectedTipPercent] = useState(0);
@@ -143,16 +138,9 @@ export default function Checkout() {
                 return;
             }
 
-            if (collectionMode === 'scheduled' && !scheduledCollection) {
-                stopCheckout('missing_collection_time', 'Choose a scheduled collection time.');
-                return;
-            }
-
             let scheduledPayload;
             try {
-                scheduledPayload = collectionMode === 'scheduled'
-                    ? toScheduledCollectionPayload(scheduledCollection)
-                    : toScheduledCollectionPayload('');
+                scheduledPayload = toScheduledCollectionPayload('');
             } catch (error) {
                 stopCheckout('invalid_collection_time', error.message || 'Choose a valid scheduled collection time.');
                 return;
@@ -226,16 +214,6 @@ export default function Checkout() {
         );
     }
 
-    const scheduledPreviewIso = collectionMode === 'scheduled'
-        ? collectionInputToIso(scheduledCollection)
-        : null;
-    const scheduledPreview = scheduledPreviewIso
-        ? getScheduledCollectionLabel({
-            scheduled_collection_at: scheduledPreviewIso,
-            scheduled_collection_timezone: 'Europe/London',
-        })
-        : '';
-
     return (
         <main className="app-page app-page--buyer">
             <div className="container" style={{ display: 'grid', gap: '22px' }}>
@@ -252,43 +230,6 @@ export default function Checkout() {
 
                 <form onSubmit={handleCheckout} className="two-column">
                     <div style={{ display: 'grid', gap: '18px' }}>
-                        <section className="card">
-                            <h2 style={{ color: 'var(--ink)', marginBottom: '14px' }}>Collection time</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setCollectionMode('immediate')}
-                                    className={collectionMode === 'immediate' ? 'btn btn-primary' : 'btn btn-ghost'}
-                                >
-                                    As soon as ready
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setCollectionMode('scheduled')}
-                                    className={collectionMode === 'scheduled' ? 'btn btn-primary' : 'btn btn-ghost'}
-                                >
-                                    Scheduled
-                                </button>
-                            </div>
-                            {collectionMode === 'scheduled' && (
-                                <>
-                                    <label htmlFor="collection-time">Collection date and time</label>
-                                    <input
-                                        id="collection-time"
-                                        type="datetime-local"
-                                        value={scheduledCollection}
-                                        min={getMinimumScheduledCollectionInputValue()}
-                                        onChange={(event) => setScheduledCollection(event.target.value)}
-                                    />
-                                    {scheduledPreview && (
-                                        <p className="chip chip--cyan" style={{ marginTop: '12px', width: 'fit-content' }}>
-                                            {scheduledPreview}
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        </section>
-
                         <section className="card">
                             <h2 style={{ color: 'var(--ink)', marginBottom: '14px' }}>Contact details</h2>
                             <label htmlFor="checkout-email">Email</label>

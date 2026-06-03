@@ -8,7 +8,7 @@ Sequence:
 
 1. Buyer signs in.
 2. Buyer builds a cart in the browser. Cart state is stored locally via Zustand in `localStorage`.
-3. [`Checkout.jsx`](../../app/src/pages/attendee/Checkout.jsx) submits only product IDs, quantities, contact details, optional WhatsApp opt-in, notes, and tip. The browser may display service fees, but it does not supply them authoritatively.
+3. [`Checkout.jsx`](../../app/src/pages/attendee/Checkout.jsx) submits only product IDs, quantities, contact details, optional WhatsApp opt-in, notes, tip, and an immediate-collection scheduled payload. The browser may display service fees, but it does not supply them authoritatively. Buyer-facing scheduled-order controls are currently hidden from checkout; backend validation/display support remains for existing or future scheduled orders.
 4. [`order-create`](../../supabase/functions/order-create/index.ts) validates the user, rejects malformed quantities, aggregates duplicate product IDs, loads products, checks inventory, computes subtotal/tip/service-fee/total on the server, persists `orders` and `order_items` atomically through `create_order_with_items_v1()`, and writes an `order_created` audit event.
 5. [`stripe-checkout`](../../supabase/functions/stripe-checkout/index.ts) reloads the order, confirms ownership and payable state, verifies the store has completed Stripe onboarding, and creates a Stripe Checkout session.
 6. Checkout is currently GBP-only, and vendor onboarding creates Stripe Express accounts with `country = GB`.
