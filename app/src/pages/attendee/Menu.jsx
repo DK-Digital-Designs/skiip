@@ -168,7 +168,7 @@ function getSelectionValidity(groups, selections) {
     const invalidGroup = groups.find((group) => {
         const selectedCount = (selections[group.id] || []).length;
         const minSelect = group.required ? Math.max(Number(group.minSelect || 1), 1) : Number(group.minSelect || 0);
-        const maxSelect = Number(group.maxSelect || group.options?.length || 0);
+        const maxSelect = Number(group.maxSelect || group.options?.length || 1);
 
         return selectedCount < minSelect || (maxSelect > 0 && selectedCount > maxSelect);
     });
@@ -222,7 +222,7 @@ function ProductConfigurationDialog({ item, groups, onAddConfigured, onClose }) 
             const maxSelect = Number(group.maxSelect || group.options.length || 1);
             const isSelected = currentGroupSelections.includes(option.id);
             const nextGroupSelections = maxSelect === 1
-                ? [option.id]
+                ? (isSelected && !group.required ? [] : [option.id])
                 : isSelected
                     ? currentGroupSelections.filter((id) => id !== option.id)
                     : [...currentGroupSelections, option.id].slice(0, maxSelect);
@@ -285,7 +285,7 @@ function ProductConfigurationDialog({ item, groups, onAddConfigured, onClose }) 
                                 <div style={{ display: 'grid', gap: '8px' }}>
                                     {group.options.map((option) => {
                                         const isSelected = selectedIds.includes(option.id);
-                                        const inputType = maxSelect === 1 ? 'radio' : 'checkbox';
+                                        const inputType = maxSelect === 1 && group.required ? 'radio' : 'checkbox';
                                         const isDisabled = !isSelected && maxSelect > 1 && selectedIds.length >= maxSelect;
 
                                         return (
@@ -329,7 +329,8 @@ function ProductConfigurationDialog({ item, groups, onAddConfigured, onClose }) 
                         <textarea
                             id="product-line-note"
                             value={lineNote}
-                            onChange={(event) => setLineNote(event.target.value)}
+                            maxLength={240}
+                            onChange={(event) => setLineNote(event.target.value.slice(0, 240))}
                             placeholder="Optional prep note"
                             style={{ minHeight: '76px' }}
                         />

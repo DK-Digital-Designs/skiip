@@ -7,6 +7,7 @@ import { ProductService } from '../../lib/services/product.service';
 import ProductImageUpload from '../../components/vendor/ProductImageUpload';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Icon from '../../components/ui/Icon';
+import { useToast } from '../../components/ui/Toast';
 import { formatCurrency, getInitials } from '../../lib/ui-format';
 import { canPersistProductModifierEditor, canShowProductModifierEditor } from '../../lib/features/productModifiers';
 
@@ -46,6 +47,7 @@ function toModifierDraftGroups(product) {
 
 export default function VendorProducts() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -212,6 +214,7 @@ export default function VendorProducts() {
                 }
             } else {
                 const savedProduct = await ProductService.createProduct(payload);
+                setCurrentProduct(savedProduct);
                 if (canPersistProductModifierEditor()) {
                     await ProductService.saveProductModifiers(savedProduct.id, modifierDraftGroups);
                 }
@@ -220,8 +223,10 @@ export default function VendorProducts() {
             const { data } = await ProductService.getProducts({ storeId: store.id }, 1, 100);
             setProducts(data || []);
             setIsEditing(false);
+            addToast('Product saved.', 'success');
         } catch (error) {
             console.error('Error saving product:', error);
+            addToast(error.message || 'Could not save product.', 'error');
         }
     }
 

@@ -62,12 +62,16 @@ BEGIN
         RAISE EXCEPTION 'anon needs SELECT grant on product_modifier_options';
     END IF;
 
-    IF NOT has_table_privilege('authenticated', 'public.product_modifier_groups', 'INSERT') THEN
-        RAISE EXCEPTION 'authenticated needs DML grant on product_modifier_groups';
+    IF has_table_privilege('authenticated', 'public.product_modifier_groups', 'INSERT')
+       OR has_table_privilege('authenticated', 'public.product_modifier_groups', 'UPDATE')
+       OR has_table_privilege('authenticated', 'public.product_modifier_groups', 'DELETE') THEN
+        RAISE EXCEPTION 'authenticated must not have DML grants on product_modifier_groups';
     END IF;
 
-    IF NOT has_table_privilege('authenticated', 'public.product_modifier_options', 'INSERT') THEN
-        RAISE EXCEPTION 'authenticated needs DML grant on product_modifier_options';
+    IF has_table_privilege('authenticated', 'public.product_modifier_options', 'INSERT')
+       OR has_table_privilege('authenticated', 'public.product_modifier_options', 'UPDATE')
+       OR has_table_privilege('authenticated', 'public.product_modifier_options', 'DELETE') THEN
+        RAISE EXCEPTION 'authenticated must not have DML grants on product_modifier_options';
     END IF;
 
     IF NOT has_table_privilege('authenticated', 'public.order_item_modifier_selections', 'SELECT') THEN

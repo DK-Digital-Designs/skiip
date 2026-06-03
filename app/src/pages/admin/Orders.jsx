@@ -117,19 +117,23 @@ export default function AdminOrders() {
                             </tr>
                         </thead>
                         <tbody>
-                            {orders.map((order) => (
+                            {orders.map((order) => {
+                                const hasOrderItems = (order.order_items || []).length > 0;
+                                const canExpand = hasPaymentDetails(order) || hasOrderItems;
+
+                                return (
                                 <Fragment key={order.id}>
                                     <tr>
                                         <td>
                                             <strong>{formatOrderCode(order)}</strong>
-                                            {hasPaymentDetails(order) && (
+                                            {canExpand && (
                                                 <button
                                                     type="button"
                                                     className="admin-detail-toggle"
                                                     onClick={() => setExpandedOrderId((current) => current === order.id ? null : order.id)}
                                                     aria-expanded={expandedOrderId === order.id}
                                                 >
-                                                    {expandedOrderId === order.id ? 'Hide details' : 'Payment details'}
+                                                    {expandedOrderId === order.id ? 'Hide details' : 'Details'}
                                                 </button>
                                             )}
                                         </td>
@@ -180,18 +184,20 @@ export default function AdminOrders() {
                                             </div>
                                         </td>
                                     </tr>
-                                    {expandedOrderId === order.id && hasPaymentDetails(order) && (
+                                    {expandedOrderId === order.id && canExpand && (
                                         <tr className="admin-order-detail-row">
                                             <td colSpan="8">
                                                 <div style={{ display: 'grid', gap: '16px' }}>
-                                                    <div className="admin-order-details">
-                                                        <div><span>Platform fee</span><strong>{formatMoney(order.platform_fee)}</strong></div>
-                                                        <div><span>Stripe fee</span><strong>{formatMoney(order.stripe_fee)}</strong></div>
-                                                        <div><span>Vendor net</span><strong>{formatMoney(order.vendor_net)}</strong></div>
-                                                        <div><span>Payment intent</span><strong>{order.payment_intent_id || 'Not recorded'}</strong></div>
-                                                        <div><span>Charge ID</span><strong>{order.charge_id || 'Not recorded'}</strong></div>
-                                                    </div>
-                                                    {(order.order_items || []).length > 0 && (
+                                                    {hasPaymentDetails(order) && (
+                                                        <div className="admin-order-details">
+                                                            <div><span>Platform fee</span><strong>{formatMoney(order.platform_fee)}</strong></div>
+                                                            <div><span>Stripe fee</span><strong>{formatMoney(order.stripe_fee)}</strong></div>
+                                                            <div><span>Vendor net</span><strong>{formatMoney(order.vendor_net)}</strong></div>
+                                                            <div><span>Payment intent</span><strong>{order.payment_intent_id || 'Not recorded'}</strong></div>
+                                                            <div><span>Charge ID</span><strong>{order.charge_id || 'Not recorded'}</strong></div>
+                                                        </div>
+                                                    )}
+                                                    {hasOrderItems && (
                                                         <div style={{ display: 'grid', gap: '10px' }}>
                                                             <strong style={{ color: '#151b2d' }}>Order items</strong>
                                                             {(order.order_items || []).map((item, index) => (
@@ -204,7 +210,8 @@ export default function AdminOrders() {
                                         </tr>
                                     )}
                                 </Fragment>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </section>

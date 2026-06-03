@@ -46,8 +46,8 @@ They are not part of the current UI or edge-function flow.
 Buyers can configure products that have modifier groups (see [Core Data Model](./core-data-model.md)). The flow stays server-authoritative:
 
 1. The buyer opens a configurable product on the menu, picks options, and optionally adds a line note. [`buildConfiguredCartLine`](../../app/src/lib/cart/cartLineIdentity.js) creates a cart line keyed by `productId::optionIds::note`, so the same product with different choices becomes distinct cart lines while identical choices merge.
-2. Checkout submits only `product_id`, `quantity`, `selected_option_ids`, and `line_note` per line (via `toOrderCreateItemPayload`) — never prices. The browser preview price is display-only.
-3. [`order-create`](../../supabase/functions/order-create/index.ts) re-loads the product's active groups/options, **re-validates** the selection server-side (rejects unknown/cross-product options, enforces `required` and `max_select`), and **re-prices** each line as `base_price + Σ price_delta`. It then persists the line, its modifier-selection snapshot, and the note through `create_order_with_items_v1()`.
+2. Checkout submits only `product_id`, `quantity`, `selected_option_ids`, `line_note`, and a non-authoritative `client_line_id` hint per line (via `toOrderCreateItemPayload`) — never prices. The browser preview price is display-only.
+3. [`order-create`](../../supabase/functions/order-create/index.ts) re-loads the product's active groups/options, parses and forwards the `client_line_id` hint, **re-validates** the selection server-side (rejects unknown/cross-product options, enforces `required` and `max_select`), and **re-prices** each line as `base_price + Σ price_delta`. It then persists the line, its modifier-selection snapshot, and the note through `create_order_with_items_v1()`.
 4. Vendors edit modifiers from the product form; saves go through the [`vendor-product-modifiers`](../../supabase/functions/vendor-product-modifiers/index.ts) edge function → `replace_product_modifiers_v1()`.
 
 ### Feature flags
