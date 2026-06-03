@@ -27,7 +27,8 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
-- `1.12.1` is the current post-launch UI/documentation patch baseline: buyer checkout no longer exposes scheduled-order controls, configurable menu item CTAs read `Build my plate`, and active docs reflect the current checkout posture.
+- `1.12.2` is the current post-launch UI patch baseline: vendor product categories now include `Snacks`, with focused regression coverage.
+- `1.12.1` was the previous post-launch UI/documentation patch baseline: buyer checkout no longer exposes scheduled-order controls, configurable menu item CTAs read `Build my plate`, and active docs reflect the current checkout posture.
 - `1.12.0` was the product-modifier hardening baseline after issue #87: server-authoritative modifier validation/re-pricing, modifier-selection snapshots, vendor modifier editing, and dark-launch feature-flag controls.
 - `1.6.0` was the post-launch feature baseline for the 2026-06-02 event-readiness work: restored service fee handling, tighter cancellation enforcement, vendor queue wording/ordering updates, persistent new-order banner behavior, buyer confirmation notice updates, and the historical-order banner-count fix.
 - `1.0.0` is the first public launch-ready release baseline after final launch checkout and fee-display polish on 2026-05-28.

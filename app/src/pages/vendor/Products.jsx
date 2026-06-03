@@ -297,6 +297,7 @@ export default function VendorProducts() {
                                     <option>Mains</option>
                                     <option>Pizza</option>
                                     <option>Sides</option>
+                                    <option>Snacks</option>
                                     <option>Drinks</option>
                                     <option>Desserts</option>
                                 </select>

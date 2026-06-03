@@ -96,4 +96,16 @@ describe('VendorProducts modifier save failures', () => {
         expect(ProductService.createProduct).toHaveBeenCalledTimes(1);
         expect(ProductService.saveProductModifiers).toHaveBeenCalledTimes(2);
     });
+
+    it('offers Snacks as a product category', async () => {
+        render(
+            <MemoryRouter>
+                <VendorProducts />
+            </MemoryRouter>
+        );
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Add Product' }));
+
+        expect(screen.getByRole('option', { name: 'Snacks' })).toBeInTheDocument();
+    });
 });
