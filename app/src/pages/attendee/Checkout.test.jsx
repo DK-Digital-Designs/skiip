@@ -1,11 +1,14 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Checkout from './Checkout';
 import { useCart } from '../../lib/hooks/useCart';
 import { useAuth } from '../../lib/context/AuthContext';
 import { calculateOrderSummary } from '../../lib/orders';
 import { OrderService } from '../../lib/services/order.service';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { StoreService } from '../../lib/services/store.service';
+import { StripeService } from '../../lib/services/stripe.service';
 
 const addToast = vi.fn();
 
@@ -26,7 +29,7 @@ vi.mock('../../lib/orders', async () => {
 });
 
 vi.mock('../../lib/supabase', () => ({
-    isSupabaseConfigured: () => false,
+    isSupabaseConfigured: vi.fn(() => false),
 }));
 
 vi.mock('../../lib/analytics', () => ({
@@ -41,6 +44,18 @@ vi.mock('../../lib/services/order.service', () => ({
     OrderService: {
         createOrder: vi.fn(),
         updateOrderStatus: vi.fn(),
+    },
+}));
+
+vi.mock('../../lib/services/store.service', () => ({
+    StoreService: {
+        getStoreById: vi.fn(),
+    },
+}));
+
+vi.mock('../../lib/services/stripe.service', () => ({
+    StripeService: {
+        createCheckoutSession: vi.fn(),
     },
 }));
 
@@ -77,6 +92,10 @@ describe('Checkout cart controls', () => {
         vi.clearAllMocks();
         addToast.mockClear();
         calculateOrderSummary.mockImplementation(actual.calculateOrderSummary);
+        isSupabaseConfigured.mockReturnValue(false);
+        StoreService.getStoreById.mockResolvedValue(null);
+        OrderService.createOrder.mockResolvedValue({ id: 'order-1' });
+        StripeService.createCheckoutSession.mockRejectedValue(new Error('Stop after payload assertion'));
     });
 
     it('allows decrementing the final quantity out of the cart', () => {
@@ -97,13 +116,31 @@ describe('Checkout cart controls', () => {
         expect(removeLineItem).toHaveBeenCalledWith('burger');
     });
 
-    it('defaults WhatsApp entry to the United Kingdom country code and shows the configured service fee', () => {
+    it('shows pilot policy copy, hides WhatsApp controls, and shows the configured service fee', () => {
         renderCheckout();
 
-        expect(screen.getByLabelText('WhatsApp country code')).toHaveValue('GB');
+        expect(screen.getByText('Confirmation')).toBeInTheDocument();
+        expect(screen.getByText(/notified the vendor of any allergies or dietary requirements/i)).toBeInTheDocument();
+        expect(screen.getByText(/To enjoy your food at its best/i)).toBeInTheDocument();
+        expect(screen.getByText(/refund requests related to delayed collection cannot be accommodated/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText('WhatsApp country code')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('WhatsApp number')).not.toBeInTheDocument();
+        expect(screen.queryByText('WhatsApp updates')).not.toBeInTheDocument();
         expect(screen.queryByText('Service fee waived')).not.toBeInTheDocument();
         expect(screen.getByText('Service Fee')).toBeInTheDocument();
         expect(screen.getByText(/1\.50/)).toBeInTheDocument();
+    });
+
+    it('submits WhatsApp fields disabled for the pilot', async () => {
+        isSupabaseConfigured.mockReturnValue(true);
+        renderCheckout();
+
+        fireEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+        await waitFor(() => expect(OrderService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
+            customer_phone: null,
+            whatsapp_opt_in: false,
+        })));
     });
 
     it('does not show scheduled collection controls on checkout', () => {

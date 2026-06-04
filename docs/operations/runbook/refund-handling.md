@@ -21,3 +21,10 @@ Paid vendor cancellations:
 For the current event, the buyer service fee is GBP 1.50 per order while the percentage Connect application fee remains 0. Full refunds still reverse the destination-charge transfer path, and Stripe processing-fee handling remains subject to Stripe's actual fee behavior.
 
 Refunds should be treated as financial operations, not simple UI status changes.
+
+Pilot late-collection wording:
+
+- checkout and the `order_ready` email tell buyers to collect within 20 minutes
+- the wording says food quality/temperature cannot be guaranteed and late-collection refunds are unavailable
+- this is informational policy copy only; the platform does not automatically classify late collection or deny refunds
+- operators must still review refund requests through the normal Admin Issues/Admin Orders process

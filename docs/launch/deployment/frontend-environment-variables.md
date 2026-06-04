@@ -20,9 +20,9 @@ Launch note:
 Recommended:
 
 - `VITE_SENTRY_DSN`
-- `VITE_BUYER_SESSION_TIMEOUT_HOURS=0`
-- `VITE_VENDOR_SESSION_TIMEOUT_HOURS=0`
-- `VITE_ADMIN_SESSION_TIMEOUT_HOURS=0`
+- `VITE_BUYER_SESSION_TIMEOUT_HOURS=0.1666667`
+- `VITE_VENDOR_SESSION_TIMEOUT_HOURS=0.5`
+- `VITE_ADMIN_SESSION_TIMEOUT_HOURS=0.5`
 
 Product modifiers (combo-able products), default `false`:
 
@@ -41,6 +41,7 @@ Modifier flag notes:
 Session timeout behavior:
 
 - each value is a number of inactive hours for that signed-in role; seller accounts use the vendor value
+- the approved pilot values are approximately 10 minutes for buyers and 30 minutes for sellers/admins
 - `0`, unset, or invalid values disable SKIIP-enforced idle sign-out
 - this is application-level unattended-browser control and does not replace Supabase project-wide Auth session settings
 

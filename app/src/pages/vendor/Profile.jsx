@@ -6,6 +6,7 @@ import { StoreService } from '../../lib/services/store.service';
 import { useToast } from '../../components/ui/Toast';
 import BackButton from '../../components/ui/BackButton';
 import Icon from '../../components/ui/Icon';
+import ProductImageUpload from '../../components/vendor/ProductImageUpload';
 import { getInitials, getVendorImage } from '../../lib/ui-format';
 import { getVendorTags, normalizeVendorTags } from '../../lib/vendor-tags';
 
@@ -167,6 +168,14 @@ export default function VendorProfile() {
                             />
                         </div>
                         <div>
+                            <ProductImageUpload
+                                label="Vendor image"
+                                helperText="Upload a square logo or food image. PNG, JPG, or WebP up to 5MB."
+                                successMessage="Vendor image uploaded. Save profile to publish it."
+                                currentImageUrl={formData.logoUrl}
+                                storeId={store?.id}
+                                onUpload={(url) => updateField('logoUrl', url)}
+                            />
                             <label htmlFor="vendor-logo">Image URL</label>
                             <input
                                 id="vendor-logo"
@@ -175,7 +184,7 @@ export default function VendorProfile() {
                                 placeholder="https://..."
                             />
                             <p className="text-muted" style={{ fontSize: '12px', marginTop: '6px' }}>
-                                Use a square logo or food image for best results.
+                                You can also use a direct public JPG, PNG, or WebP image URL. Canva share links may not work.
                             </p>
                         </div>
                         <div>
