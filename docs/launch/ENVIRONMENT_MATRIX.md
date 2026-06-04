@@ -10,9 +10,9 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `VITE_SUPABASE_ANON_KEY` | Required | Required | Public but environment-specific. |
 | `VITE_PUBLIC_APP_ORIGIN` | Matching staging app origin | `https://www.skiip.co.uk` | Canonical origin used in Supabase Auth email redirects; do not set production to a Vercel deployment URL. |
 | `VITE_SENTRY_DSN` | Recommended | Recommended | Browser error reporting. |
-| `VITE_BUYER_SESSION_TIMEOUT_HOURS` | `0` unless testing expiry | `0` until an idle policy is approved | App-controlled buyer inactivity sign-out in hours; `0` disables. |
-| `VITE_VENDOR_SESSION_TIMEOUT_HOURS` | `0` unless testing expiry | `0` until an idle policy is approved | App-controlled vendor inactivity sign-out in hours; `0` disables. |
-| `VITE_ADMIN_SESSION_TIMEOUT_HOURS` | `0` unless testing expiry | `0` until an idle policy is approved | App-controlled admin inactivity sign-out in hours; `0` disables. |
+| `VITE_BUYER_SESSION_TIMEOUT_HOURS` | `0.1666667` | `0.1666667` | Approved pilot buyer inactivity sign-out, approximately 10 minutes. |
+| `VITE_VENDOR_SESSION_TIMEOUT_HOURS` | `0.5` | `0.5` | Approved pilot vendor inactivity sign-out, 30 minutes. |
+| `VITE_ADMIN_SESSION_TIMEOUT_HOURS` | `0.5` | `0.5` | Approved pilot admin inactivity sign-out, 30 minutes. |
 | `VITE_STRIPE_PUBLIC_KEY` | Removed | Removed | Current checkout is redirect-based through edge functions. Do not set this in Vercel production. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
 | `VITE_PRODUCT_MODIFIERS_UI_ENABLED` | `false` until tested | `false` until rollout approved | Master gate for combo-able product UI. Build-time; redeploy to change. |
@@ -73,7 +73,7 @@ Before May 12 staging testing:
 6. Confirm Supabase Auth password recovery callback and email delivery with one test account.
 7. Run one immediate buyer order through Stripe test checkout. Buyer-facing scheduled-order controls are currently hidden from checkout; verify scheduled collection display only if seeded or legacy scheduled orders are in scope.
 8. Confirm webhook marks payment succeeded, inventory finalizes, notifications queue, and vendor/admin views show the order.
-9. Set each session timeout variable to `1` in a test deployment in turn and verify inactivity expiry messaging before returning values to `0` for the pilot baseline.
+9. Verify inactivity expiry messaging using short-lived preview values, then restore the approved pilot values before promotion.
 
 Before production launch:
 
@@ -83,4 +83,4 @@ Before production launch:
 4. Confirm Web Analytics and Speed Insights are enabled on the production Vercel project.
 5. Confirm Search Console ownership, sitemap submission, and root URL inspection for the production domain.
 6. Confirm the production Supabase Auth email link visibly uses `https://www.skiip.co.uk`, and its first click delivers a usable password recovery form.
-7. Confirm the agreed role-specific idle timeout values are deployed; the default pilot baseline is disabled (`0`) until SKIIP approves a policy.
+7. Confirm the approved role-specific idle timeout values are deployed: approximately 10 minutes for buyers and 30 minutes for vendors/admins.

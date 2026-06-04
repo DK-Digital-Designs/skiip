@@ -112,4 +112,20 @@ describe('Menu product configuration dialog', () => {
         fireEvent.click(optionalOption);
         expect(optionalOption).not.toBeChecked();
     });
+
+    it('uses a plus icon and title-cased Build My Plate copy', async () => {
+        renderMenu();
+
+        const cardButton = await screen.findByRole('button', { name: 'Build my plate for Combo Burger' });
+        const assertBuildMyPlateButton = (button) => {
+            expect(button).toHaveTextContent('Build My Plate');
+            expect(button.querySelector('path[d="M12 5v14"]')).not.toBeNull();
+            expect(button.querySelector('path[d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"]')).toBeNull();
+        };
+
+        assertBuildMyPlateButton(cardButton);
+
+        fireEvent.click(screen.getByRole('button', { name: 'View details for Combo Burger' }));
+        assertBuildMyPlateButton(await screen.findByRole('button', { name: 'Build my plate for Combo Burger from details' }));
+    });
 });

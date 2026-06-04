@@ -315,9 +315,6 @@ export default function OrderTracker() {
                                 </p>
                             )}
                         </div>
-                        <span className={order.whatsapp_opt_in ? 'chip chip--green' : 'chip'}>
-                            WhatsApp {order.whatsapp_opt_in ? 'active' : 'inactive'}
-                        </span>
                     </div>
 
                     <div style={{ display: 'grid', gap: '12px' }}>

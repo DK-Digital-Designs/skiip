@@ -44,8 +44,11 @@ Deno.test("ready email includes pickup location and escapes dynamic values", () 
   );
 
   assertStringIncludes(content.html, "Ready for pickup");
+  assertStringIncludes(content.html, "To enjoy your food at its best");
+  assertStringIncludes(content.html, "refund requests related to delayed collection cannot be accommodated");
   assertStringIncludes(content.html, "Vendor &lt;script&gt;");
   assertStringIncludes(content.html, "Gate A &lt;North&gt;");
   assert(!content.html.includes("Vendor <script>"));
   assert(!content.html.includes("Gate A <North>"));
+  assertStringIncludes(content.text, "Thank you for your understanding and cooperation");
 });

@@ -56,7 +56,7 @@ function VendorMedia({ vendor }) {
     );
 }
 
-function VendorCard({ vendor, index }) {
+function VendorCard({ vendor }) {
     const tags = getVendorTags(vendor);
     const vendorLabel = `${vendor.id || 'unknown'}:${vendor.name || 'Unknown vendor'}`;
 
@@ -69,9 +69,7 @@ function VendorCard({ vendor, index }) {
         >
             <div style={{ display: 'grid', alignContent: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span className={index === 0 ? 'chip chip--accent' : 'chip'}>
-                        {index === 0 ? 'Trending' : 'Open'}
-                    </span>
+                    <span className="chip">Open</span>
                     {tags.slice(0, 2).map((tag) => (
                         <span key={tag} className="chip chip--cyan">
                             {tag}
@@ -275,8 +273,8 @@ export default function VendorList() {
                         </div>
                     ) : (
                         <div className="vendor-grid">
-                            {filteredVendors.map((vendor, index) => (
-                                <VendorCard key={vendor.id} vendor={vendor} index={index} />
+                            {filteredVendors.map((vendor) => (
+                                <VendorCard key={vendor.id} vendor={vendor} />
                             ))}
                         </div>
                     )}

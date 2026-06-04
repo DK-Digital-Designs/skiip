@@ -6,6 +6,8 @@ These statements reflect the actual current implementation.
 
 - buyer checkout is authenticated only
 - buyer checkout currently creates immediate-collection orders only; scheduled-order controls are hidden from the checkout screen, while backend/vendor/admin scheduled collection support remains present
+- checkout shows client-approved informational allergen confirmation and late-collection wording; neither adds backend enforcement or a new stored field
+- buyer-facing WhatsApp controls and status labels are hidden for the pilot, and new checkout payloads explicitly keep WhatsApp opt-in disabled
 - order totals are computed on the server
 - payment finalization is webhook-driven
 - vendor/admin order status changes go through edge functions
@@ -18,8 +20,8 @@ These statements reflect the actual current implementation.
 - full admin-approved destination-charge refunds request transfer reversal and application-fee refund
 - buyer/vendor support requests are stored privately, surfaced through admin triage, and send best-effort internal email alerts
 - buyer/vendor menu discovery uses the Mains category/tag label instead of Burgers; product names and descriptions can still mention burgers
-- app-controlled inactivity logout is frontend-configurable per role and defaults to disabled when timeout env vars are `0`, unset, or invalid
+- app-controlled inactivity logout is frontend-configurable per role; the approved pilot values are approximately 10 minutes for buyers and 30 minutes for sellers/admins
 - vendor Stripe Connect onboarding is currently hardcoded to GB Express accounts
 - vendor Stripe Connect readiness is canonicalized in `stores.stripe_connect_status`
-- the marketing site now lives outside this repo in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing) and is not part of the order/payment source of truth
+- the marketing site now lives outside this repo in [DK-Digital-Designs/skiip-marketing](https://github.com/DK-Digital-Designs/skiip-marketing), publishes client-supplied legal wording at `/terms`, `/privacy`, and `/cookies`, and is not part of the order/payment source of truth
 - Vercel analytics data is directional client-side telemetry; Supabase, Stripe, and the admin operations portal remain authoritative for orders, payments, refunds, and revenue

@@ -122,8 +122,8 @@ function MenuItemDetailsDialog({ item, quantity, onAdd, onRemove, onClose }) {
                             className="btn btn-primary"
                             aria-label={`Build my plate for ${item.name} from details`}
                         >
-                            <Icon name="settings" size={17} />
-                            Build my plate
+                            <Icon name="plus" size={17} />
+                            Build My Plate
                         </button>
                     ) : quantity > 0 ? (
                         <QuantityControl
@@ -520,8 +520,8 @@ export default function Menu() {
                                                 aria-label={soldOut ? `${item.name} is out of stock` : `Build my plate for ${item.name}`}
                                                 disabled={soldOut}
                                             >
-                                                <Icon name="settings" size={17} />
-                                                {soldOut ? 'Out of Stock' : 'Build my plate'}
+                                                <Icon name="plus" size={17} />
+                                                {soldOut ? 'Out of Stock' : 'Build My Plate'}
                                             </button>
                                         ) : quantity > 0 ? (
                                             <QuantityControl

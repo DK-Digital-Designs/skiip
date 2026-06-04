@@ -25,7 +25,6 @@ import {
 } from '../../lib/scheduledCollection';
 import { trackSkiipEvent } from '../../lib/analytics';
 import { calculateOrderSummary } from '../../lib/orders';
-import { getPhoneCountry, normalizeE164Phone, PHONE_COUNTRIES, splitE164Phone } from '../../lib/phone';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -35,10 +34,7 @@ export default function Checkout() {
 
     const [vendor, setVendor] = useState(null);
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [phoneCountry, setPhoneCountry] = useState('GB');
     const [notes, setNotes] = useState('');
-    const [whatsappOptIn, setWhatsappOptIn] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [tipAmount, setTipAmount] = useState(0);
     const [customTip, setCustomTip] = useState('');
@@ -55,11 +51,6 @@ export default function Checkout() {
 
         if (profile) {
             if (profile.email && !email) setEmail(profile.email);
-            if (profile.phone && !phone) {
-                const storedPhone = splitE164Phone(profile.phone);
-                setPhoneCountry(storedPhone.countryCode);
-                setPhone(storedPhone.localNumber);
-            }
         } else if (user?.email && !email) {
             setEmail(user.email);
         }
@@ -126,15 +117,9 @@ export default function Checkout() {
             }
 
             const trimmedEmail = email.trim();
-            const normalizedWhatsAppPhone = normalizeE164Phone(phoneCountry, phone);
 
             if (!trimmedEmail) {
                 stopCheckout('missing_email', 'Please provide an email address.');
-                return;
-            }
-
-            if (whatsappOptIn && !normalizedWhatsAppPhone) {
-                stopCheckout('invalid_whatsapp_phone', 'Add a valid WhatsApp number, including the correct country code.');
                 return;
             }
 
@@ -156,8 +141,8 @@ export default function Checkout() {
             const order = await OrderService.createOrder({
                 items,
                 customer_email: trimmedEmail || user?.email,
-                customer_phone: whatsappOptIn ? normalizedWhatsAppPhone : null,
-                whatsapp_opt_in: whatsappOptIn,
+                customer_phone: null,
+                whatsapp_opt_in: false,
                 notes,
                 tip_amount: tip,
                 ...scheduledPayload,
@@ -243,30 +228,20 @@ export default function Checkout() {
                                 style={{ marginBottom: '16px' }}
                             />
 
-                            <label htmlFor="checkout-phone">WhatsApp number</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(148px, 0.8fr) minmax(150px, 1fr)', gap: '10px', marginBottom: '8px' }}>
-                                <select
-                                    aria-label="WhatsApp country code"
-                                    value={phoneCountry}
-                                    onChange={(event) => setPhoneCountry(event.target.value)}
-                                >
-                                    {PHONE_COUNTRIES.map((country) => (
-                                        <option key={country.code} value={country.code}>
-                                            {country.name} ({country.dialCode})
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    id="checkout-phone"
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(event) => setPhone(event.target.value)}
-                                    placeholder="7700 900123"
-                                />
+                            <div style={{
+                                marginBottom: '16px',
+                                padding: '14px 16px',
+                                border: '1px solid rgba(239,68,68,0.5)',
+                                borderRadius: '14px',
+                                background: 'rgba(239,68,68,0.08)',
+                            }}>
+                                <strong style={{ display: 'block', color: 'var(--red)', marginBottom: '4px' }}>
+                                    Confirmation
+                                </strong>
+                                <p style={{ color: 'var(--ink)', fontSize: '14px', lineHeight: 1.5 }}>
+                                    By proceeding, you confirm that you have notified the vendor of any allergies or dietary requirements in the notes section.
+                                </p>
                             </div>
-                            <p className="text-muted" style={{ fontSize: '13px', marginBottom: '16px' }}>
-                                {getPhoneCountry(phoneCountry).dialCode} will be used for local numbers. Only needed for opted-in order updates.
-                            </p>
 
                             <label htmlFor="checkout-notes">Notes</label>
                             <textarea
@@ -276,22 +251,12 @@ export default function Checkout() {
                                 placeholder="Allergies, pickup notes, or instructions"
                                 style={{ minHeight: '88px' }}
                             />
-                        </section>
-
-                        <section className="card">
-                            <h2 style={{ color: 'var(--ink)', marginBottom: '8px' }}>WhatsApp updates</h2>
-                            <p className="text-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
-                                Optional and purely transactional. No marketing.
+                            <p className="text-muted" style={{ fontSize: '13px', lineHeight: 1.5, marginTop: '10px' }}>
+                                To enjoy your food at its best, we kindly ask that you collect your order within 20 minutes of being notified that it is ready.
                             </p>
-                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={whatsappOptIn}
-                                    onChange={(event) => setWhatsappOptIn(event.target.checked)}
-                                    style={{ width: '20px', marginTop: '2px' }}
-                                />
-                                <span>Send me WhatsApp updates for my order.</span>
-                            </label>
+                            <p className="text-muted" style={{ fontSize: '13px', lineHeight: 1.5, marginTop: '6px' }}>
+                                After 20 minutes, the vendor is unable to guarantee the temperature or quality of the food, and refund requests related to delayed collection cannot be accommodated. Thank you for your understanding and cooperation.
+                            </p>
                         </section>
                     </div>
 

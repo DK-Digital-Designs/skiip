@@ -10,7 +10,14 @@ const ALLOWED_IMAGE_TYPES = {
     'image/webp': 'webp',
 };
 
-export default function ProductImageUpload({ onUpload, currentImageUrl, storeId }) {
+export default function ProductImageUpload({
+    onUpload,
+    currentImageUrl,
+    storeId,
+    label = 'Product image',
+    helperText = 'PNG, JPG, or WebP up to 5MB.',
+    successMessage = 'Product image uploaded.',
+}) {
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(currentImageUrl);
     const { addToast } = useToast();
@@ -52,7 +59,7 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
 
             setPreview(publicUrl);
             onUpload(publicUrl);
-            addToast('Product image uploaded.', 'success');
+            addToast(successMessage, 'success');
         } catch (error) {
             addToast(error.message, 'error');
         } finally {
@@ -62,7 +69,7 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
 
     return (
         <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="product-image-input">Product image</label>
+            <label htmlFor="product-image-input">{label}</label>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{
                     width: '104px',
@@ -98,7 +105,7 @@ export default function ProductImageUpload({ onUpload, currentImageUrl, storeId 
                     >
                         {uploading ? 'Uploading...' : 'Upload image'}
                     </label>
-                    <p className="text-muted" style={{ fontSize: '12px' }}>PNG, JPG, or WebP up to 5MB.</p>
+                    <p className="text-muted" style={{ fontSize: '12px' }}>{helperText}</p>
                 </div>
             </div>
         </div>

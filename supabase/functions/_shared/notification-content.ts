@@ -42,6 +42,10 @@ const EVENT_COPY: Record<
 };
 
 const TRACK_ORDER_URL = "https://www.skiip.co.uk/#/order/profile";
+const LATE_COLLECTION_NOTICE = [
+  "To enjoy your food at its best, we kindly ask that you collect your order within 20 minutes of being notified that it is ready.",
+  "After 20 minutes, the vendor is unable to guarantee the temperature or quality of the food, and refund requests related to delayed collection cannot be accommodated. Thank you for your understanding and cooperation.",
+] as const;
 
 function formatMoney(value: number | string | null | undefined) {
   return Number(value || 0).toFixed(2);
@@ -125,6 +129,9 @@ export function buildEmailContent(
   const cancellationNotice = eventType === "order_paid"
     ? "Please note: Orders cannot be cancelled once the vendor has started preparing the food."
     : null;
+  const lateCollectionNotice = eventType === "order_ready"
+    ? LATE_COLLECTION_NOTICE
+    : [];
   const refundRow =
     eventType === "order_refunded" && payload.refundAmount
       ? buildDetailRow("Refund amount", `GBP ${payload.refundAmount}`)
@@ -154,6 +161,7 @@ export function buildEmailContent(
                   <span style="display: inline-block; padding: 7px 12px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;">${escapeHtml(copy.statusLabel)}</span>
                   <p style="margin: 18px 0 0; color: #374151; font-size: 16px; line-height: 1.6;">${escapeHtml(copy.intro)}</p>
                   ${cancellationNotice ? `<p style="margin: 16px 0 0; color: #111827; font-size: 14px; line-height: 1.6; font-weight: 700;">${escapeHtml(cancellationNotice)}</p>` : ""}
+                  ${lateCollectionNotice.map((paragraph) => `<p style="margin: 16px 0 0; color: #111827; font-size: 14px; line-height: 1.6; font-weight: 700;">${escapeHtml(paragraph)}</p>`).join("")}
                 </td>
               </tr>
               <tr>
@@ -198,6 +206,10 @@ export function buildEmailContent(
 
   if (cancellationNotice) {
     lines.push(cancellationNotice);
+  }
+
+  if (lateCollectionNotice.length > 0) {
+    lines.push(...lateCollectionNotice);
   }
 
   if (eventType === "order_refunded" && payload.refundAmount) {
