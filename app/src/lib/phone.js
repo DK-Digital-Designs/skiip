@@ -9,6 +9,7 @@ export const PHONE_COUNTRIES = [
 ];
 
 const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
+const OPERATIONAL_PHONE_PATTERN = /^\+?\d{7,15}$/;
 
 export function getPhoneCountry(code) {
   return PHONE_COUNTRIES.find((country) => country.code === code) || PHONE_COUNTRIES[0];
@@ -27,6 +28,11 @@ export function normalizeE164Phone(countryCode, number) {
       : `${dialCode}${compact.replace(/^0+/, '')}`;
 
   return E164_PATTERN.test(normalized) ? normalized : null;
+}
+
+export function normalizeOperationalPhone(number) {
+  const normalized = String(number || '').trim().replace(/[\s().\[\]-]/g, '');
+  return OPERATIONAL_PHONE_PATTERN.test(normalized) ? normalized : null;
 }
 
 export function splitE164Phone(number) {

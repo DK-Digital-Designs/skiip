@@ -7,6 +7,7 @@ These statements reflect the actual current implementation.
 - buyer checkout is authenticated only
 - buyer checkout currently creates immediate-collection orders only; scheduled-order controls are hidden from the checkout screen, while backend/vendor/admin scheduled collection support remains present
 - checkout shows client-approved informational allergen confirmation and late-collection wording; neither adds backend enforcement or a new stored field
+- buyer checkout captures a required operational phone number on orders for manual event-day verification/contact
 - buyer-facing WhatsApp controls and status labels are hidden for the pilot, and new checkout payloads explicitly keep WhatsApp opt-in disabled
 - order totals are computed on the server
 - payment finalization is webhook-driven

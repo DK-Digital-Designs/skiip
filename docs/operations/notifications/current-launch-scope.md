@@ -6,7 +6,7 @@ Default launch behavior in code:
 
 - email is enabled for `order_paid`, `order_preparing`, `order_ready`, `order_cancelled`, and `order_refunded`
 - WhatsApp backend infrastructure remains available for later activation, but buyer-facing WhatsApp controls/status labels are hidden for the pilot
-- new buyer checkout payloads explicitly submit `customer_phone: null` and `whatsapp_opt_in: false`
+- buyer checkout captures a required operational phone number for manual order verification/contact, while new buyer checkout payloads explicitly keep `whatsapp_opt_in: false`
 - production must keep `WHATSAPP_SEND_MODE=disabled` for the pilot
 - the `order_ready` email includes the client-approved 20-minute late-collection/refund wording
 
@@ -32,5 +32,6 @@ Config levers:
 Current non-scope:
 
 - there is no active SMS sender path even though `sms` exists in shared notification types and database constraints
+- captured checkout phone numbers are not used for automated WhatsApp or SMS during the pilot
 
 Do not widen WhatsApp scope casually. Re-enabling it requires a deliberate post-pilot product and provider decision.

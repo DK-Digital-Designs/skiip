@@ -4,7 +4,7 @@ import { buildCorsHeaders, isAllowedOrigin, jsonResponse } from "../_shared/http
 import { getAuthErrorStatus, requireUser } from "../_shared/auth.ts"
 import { createServiceClient } from "../_shared/service.ts"
 import { logger } from "../_shared/logger.ts"
-import { normalizeSubmittedWhatsAppPhone } from "../_shared/phone.ts"
+import { normalizeSubmittedOperationalPhone, normalizeSubmittedWhatsAppPhone } from "../_shared/phone.ts"
 import { normalizeScheduledCollection } from "../_shared/scheduled-collection.ts"
 import {
   type AggregatedOrderItem,
@@ -154,7 +154,7 @@ serve(async (req: Request) => {
     const submittedPhone = (body.customer_phone || '').trim()
     const customerPhone = body.whatsapp_opt_in === true
       ? normalizeSubmittedWhatsAppPhone(submittedPhone)
-      : null
+      : normalizeSubmittedOperationalPhone(submittedPhone)
     const scheduledCollection = normalizeScheduledCollection(body)
 
     let parsedLines: ParsedOrderItemLine[]
@@ -179,6 +179,10 @@ serve(async (req: Request) => {
         400,
         origin,
       )
+    }
+
+    if (body.whatsapp_opt_in !== true && !customerPhone) {
+      return jsonResponse({ error: 'A valid customer phone number is required' }, 400, origin)
     }
 
     const productIds = [...new Set(parsedLines.map((item) => item.product_id))]

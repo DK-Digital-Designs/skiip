@@ -123,6 +123,7 @@ describe('Checkout cart controls', () => {
         expect(screen.getByText(/notified the vendor of any allergies or dietary requirements/i)).toBeInTheDocument();
         expect(screen.getByText(/To enjoy your food at its best/i)).toBeInTheDocument();
         expect(screen.getByText(/refund requests related to delayed collection cannot be accommodated/i)).toBeInTheDocument();
+        expect(screen.getByLabelText('Phone number')).toBeRequired();
         expect(screen.queryByLabelText('WhatsApp country code')).not.toBeInTheDocument();
         expect(screen.queryByLabelText('WhatsApp number')).not.toBeInTheDocument();
         expect(screen.queryByText('WhatsApp updates')).not.toBeInTheDocument();
@@ -135,12 +136,38 @@ describe('Checkout cart controls', () => {
         isSupabaseConfigured.mockReturnValue(true);
         renderCheckout();
 
+        fireEvent.change(screen.getByLabelText('Phone number'), {
+            target: { value: '+44 (7700) 900-123' },
+        });
         fireEvent.click(screen.getByRole('button', { name: /pay/i }));
 
         await waitFor(() => expect(OrderService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
-            customer_phone: null,
+            customer_phone: '+447700900123',
             whatsapp_opt_in: false,
         })));
+    });
+
+    it('blocks checkout when the phone number is empty', () => {
+        isSupabaseConfigured.mockReturnValue(true);
+        renderCheckout();
+
+        fireEvent.submit(screen.getByRole('button', { name: /pay/i }).closest('form'));
+
+        expect(addToast).toHaveBeenCalledWith('Please provide a valid phone number for order support.', 'error');
+        expect(OrderService.createOrder).not.toHaveBeenCalled();
+    });
+
+    it('blocks checkout when the phone number is clearly invalid', () => {
+        isSupabaseConfigured.mockReturnValue(true);
+        renderCheckout();
+
+        fireEvent.change(screen.getByLabelText('Phone number'), {
+            target: { value: 'not-a-phone' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+        expect(addToast).toHaveBeenCalledWith('Please provide a valid phone number for order support.', 'error');
+        expect(OrderService.createOrder).not.toHaveBeenCalled();
     });
 
     it('does not show scheduled collection controls on checkout', () => {
@@ -181,6 +208,9 @@ describe('Checkout cart controls', () => {
             }],
         });
 
+        fireEvent.change(screen.getByLabelText('Phone number'), {
+            target: { value: '07700 900123' },
+        });
         fireEvent.click(screen.getByRole('button', { name: /pay/i }));
 
         expect(addToast).toHaveBeenCalledWith('Checkout for configured products is not enabled yet.', 'error');

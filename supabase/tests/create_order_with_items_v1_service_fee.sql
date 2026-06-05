@@ -82,7 +82,7 @@ BEGIN
         0.00,
         1.50,
         'service-fee-buyer@example.com',
-        NULL,
+        '07700900123',
         NULL,
         false,
         jsonb_build_array(
@@ -102,6 +102,10 @@ BEGIN
 
     IF v_created_order.total <> 21.50 THEN
         RAISE EXCEPTION 'Expected total 21.50, got %', v_created_order.total;
+    END IF;
+
+    IF v_created_order.customer_phone <> '07700900123' THEN
+        RAISE EXCEPTION 'Expected customer_phone 07700900123, got %', v_created_order.customer_phone;
     END IF;
 
     BEGIN

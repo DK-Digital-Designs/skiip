@@ -25,6 +25,7 @@ import {
 } from '../../lib/scheduledCollection';
 import { trackSkiipEvent } from '../../lib/analytics';
 import { calculateOrderSummary } from '../../lib/orders';
+import { normalizeOperationalPhone } from '../../lib/phone';
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function Checkout() {
 
     const [vendor, setVendor] = useState(null);
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
     const [processing, setProcessing] = useState(false);
     const [tipAmount, setTipAmount] = useState(0);
@@ -51,6 +53,7 @@ export default function Checkout() {
 
         if (profile) {
             if (profile.email && !email) setEmail(profile.email);
+            if (profile.phone && !phone) setPhone(profile.phone);
         } else if (user?.email && !email) {
             setEmail(user.email);
         }
@@ -117,9 +120,15 @@ export default function Checkout() {
             }
 
             const trimmedEmail = email.trim();
+            const customerPhone = normalizeOperationalPhone(phone);
 
             if (!trimmedEmail) {
                 stopCheckout('missing_email', 'Please provide an email address.');
+                return;
+            }
+
+            if (!customerPhone) {
+                stopCheckout('invalid_phone', 'Please provide a valid phone number for order support.');
                 return;
             }
 
@@ -141,7 +150,7 @@ export default function Checkout() {
             const order = await OrderService.createOrder({
                 items,
                 customer_email: trimmedEmail || user?.email,
-                customer_phone: null,
+                customer_phone: customerPhone,
                 whatsapp_opt_in: false,
                 notes,
                 tip_amount: tip,
@@ -224,6 +233,17 @@ export default function Checkout() {
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
                                 placeholder="name@example.com"
+                                required
+                                style={{ marginBottom: '16px' }}
+                            />
+
+                            <label htmlFor="checkout-phone">Phone number</label>
+                            <input
+                                id="checkout-phone"
+                                type="tel"
+                                value={phone}
+                                onChange={(event) => setPhone(event.target.value)}
+                                placeholder="07700 900123"
                                 required
                                 style={{ marginBottom: '16px' }}
                             />

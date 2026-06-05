@@ -28,7 +28,8 @@ Historical progress logs:
 | Codex | ~0.5 hours | 2026/06/03 | Applied small buyer UI cleanup: hid scheduled-order controls from the checkout screen so buyer checkout creates immediate-collection orders, changed configurable menu item CTAs from `Configure` to `Build my plate`, added focused regression coverage, bumped the synced app version to `1.12.1`, and updated active release/current-state/checkout-flow docs. |
 | Codex | ~0.25 hours | 2026/06/04 | Added `Snacks` to the vendor product category dropdown, added focused regression coverage, and bumped the synced app version to `1.12.2`. Verified Vitest (`129` tests), app lint, and production build. |
 | Codex | ~2.0 hours | 2026/06/04 | Implemented the final minimal pilot-feedback pass: added informational checkout allergen and late-collection wording, hid buyer-facing WhatsApp UI and disabled new checkout opt-ins, changed configurable-product CTAs to `+ Build My Plate`, removed the hardcoded Trending claim, reused the existing seller-authorized product-image uploader for vendor profile images, added late-collection copy to ready emails, configured the documented 10/30/30-minute inactivity baseline, published client-supplied legal wording in the external marketing site, and added focused regression coverage. |
-| **TOTAL** | **~20.75 hours** | | |
+| Codex | ~0.75 hours | 2026/06/05 | Re-added required buyer checkout phone capture for event-day manual order verification while keeping WhatsApp/SMS automation disabled. Persisted operational phone values through `order-create` independently of WhatsApp opt-in, added frontend/backend phone normalization coverage, updated launch/runtime/operations documentation with the event-day support fallback note, and bumped the synced app version to `1.12.4`. Verified focused checkout/phone tests, full Vitest (`137` tests), production build, and scoped Deno function tests (`22` tests). |
+| **TOTAL** | **~21.5 hours** | | |
 
 ## Tracking Rules
 

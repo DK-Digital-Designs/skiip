@@ -9,6 +9,7 @@ This is the stable entrypoint for operations runbook documentation. The detailed
 - [Daily Operational Checks](./runbook/daily-operational-checks.md)
 - [Analytics And Client Reporting](./runbook/analytics-and-client-reporting.md)
 - [Incident Handling](./runbook/incident-handling.md)
+- [Event-Day Support Note](./runbook/event-day-support-note.md)
 - [Refund Handling](./runbook/refund-handling.md)
 - [Support Issues](./runbook/support-issues.md)
 - [Admin Vendor Operations](./runbook/admin-vendor-operations.md)
