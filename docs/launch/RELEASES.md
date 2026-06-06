@@ -27,6 +27,7 @@ SKIIP uses SemVer for pre-launch and launch tracking.
 
 ## Current Baselines
 
+- `1.12.5` is the 2026-06-06 event version: cancelled-order refund instructions now point customers to the return form in SKIIP, and checkout phone normalization accepts event-day support number formatting.
 - `1.12.2` is the current post-launch UI patch baseline: vendor product categories now include `Snacks`, with focused regression coverage.
 - `1.12.1` was the previous post-launch UI/documentation patch baseline: buyer checkout no longer exposes scheduled-order controls, configurable menu item CTAs read `Build my plate`, and active docs reflect the current checkout posture.
 - `1.12.0` was the product-modifier hardening baseline after issue #87: server-authoritative modifier validation/re-pricing, modifier-selection snapshots, vendor modifier editing, and dark-launch feature-flag controls.
