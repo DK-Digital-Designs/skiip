@@ -137,7 +137,7 @@ describe('Checkout cart controls', () => {
         renderCheckout();
 
         fireEvent.change(screen.getByLabelText('Phone number'), {
-            target: { value: '+44 (7700) 900-123' },
+            target: { value: '+44 [7700].900-123' },
         });
         fireEvent.click(screen.getByRole('button', { name: /pay/i }));
 

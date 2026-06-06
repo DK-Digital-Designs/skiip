@@ -250,7 +250,7 @@ export function getBuyerOrderStatusDescription(order) {
   }
 
   if (order?.status === 'cancelled' && order?.payment_status === 'succeeded') {
-    return 'This paid order was cancelled. Refund review is required and SKIIP will contact you.';
+    return 'This paid order was cancelled. If payment was taken, find this order in SKIIP and submit the return form. The SKIIP team will confirm your refund.';
   }
 
   if (order?.status === 'cancelled') {

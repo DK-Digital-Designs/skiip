@@ -52,3 +52,17 @@ Deno.test("ready email includes pickup location and escapes dynamic values", () 
   assert(!content.html.includes("Gate A <North>"));
   assertStringIncludes(content.text, "Thank you for your understanding and cooperation");
 });
+
+Deno.test("cancelled email directs paid customers to the return form", () => {
+  const content = buildEmailContent(basePayload, "order_cancelled");
+
+  assertEquals(content.subject, "Your SKIIP order was cancelled");
+  assertStringIncludes(content.html, "submit the return form");
+  assertStringIncludes(content.html, "The SKIIP team will confirm your refund.");
+  assertStringIncludes(content.html, "Use the Track your order link to open this order in SKIIP.");
+  assertStringIncludes(content.text, "submit the return form");
+  assert(!content.html.includes("support will advise"));
+  assert(!content.html.includes("No further action is needed"));
+  assert(!content.text.includes("support will advise"));
+  assert(!content.text.includes("No further action is needed"));
+});

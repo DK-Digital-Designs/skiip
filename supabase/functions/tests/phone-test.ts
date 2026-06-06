@@ -14,6 +14,7 @@ Deno.test("rejects local or malformed WhatsApp input at the order boundary", () 
 Deno.test("normalizes operational order phone input without requiring WhatsApp format", () => {
   assertEquals(normalizeSubmittedOperationalPhone(" 07700 900123 "), "07700900123")
   assertEquals(normalizeSubmittedOperationalPhone("+44 (7700) 900-123"), "+447700900123")
+  assertEquals(normalizeSubmittedOperationalPhone("+44 [7700].900-123"), "+447700900123")
 })
 
 Deno.test("rejects empty or implausible operational order phone input", () => {

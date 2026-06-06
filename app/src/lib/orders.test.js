@@ -67,7 +67,7 @@ describe('order utilities', () => {
     expect(getBuyerOrderStatusDescription(pendingOrder)).toContain('waiting for payment');
     expect(getBuyerOrderStatusLabel(failedOrder)).toBe('Payment failed');
     expect(getBuyerOrderStatusDescription(failedOrder)).toContain('try again');
-    expect(getBuyerOrderStatusDescription({ status: 'cancelled', payment_status: 'succeeded' })).toContain('Refund review');
+    expect(getBuyerOrderStatusDescription({ status: 'cancelled', payment_status: 'succeeded' })).toContain('submit the return form');
   });
 
   it('detects refundable orders', () => {

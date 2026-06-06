@@ -7,6 +7,6 @@ export function normalizeSubmittedWhatsAppPhone(phone: string | null | undefined
 }
 
 export function normalizeSubmittedOperationalPhone(phone: string | null | undefined) {
-  const normalized = (phone || '').trim().replace(/[\s().\[\]-]/g, '')
+  const normalized = (phone || '').trim().replace(/[\s().[\]-]/g, '')
   return OPERATIONAL_PHONE_PATTERN.test(normalized) ? normalized : null
 }

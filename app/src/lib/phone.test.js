@@ -15,6 +15,7 @@ describe('checkout phone normalization', () => {
   it('normalizes event-day operational phone input without country assumptions', () => {
     expect(normalizeOperationalPhone(' 07700 900123 ')).toBe('07700900123');
     expect(normalizeOperationalPhone('+44 (7700) 900-123')).toBe('+447700900123');
+    expect(normalizeOperationalPhone('+44 [7700].900-123')).toBe('+447700900123');
   });
 
   it('rejects empty or implausible operational phone input', () => {

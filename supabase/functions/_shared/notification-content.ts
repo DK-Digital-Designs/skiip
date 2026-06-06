@@ -29,9 +29,9 @@ const EVENT_COPY: Record<
   order_cancelled: {
     subject: "Your SKIIP order was cancelled",
     headline:
-      "Your order has been cancelled. If payment was taken, support will advise on the next step.",
+      "Your order has been cancelled. If payment was taken, find this order in SKIIP and submit the return form. The SKIIP team will confirm your refund.",
     statusLabel: "Cancelled",
-    intro: "No further action is needed in the app right now.",
+    intro: "Use the Track your order link to open this order in SKIIP.",
   },
   order_refunded: {
     subject: "Your SKIIP order has been refunded",

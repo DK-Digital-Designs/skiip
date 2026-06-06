@@ -31,7 +31,7 @@ export function normalizeE164Phone(countryCode, number) {
 }
 
 export function normalizeOperationalPhone(number) {
-  const normalized = String(number || '').trim().replace(/[\s().\[\]-]/g, '');
+  const normalized = String(number || '').trim().replace(/[\s().[\]-]/g, '');
   return OPERATIONAL_PHONE_PATTERN.test(normalized) ? normalized : null;
 }
 
