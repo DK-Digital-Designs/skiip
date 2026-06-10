@@ -47,7 +47,9 @@ The broad entrypoint files above are intentionally short. Follow their topic lin
 
 ## Delivery
 
-- Completed progress logs live in [Phase 1-4 Progress](PROGRESS.md) and [Phase 5 Progress](PROGRESS-2.md). Active Phase 6 work is tracked in [`PHASE6.md`](../PHASE6.md) at the project root.
+- Completed progress logs live in [Phase 1-4 Progress](PROGRESS.md), [Phase 5 Progress](PROGRESS-2.md), and [Phase 6 Progress](archive/phase-reports/phase-6/PHASE6.md). Active Phase 7 work is tracked in [`PHASE7.md`](../PHASE7.md) at the project root.
+- [Phase 6 Client Scope And Pricing](phase-6/SKIIP_PHASE_6_CLIENT_SCOPE_AND_PRICING.md)
+  Client-facing delivery summary covering launch activation, the cancelled 30 May event, the successful 6 June event, corrected tracked hours, infrastructure reimbursement, and event-support pricing.
 - [Agent Automation Plan](delivery/AGENT_AUTOMATION_PLAN.md)
   Stable index for proposed SKIIP-specific agent skills, deterministic scripts, recurring automations, and implementation phases.
 - [Branching Workflow](delivery/BRANCHING_WORKFLOW.md)

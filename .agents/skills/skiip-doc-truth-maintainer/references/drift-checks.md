@@ -12,7 +12,7 @@ Primary source of truth:
 Secondary context:
 
 - root `README.md`
-- active `PHASE6.md`
+- active `PHASE7.md`
 - GitHub issues and project board
 - recent PR descriptions
 - current branch changes

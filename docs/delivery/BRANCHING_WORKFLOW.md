@@ -115,7 +115,7 @@ Before final handoff, the person or agent doing the work should:
 
 1. Update the relevant GitHub issue with what changed, what was verified, what remains blocked, and who or what owns the next step.
 2. Create a new GitHub issue when a risk or task is not already tracked, rather than hiding it in chat or local notes.
-3. Update [`PHASE6.md`](../../PHASE6.md) when the session changes implementation state, launch posture, verification evidence, delivery process, or closeout risk.
+3. Update [`PHASE7.md`](../../PHASE7.md) when the session changes implementation state, operational posture, verification evidence, delivery process, or closeout risk.
 4. Update the progress total and commit list when committed work exists for the period being summarized.
 5. State explicitly in the final handoff if no progress or issue update was needed, with the reason.
 

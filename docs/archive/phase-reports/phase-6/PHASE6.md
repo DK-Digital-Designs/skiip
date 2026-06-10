@@ -1,11 +1,15 @@
-# Phase 6 Progress (May 24th - Present)
+# Phase 6 Progress (May 24th - June 6th)
 
-This is the active progress tracker for new SKIIP work after the Phase 5 closeout.
+This is the archived progress tracker for SKIIP Phase 6 launch delivery work after the Phase 5 closeout.
 
 Historical progress logs:
 
-- [Phase 1-4 progress](docs/PROGRESS.md)
-- [Phase 5 progress](docs/PROGRESS-2.md)
+- [Phase 1-4 progress](../../../PROGRESS.md)
+- [Phase 5 progress](../../../PROGRESS-2.md)
+
+Current progress:
+
+- [Phase 7 progress](../../../../PHASE7.md)
 
 | Actor | Time | Date | Description |
 | :--- | :--- | :--- | :--- |
@@ -29,11 +33,11 @@ Historical progress logs:
 | Codex | ~0.25 hours | 2026/06/04 | Added `Snacks` to the vendor product category dropdown, added focused regression coverage, and bumped the synced app version to `1.12.2`. Verified Vitest (`129` tests), app lint, and production build. |
 | Codex | ~2.0 hours | 2026/06/04 | Implemented the final minimal pilot-feedback pass: added informational checkout allergen and late-collection wording, hid buyer-facing WhatsApp UI and disabled new checkout opt-ins, changed configurable-product CTAs to `+ Build My Plate`, removed the hardcoded Trending claim, reused the existing seller-authorized product-image uploader for vendor profile images, added late-collection copy to ready emails, configured the documented 10/30/30-minute inactivity baseline, published client-supplied legal wording in the external marketing site, and added focused regression coverage. |
 | Codex | ~0.75 hours | 2026/06/05 | Re-added required buyer checkout phone capture for event-day manual order verification while keeping WhatsApp/SMS automation disabled. Persisted operational phone values through `order-create` independently of WhatsApp opt-in, added frontend/backend phone normalization coverage, updated launch/runtime/operations documentation with the event-day support fallback note, and bumped the synced app version to `1.12.4`. Verified focused checkout/phone tests, full Vitest (`137` tests), production build, and scoped Deno function tests (`22` tests). |
-| **TOTAL** | **~21.5 hours** | | |
+| Dean Gibson | ~0.5 hours | 2026/06/06 | Applied the event-day cancelled-order support hotfix: directed paid customers to the in-app return form, broadened operational phone-format normalization, added focused frontend/Deno regression coverage, and released the event baseline as `1.12.5`. |
+| **TOTAL** | **~24.5 hours** | | |
 
-## Tracking Rules
+## Closeout Notes
 
-- Add meaningful new implementation, launch, verification, delivery, and documentation work here.
-- Keep completed historical phase records in `docs/`.
-- Update the relevant GitHub issue when work changes launch posture, implementation state, or ownership.
-- Record verification commands or external checks in the relevant work entry when useful.
+- Phase 6 is closed at approximately 24.5 tracked hours.
+- Add new implementation, post-launch verification, support, delivery, and documentation work to [`PHASE7.md`](../../../../PHASE7.md).
+- Keep this file unchanged as the historical Phase 6 delivery record unless a factual correction is required.

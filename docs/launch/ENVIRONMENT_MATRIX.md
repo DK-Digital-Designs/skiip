@@ -11,7 +11,7 @@ This is the May 2026 launch source of truth for environment parity. Do not commi
 | `VITE_PUBLIC_APP_ORIGIN` | Matching staging app origin | `https://www.skiip.co.uk` | Canonical origin used in Supabase Auth email redirects; do not set production to a Vercel deployment URL. |
 | `VITE_SENTRY_DSN` | Recommended | Recommended | Browser error reporting. |
 | `VITE_BUYER_SESSION_TIMEOUT_HOURS` | `0.1666667` | `0.1666667` | Approved pilot buyer inactivity sign-out, approximately 10 minutes. |
-| `VITE_VENDOR_SESSION_TIMEOUT_HOURS` | `0.5` | `0.5` | Approved pilot vendor inactivity sign-out, 30 minutes. |
+| `VITE_VENDOR_SESSION_TIMEOUT_HOURS` | `0.5` | `0` for the 2026-06-06 live event | Temporary event override to stop vendors being signed out during service. Revisit and replace with a proper vendor idle-session policy after the event. |
 | `VITE_ADMIN_SESSION_TIMEOUT_HOURS` | `0.5` | `0.5` | Approved pilot admin inactivity sign-out, 30 minutes. |
 | `VITE_STRIPE_PUBLIC_KEY` | Removed | Removed | Current checkout is redirect-based through edge functions. Do not set this in Vercel production. |
 | `VITE_VENDOR_INVITE_CODE` | Not required | Not required | Vendor onboarding is admin-created for launch. |
@@ -83,4 +83,4 @@ Before production launch:
 4. Confirm Web Analytics and Speed Insights are enabled on the production Vercel project.
 5. Confirm Search Console ownership, sitemap submission, and root URL inspection for the production domain.
 6. Confirm the production Supabase Auth email link visibly uses `https://www.skiip.co.uk`, and its first click delivers a usable password recovery form.
-7. Confirm the approved role-specific idle timeout values are deployed: approximately 10 minutes for buyers and 30 minutes for vendors/admins.
+7. Confirm the approved role-specific idle timeout values are deployed. Exception: during the 2026-06-06 live event, production vendor timeout is temporarily set to `0` and must be revisited after the event.

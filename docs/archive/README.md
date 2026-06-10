@@ -9,3 +9,8 @@ This area contains historical notes, generated outputs, client deliverables, pha
 - [Client deliverables](client-deliverables/)
 - [Phase reports](phase-reports/)
 - [Scope reviews](scope-reviews/)
+
+Recent archive additions:
+
+- [Phase 6 progress](phase-reports/phase-6/PHASE6.md)
+- [6 June 2026 launch report](generated/launch-report/skiip-launch-report-2026-06-06.html)

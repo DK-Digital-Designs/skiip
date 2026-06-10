@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SKIIP Launch Report — Jun 6, 2026</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d0d0d;
+      color: #e5e5e5;
+      padding: 40px 24px;
+    }
+
+    .container { max-width: 960px; margin: 0 auto; }
+
+    header {
+      margin-bottom: 40px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #888;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #1a3a1a;
+      color: #4caf50;
+      border: 1px solid #2d6b2d;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 16px;
+      margin-top: 40px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .kpi {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .kpi .label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .kpi .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .kpi .delta {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    .delta.up { color: #4caf50; }
+    .delta.down { color: #f44336; }
+    .delta.good-down { color: #4caf50; }
+
+    .section {
+      margin-top: 8px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 12px;
+    }
+
+    .card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      color: #555;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    th:not(:first-child) { text-align: right; }
+
+    td {
+      padding: 9px 0;
+      border-bottom: 1px solid #1a1a1a;
+      color: #ccc;
+    }
+
+    td:not(:first-child) { text-align: right; color: #fff; font-weight: 500; }
+
+    tr:last-child td { border-bottom: none; }
+
+    .funnel-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .funnel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .funnel-label {
+      width: 180px;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .funnel-bar-wrap {
+      flex: 1;
+      background: #1e1e1e;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .funnel-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: #4caf50;
+    }
+
+    .funnel-val {
+      width: 40px;
+      text-align: right;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .two-col { grid-template-columns: 1fr; }
+      .kpi .value { font-size: 22px; }
+    }
+
+    .perf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .perf-item {
+      background: #0f1a0f;
+      border: 1px solid #1e3a1e;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .perf-item .p-label {
+      font-size: 11px;
+      color: #5a8a5a;
+      margin-bottom: 6px;
+    }
+
+    .perf-item .p-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #4caf50;
+    }
+
+    .score-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid #4caf50;
+      font-size: 22px;
+      font-weight: 800;
+      color: #4caf50;
+      margin-bottom: 12px;
+    }
+
+    .insight-box {
+      background: #0f1f2f;
+      border: 1px solid #1a3a5a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #7ab8e8;
+      line-height: 1.6;
+    }
+
+    .insight-box strong { color: #a8d4f5; }
+
+    .warn-box {
+      background: #1f1500;
+      border: 1px solid #4a3000;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #d4a84b;
+      line-height: 1.6;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #1a1a1a;
+      font-size: 12px;
+      color: #444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>SKIIP — Launch Day Report</h1>
+    <p>June 6, 2026 · Last 24 hours · Production</p>
+    <span class="badge">🚀 Launch Day</span>
+  </header>
+
+  <!-- ── ORDERS ── -->
+  <h2>Orders & Revenue <span style="font-size:11px;color:#4caf50;font-weight:600;text-transform:none;letter-spacing:0;background:#1a3a1a;border:1px solid #2d6b2d;border-radius:10px;padding:2px 8px">Final</span></h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">Total Orders</div>
+      <div class="value">48</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Successful</div>
+      <div class="value">45</div>
+      <div class="delta up">94% success rate</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Gross Revenue</div>
+      <div class="value">£1,022</div>
+      <div class="delta up">broke £1k 🎉</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Avg Order Value</div>
+      <div class="value">£22.72</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Avg Time to Pay</div>
+      <div class="value">52s</div>
+      <div class="delta up">Median ~0.4 min</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tips Collected</div>
+      <div class="value">£7.80</div>
+      <div class="delta" style="color:#888">4 tipping orders</div>
+    </div>
+  </div>
+
+  <div class="two-col section" style="margin-top:12px">
+    <div class="card">
+      <h3>Orders by Vendor</h3>
+      <table>
+        <thead><tr><th>Vendor</th><th>Orders</th><th>Succeeded</th></tr></thead>
+        <tbody>
+          <tr><td>9da6ade5</td><td>24</td><td>23</td></tr>
+          <tr><td>d8a7769b</td><td>17</td><td>17</td></tr>
+          <tr><td>1c54e2ad</td><td>7</td><td>5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Order Statuses</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Count</th></tr></thead>
+        <tbody>
+          <tr><td>✅ Collected</td><td>41</td></tr>
+          <tr><td>🟡 Ready / Paid</td><td>4</td></tr>
+          <tr><td>⏳ Pending payment</td><td>1</td></tr>
+          <tr><td>❌ Cancelled</td><td>2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card section" style="margin-top:12px">
+    <h3>Revenue Breakdown (succeeded orders)</h3>
+    <table>
+      <thead><tr><th>Line</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Customer-paid total</td><td>£1,022.30</td></tr>
+        <tr><td>Service fees (SKIIP)</td><td>£67.50</td></tr>
+        <tr><td>Tips</td><td>£7.80</td></tr>
+        <tr><td>Stripe fees</td><td>~£24.32</td></tr>
+        <tr><td>Vendor net payout</td><td>~£929.68</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box section" style="margin-top:12px">
+    <strong>Strong repeat ordering.</strong> Several customers ordered from multiple vendors — one placed 4 orders across all 3 stores. 0 payment failures in the final batch. All final orders had UK mobile numbers (07xxx). <strong>0 WhatsApp opt-ins</strong> across all orders — worth revisiting the opt-in UX for future events.
+  </div>
+  <div class="warn-box" style="margin-top:8px">
+    <strong>2 cancellations at vendor 1c54e2ad</strong> — both had £2 subtotals and payment never started. Likely drop-off or test orders. Minimum basket size enforcement would filter these out.
+  </div>
+
+  <!-- ── TOP-LINE KPIs ── -->
+  <h2>Traffic Overview</h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">Visitors</div>
+      <div class="value">121</div>
+      <div class="delta up">▲ +195%</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Page Views</div>
+      <div class="value">548</div>
+      <div class="delta up">▲ +756%</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Bounce Rate</div>
+      <div class="value">47%</div>
+      <div class="delta good-down">▼ −29%</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Mobile Share</div>
+      <div class="value">89%</div>
+      <div class="delta" style="color:#888">Devices</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Top Country</div>
+      <div class="value" style="font-size:18px;">🇬🇧 UK</div>
+      <div class="delta" style="color:#888">89% of visitors</div>
+    </div>
+  </div>
+
+  <!-- ── ACQUISITION ── -->
+  <h2>Acquisition</h2>
+  <div class="two-col section">
+    <div class="card">
+      <h3>Referrers</h3>
+      <table>
+        <thead>
+          <tr><th>Source</th><th>Visitors</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>checkout.stripe.com</td><td>34</td></tr>
+          <tr><td>l.instagram.com</td><td>9</td></tr>
+          <tr><td>google.com</td><td>5</td></tr>
+          <tr><td>skiip.vercel.app</td><td>1</td></tr>
+        </tbody>
+      </table>
+      <div class="insight-box" style="margin-top:14px">
+        <strong>Stripe return traffic is the #1 referrer</strong> (34 visitors) — users returning post-payment. Instagram drove 9 organic visitors. Google organic picked up to 5, suggesting some search visibility already.
+      </div>
+    </div>
+    <div class="card">
+      <h3>Devices & OS</h3>
+      <table>
+        <thead>
+          <tr><th>Device</th><th>Visitors</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mobile</td><td>89%</td></tr>
+          <tr><td>Desktop</td><td>11%</td></tr>
+        </tbody>
+      </table>
+      <table style="margin-top:16px">
+        <thead>
+          <tr><th>OS</th><th>Share</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>iOS</td><td>78%</td></tr>
+          <tr><td>Android</td><td>12%</td></tr>
+          <tr><td>Windows</td><td>6%</td></tr>
+          <tr><td>Mac</td><td>5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── BROWSERS ── -->
+  <h2>Browsers</h2>
+  <div class="card section">
+    <table>
+      <thead>
+        <tr><th>Browser</th><th>Visitors</th><th>Page Views</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mobile Safari</td><td>66 (54%)</td><td>357</td></tr>
+        <tr><td>Chrome Mobile iOS</td><td>24 (20%)</td><td>108</td></tr>
+        <tr><td>Chrome Mobile</td><td>12 (10%)</td><td>38</td></tr>
+        <tr><td>Instagram App</td><td>9 (7%)</td><td>10</td></tr>
+        <tr><td>Microsoft Edge</td><td>6 (5%)</td><td>18</td></tr>
+        <tr><td>Chrome (Desktop)</td><td>3 (2%)</td><td>12</td></tr>
+        <tr><td>Google Search App</td><td>1 (1%)</td><td>5</td></tr>
+        <tr><td>Samsung Browser</td><td>1 (1%)</td><td>1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── USER FUNNEL ── -->
+  <h2>User Funnel</h2>
+  <div class="card section">
+    <h3>Key Events — Unique Visitors</h3>
+    <div class="funnel-wrap">
+      <div class="funnel-row">
+        <div class="funnel-label">vendor_card_clicked</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%"></div></div>
+        <div class="funnel-val">70</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">start_ordering_clicked</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:93%"></div></div>
+        <div class="funnel-val">65</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">menu_item_added</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:73%;background:#81c784"></div></div>
+        <div class="funnel-val">51</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">payment_started</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:53%;background:#aed581"></div></div>
+        <div class="funnel-val">37</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">checkout_started</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:43%;background:#aed581"></div></div>
+        <div class="funnel-val">30</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">order_created</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:50%;background:#dce775"></div></div>
+        <div class="funnel-val">35</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label">payment_redirected</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:50%;background:#dce775"></div></div>
+        <div class="funnel-val">35</div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-label" style="color:#888">checkout_failed</div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:3%;background:#ef5350"></div></div>
+        <div class="funnel-val" style="color:#ef5350">2</div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <strong>Vendor → Order conversion: 50%.</strong> Of the 70 people who clicked a vendor card, 35 created an order — exceptional for a first event. The drop from payment_started (37) to checkout_started (30) is the biggest leak in the funnel; worth investigating that step.
+    </div>
+    <div class="warn-box">
+      <strong>checkout_failed: 2 unique visitors, 33 total events</strong> — a retry loop, not a systemic failure, but 33 events from 2 people is notable. Pull the Stripe error logs to confirm the failure code.
+    </div>
+  </div>
+
+  <!-- ── SIGNUPS ── -->
+  <h2>Signups</h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">signup_started</div>
+      <div class="value">29</div>
+    </div>
+    <div class="kpi">
+      <div class="label">signup_completed</div>
+      <div class="value">28</div>
+      <div class="delta up">97% completion</div>
+    </div>
+    <div class="kpi">
+      <div class="label">signup_failed</div>
+      <div class="value">2</div>
+      <div class="delta" style="color:#888">2 visitors</div>
+    </div>
+  </div>
+
+  <!-- ── PERFORMANCE ── -->
+  <h2>Web Performance (Mobile)</h2>
+  <div class="card section">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+      <div class="score-circle">100</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#4caf50">Great</div>
+        <div style="font-size:13px;color:#666;margin-top:2px">Real Experience Score · >75% of visits scored above 90</div>
+      </div>
+    </div>
+    <div class="perf-grid">
+      <div class="perf-item">
+        <div class="p-label">First Contentful Paint</div>
+        <div class="p-value">0.80s</div>
+      </div>
+      <div class="perf-item">
+        <div class="p-label">Largest Contentful Paint</div>
+        <div class="p-value">1.27s</div>
+      </div>
+      <div class="perf-item">
+        <div class="p-label">Interaction to Next Paint</div>
+        <div class="p-value">80ms</div>
+      </div>
+      <div class="perf-item">
+        <div class="p-label">Cumulative Layout Shift</div>
+        <div class="p-value">0.02</div>
+      </div>
+      <div class="perf-item">
+        <div class="p-label">First Input Delay</div>
+        <div class="p-value">32ms</div>
+      </div>
+      <div class="perf-item">
+        <div class="p-label">Time to First Byte</div>
+        <div class="p-value">0.26s</div>
+      </div>
+    </div>
+    <div class="insight-box">
+      No poor or "needs improvement" routes. The app is fast on mobile — great foundation for the 88% mobile user base.
+    </div>
+  </div>
+
+  <!-- ── EMAIL ── -->
+  <h2>Email (skiip.co.uk)</h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">Emails Sent</div>
+      <div class="value">139</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Deliverability</div>
+      <div class="value">99.28%</div>
+      <div class="delta up">Excellent</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Bounce Rate</div>
+      <div class="value">0.72%</div>
+      <div class="delta" style="color:#f0ad4e">1 transient</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Complain Rate</div>
+      <div class="value">0%</div>
+      <div class="delta up">Clean</div>
+    </div>
+  </div>
+
+  <!-- ── BACKEND ── -->
+  <h2>Backend (Supabase)</h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">Total Requests</div>
+      <div class="value">15,962</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Database</div>
+      <div class="value">11,531</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Auth</div>
+      <div class="value">1,416</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Storage</div>
+      <div class="value">1,944</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Realtime</div>
+      <div class="value">1,071</div>
+    </div>
+  </div>
+  <div class="kpi-grid section" style="margin-top:12px">
+    <div class="kpi" style="background:#0f1a0f;border-color:#1e3a1e">
+      <div class="label" style="color:#5a8a5a">DB Status</div>
+      <div class="value" style="font-size:18px;color:#4caf50">Healthy</div>
+    </div>
+    <div class="kpi" style="background:#0f1a0f;border-color:#1e3a1e">
+      <div class="label" style="color:#5a8a5a">CPU</div>
+      <div class="value" style="font-size:18px;color:#4caf50">5%</div>
+    </div>
+    <div class="kpi" style="background:#0f1a0f;border-color:#1e3a1e">
+      <div class="label" style="color:#5a8a5a">RAM</div>
+      <div class="value" style="font-size:18px;color:#4caf50">55%</div>
+    </div>
+    <div class="kpi" style="background:#0f1a0f;border-color:#1e3a1e">
+      <div class="label" style="color:#5a8a5a">Connections</div>
+      <div class="value" style="font-size:18px;color:#4caf50">25/60</div>
+    </div>
+    <div class="kpi" style="background:#0f1a0f;border-color:#1e3a1e">
+      <div class="label" style="color:#5a8a5a">Disk</div>
+      <div class="value" style="font-size:18px;color:#4caf50">4%</div>
+    </div>
+  </div>
+  <div class="insight-box section" style="margin-top:12px">
+    Backend handled 15,962 requests across the full event — DB at only 5% CPU and 55% RAM on a Nano instance (eu-west-1) with headroom to spare. 25/60 connections at peak. No errors or timeouts reported.
+  </div>
+
+  <!-- ── INFRASTRUCTURE ── -->
+  <h2>Infrastructure (Vercel · Last 12h)</h2>
+  <div class="kpi-grid section">
+    <div class="kpi">
+      <div class="label">Edge Requests</div>
+      <div class="value">2XX ✓</div>
+      <div class="delta up">No 5XX errors</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Function Errors</div>
+      <div class="value">0</div>
+      <div class="delta up">Clean</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Function Timeouts</div>
+      <div class="value">0</div>
+      <div class="delta up">Clean</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Data Out</div>
+      <div class="value">34 MB</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Data In</div>
+      <div class="value">7 MB</div>
+    </div>
+  </div>
+
+  <!-- ── SUMMARY ── -->
+  <h2>Summary</h2>
+  <div class="card section">
+    <p style="font-size:14px;line-height:1.8;color:#bbb">
+      Successful first event. <strong style="color:#fff">121 visitors</strong>, <strong style="color:#fff">548 page views</strong>, and <strong style="color:#fff">£1,022.30 gross revenue</strong> from 45 successful orders across 3 vendors. The funnel converted at 50% from vendor card click to order — exceptional. Signups hit 97% completion. The backend handled 15,962 Supabase requests at 5% CPU with zero errors, and Vercel served the full event with no function errors or timeouts. Email deliverability ended at 99.28% with 0% complaints. <strong style="color:#f0ad4e">One action item:</strong> investigate the checkout_failed retry loop (33 events, 2 visitors) via Stripe logs, and review the WhatsApp opt-in UX — 0 of 48 orders opted in.
+    </p>
+  </div>
+
+  <footer>
+    SKIIP internal report · Final · June 6, 2026 · Data from Vercel Analytics, Vercel Speed Insights, Vercel Infrastructure, Supabase, and Resend email metrics
+  </footer>
+
+</div>
+</body>
+</html>

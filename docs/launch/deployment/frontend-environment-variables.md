@@ -44,6 +44,7 @@ Session timeout behavior:
 - the approved pilot values are approximately 10 minutes for buyers and 30 minutes for sellers/admins
 - `0`, unset, or invalid values disable SKIIP-enforced idle sign-out
 - this is application-level unattended-browser control and does not replace Supabase project-wide Auth session settings
+- Event-day override, 2026-06-06: production `VITE_VENDOR_SESSION_TIMEOUT_HOURS` was changed to `0` so live vendors are not signed out during service. Treat this as temporary event operations debt and revisit a proper vendor idle-session policy after the event.
 
 No Vite environment variable is required for the current Vercel Web Analytics or Speed Insights integration. The repo-side requirement is that `@vercel/analytics`, `@vercel/speed-insights`, `<Analytics />`, and `<SpeedInsights />` are present in the product app. The hosted Vercel project still needs the corresponding dashboard features enabled.
 
