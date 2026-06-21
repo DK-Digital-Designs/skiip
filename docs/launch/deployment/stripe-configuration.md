@@ -35,7 +35,7 @@ Important:
 
 - the webhook signing secret must come from the exact hosted Stripe webhook endpoint in use
 - do not mix Stripe CLI listener secrets with hosted endpoint secrets
-- set `STRIPE_MODE=test` for test-mode endpoints and `STRIPE_MODE=live` for live endpoints; mismatched `event.livemode` webhooks are rejected before event claiming
+- set `STRIPE_MODE=test` for test-mode endpoints and `STRIPE_MODE=live` for live endpoints; Stripe clients reject mismatched `sk_test_`, `rk_test_`, `sk_live_`, and `rk_live_` key prefixes at startup and mismatched `event.livemode` webhooks before event claiming
 - set `PAYMENTS_ENABLED=false` to pause only new Checkout Session creation while leaving live webhooks, refunds, reconciliation, disputes, and Connect status recovery available
 - `PAYMENTS_ENABLED` is the Supabase environment master switch; Admin Settings `Checkout availability` writes `app_settings.payment_controls` and can pause/resume checkout only when the master switch is `true`
 - live webhook endpoint API version must be pinned to `2023-10-16` while the edge functions remain on `stripe@14.x`

@@ -4,11 +4,15 @@ import {
   assertRejects,
 } from "jsr:@std/assert@1";
 import {
+  assertStripeSecretKeyMatchesMode,
   assertStripeLivemode,
   constructWithWebhookSecrets,
+  createStripeClient,
+  getStripeSecretKeyMode,
   getRequiredStripeMode,
   isPaymentsEnabled,
   parseStripeWebhookSecrets,
+  StripeKeyModeMismatchError,
   StripeModeMismatchError,
 } from "../_shared/stripe-config.ts";
 
@@ -51,6 +55,51 @@ Deno.test("assertStripeLivemode rejects mismatched test and live events", () => 
   );
   assertEquals(liveModeError.expectedMode, "live");
   assertEquals(liveModeError.actualMode, "test");
+});
+
+Deno.test("getStripeSecretKeyMode detects live and test secret key prefixes", () => {
+  assertEquals(getStripeSecretKeyMode("sk_test_123"), "test");
+  assertEquals(getStripeSecretKeyMode("rk_test_123"), "test");
+  assertEquals(getStripeSecretKeyMode("sk_live_123"), "live");
+  assertEquals(getStripeSecretKeyMode("rk_live_123"), "live");
+  assertEquals(getStripeSecretKeyMode("pk_test_123"), null);
+  assertEquals(getStripeSecretKeyMode("not-a-stripe-key"), null);
+});
+
+Deno.test("assertStripeSecretKeyMatchesMode rejects key prefix mismatches", () => {
+  assertStripeSecretKeyMatchesMode("sk_test_123", env({ STRIPE_MODE: "test" }));
+  assertStripeSecretKeyMatchesMode("rk_live_123", env({ STRIPE_MODE: "live" }));
+
+  const testModeError = assertThrows(
+    () => assertStripeSecretKeyMatchesMode("sk_live_123", env({ STRIPE_MODE: "test" })),
+    StripeKeyModeMismatchError,
+  );
+  assertEquals(testModeError.expectedMode, "test");
+  assertEquals(testModeError.actualMode, "live");
+
+  const liveModeError = assertThrows(
+    () => assertStripeSecretKeyMatchesMode("sk_test_123", env({ STRIPE_MODE: "live" })),
+    StripeKeyModeMismatchError,
+  );
+  assertEquals(liveModeError.expectedMode, "live");
+  assertEquals(liveModeError.actualMode, "test");
+});
+
+Deno.test("assertStripeSecretKeyMatchesMode rejects non-secret Stripe keys", () => {
+  assertThrows(
+    () => assertStripeSecretKeyMatchesMode("pk_test_123", env({ STRIPE_MODE: "test" })),
+    Error,
+    "STRIPE_SECRET_KEY must start with sk_test_ or rk_test_",
+  );
+});
+
+Deno.test("createStripeClient enforces STRIPE_MODE against the key prefix", () => {
+  const error = assertThrows(
+    () => createStripeClient("sk_live_123", env({ STRIPE_MODE: "test" })),
+    StripeKeyModeMismatchError,
+  );
+  assertEquals(error.expectedMode, "test");
+  assertEquals(error.actualMode, "live");
 });
 
 Deno.test("isPaymentsEnabled only accepts exact true", () => {
